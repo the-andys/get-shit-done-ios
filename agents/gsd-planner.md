@@ -103,7 +103,7 @@ Discovery is MANDATORY unless you can prove current context exists.
 **Level 0 - Skip** (pure internal work, existing patterns only)
 - ALL work follows established codebase patterns (grep confirms)
 - No new external dependencies
-- Examples: Add delete button, add field to model, create CRUD endpoint
+- Examples: Add delete button to a View, add property to SwiftData model, create new CRUD ViewModel
 
 **Level 1 - Quick Verification** (2-5 min)
 - Single known library, confirming syntax/version
@@ -118,8 +118,8 @@ Discovery is MANDATORY unless you can prove current context exists.
 - Action: Full research with DISCOVERY.md
 
 **Depth indicators:**
-- Level 2+: New library not in package.json, external API, "choose/select/evaluate" in description
-- Level 3: "architecture/design/system", multiple external services, data modeling, auth design
+- Level 2+: New SPM dependency not in Package.swift, external API/SDK, Apple framework not yet used, "choose/select/evaluate" in description
+- Level 3: "architecture/design/system", multiple external services, data modeling, auth design, CloudKit/Core Data migration strategy
 
 For niche domains (3D, games, audio, shaders, ML), suggest `/gsd:research-phase` before plan-phase.
 
@@ -132,19 +132,19 @@ For niche domains (3D, games, audio, shaders, ML), suggest `/gsd:research-phase`
 Every task has four required fields:
 
 **<files>:** Exact file paths created or modified.
-- Good: `src/app/api/auth/login/route.ts`, `prisma/schema.prisma`
+- Good: `Sources/Features/Auth/SignInWithAppleViewModel.swift`, `Sources/Models/User.swift`
 - Bad: "the auth files", "relevant components"
 
 **<action>:** Specific implementation instructions, including what to avoid and WHY.
-- Good: "Create POST endpoint accepting {email, password}, validates using bcrypt against User table, returns JWT in httpOnly cookie with 15-min expiry. Use jose library (not jsonwebtoken - CommonJS issues with Edge runtime)."
+- Good: "Create SignInWithAppleViewModel conforming to ObservableObject. Use ASAuthorizationAppleIDProvider for authentication flow, store credential in Keychain via KeychainService. Persist user profile to SwiftData User model. Use async/await (not Combine - simpler error propagation for one-shot operations)."
 - Bad: "Add authentication", "Make login work"
 
 **<verify>:** How to prove the task is complete.
-- Good: `npm test` passes, `curl -X POST /api/auth/login` returns 200 with Set-Cookie header
+- Good: `swift test` passes, `xcodebuild build -scheme App -destination 'platform=iOS Simulator,name=iPhone 16'` succeeds with zero warnings
 - Bad: "It works", "Looks good"
 
 **<done>:** Acceptance criteria - measurable state of completion.
-- Good: "Valid credentials return 200 + JWT cookie, invalid credentials return 401"
+- Good: "Sign in with Apple flow completes, user profile is persisted to SwiftData, subsequent app launch shows authenticated state"
 - Bad: "Authentication is complete"
 
 ## Task Types
@@ -157,6 +157,32 @@ Every task has four required fields:
 | `checkpoint:human-action` | Truly unavoidable manual steps (rare) | Pauses for user |
 
 **Automation-first rule:** If Claude CAN do it via CLI/API, Claude MUST do it. Checkpoints verify AFTER automation, not replace it.
+
+## Mandatory Accessibility for View Tasks
+
+Every task that creates or modifies a SwiftUI View MUST include accessibility in its `<action>`:
+
+- `accessibilityLabel` for non-text interactive elements (icons, images)
+- `accessibilityHint` for non-obvious actions
+- `accessibilityValue` for stateful controls (toggles, sliders, progress)
+- Logical focus/reading order via `accessibilitySortPriority` if default order is wrong
+- Dynamic Type support (no hardcoded font sizes — use `.font(.body)`, `.font(.headline)`, etc.)
+- Minimum 44x44pt touch targets for interactive elements
+
+If a task's `<action>` modifies a View and does NOT mention accessibility, the plan is incomplete. Add it.
+
+## Mandatory Localization for View Tasks
+
+Every task that creates or modifies a SwiftUI View with user-facing text MUST include localization in its `<action>`:
+
+- Use `String(localized:)` for all user-facing strings (never hardcode raw strings in Views)
+- Use `LocalizedStringKey` for SwiftUI `Text()` initializers (implicit — but explicit for dynamic content)
+- Reference `Localizable.xcstrings` as the string catalog (Xcode manages this automatically)
+- Include `comment:` parameter in `String(localized:)` for translator context when meaning is ambiguous
+
+If a task's `<action>` creates a View with user-facing text and does NOT use `String(localized:)` or `LocalizedStringKey`, the plan is incomplete. Add it.
+
+See `ios-swift-guidelines.md` § Localization for mandatory patterns.
 
 ## Task Sizing
 
@@ -176,36 +202,38 @@ Each task: **15-60 minutes** Claude execution time.
 
 | TOO VAGUE | JUST RIGHT |
 |-----------|------------|
-| "Add authentication" | "Add JWT auth with refresh rotation using jose library, store in httpOnly cookie, 15min access / 7day refresh" |
-| "Create the API" | "Create POST /api/projects endpoint accepting {name, description}, validates name length 3-50 chars, returns 201 with project object" |
-| "Style the dashboard" | "Add Tailwind classes to Dashboard.tsx: grid layout (3 cols on lg, 1 on mobile), card shadows, hover states on action buttons" |
-| "Handle errors" | "Wrap API calls in try/catch, return {error: string} on 4xx/5xx, show toast via sonner on client" |
-| "Set up the database" | "Add User and Project models to schema.prisma with UUID ids, email unique constraint, createdAt/updatedAt timestamps, run prisma db push" |
+| "Add authentication" | "Add Sign in with Apple using ASAuthorizationAppleIDProvider, persist credential in Keychain, store user profile in SwiftData User model, handle revocation via NotificationCenter observer" |
+| "Create the form" | "Create ProjectFormView with SwiftUI Form: TextField for name (validated 3-50 chars via onChange), TextEditor for description, @FocusState management, save via SwiftData ModelContext.insert()" |
+| "Style the dashboard" | "Create DashboardView with LazyVGrid (adaptive columns, minimum 160pt), card style using .background(.regularMaterial) + .clipShape(RoundedRectangle), pull-to-refresh via .refreshable" |
+| "Handle errors" | "Create ErrorHandler actor: map URLError/DecodingError to user-facing AppError enum, present via .alert modifier on root NavigationStack, log to OSLog subsystem" |
+| "Set up the database" | "Add User and Project @Model classes in Sources/Models/ with UUID ids, unique email constraint via #Unique macro, timestamps with .transformable, configure ModelContainer in App entry point" |
+| "Add settings screen" | "Create SettingsView with Form: Toggle for notifications (label via `String(localized:)`), Picker for theme, NavigationLink to About. All user-facing strings localized via `String(localized: \"settings.notifications.label\", comment: \"Toggle label for push notifications\")`. Accessibility labels on all controls." |
 
 **Test:** Could a different Claude instance execute without asking clarifying questions? If not, add specificity.
 
 ## TDD Detection
 
-**Heuristic:** Can you write `expect(fn(input)).toBe(output)` before writing `fn`?
+**Heuristic:** Can you write `XCTAssertEqual(fn(input), expected)` or `#expect(fn(input) == expected)` before writing `fn`?
 - Yes → Create a dedicated TDD plan (type: tdd)
 - No → Standard task in standard plan
 
-**TDD candidates (dedicated TDD plans):** Business logic with defined I/O, API endpoints with request/response contracts, data transformations, validation rules, algorithms, state machines.
+**TDD candidates (dedicated TDD plans):** ViewModels with defined state transitions, Services with request/response contracts, data transformations, validation rules, algorithms, state machines, repository/persistence logic.
 
-**Standard tasks:** UI layout/styling, configuration, glue code, one-off scripts, simple CRUD with no business logic.
+**Standard tasks:** SwiftUI View layout/styling, Info.plist configuration, glue code, simple SwiftData CRUD with no business logic, navigation wiring.
 
 **Why TDD gets own plan:** TDD requires RED→GREEN→REFACTOR cycles consuming 40-50% context. Embedding in multi-task plans degrades quality.
 
 ## User Setup Detection
 
-For tasks involving external services, identify human-required configuration:
+For tasks involving external services or Apple capabilities, identify human-required configuration:
 
-External service indicators: New SDK (`stripe`, `@sendgrid/mail`, `twilio`, `openai`), webhook handlers, OAuth integration, `process.env.SERVICE_*` patterns.
+External service indicators: New SDK (RevenueCat, Firebase, Sentry), Apple capability requiring entitlement (Push Notifications, Sign in with Apple, CloudKit, HealthKit), provisioning profile changes, App Store Connect configuration.
 
-For each external service, determine:
-1. **Env vars needed** — What secrets from dashboards?
-2. **Account setup** — Does user need to create an account?
-3. **Dashboard config** — What must be configured in external UI?
+For each external service or capability, determine:
+1. **Entitlements needed** — What capabilities in Signing & Capabilities?
+2. **Account setup** — Does user need Apple Developer Program, third-party dashboard?
+3. **Portal config** — What must be configured in App Store Connect, Apple Developer Portal, or third-party dashboards?
+4. **Provisioning** — Does the provisioning profile need regeneration?
 
 Record in `user_setup` frontmatter. Only include what Claude literally cannot do. Do NOT surface in planning output — execute-plan handles presentation.
 
@@ -223,11 +251,11 @@ Record in `user_setup` frontmatter. Only include what Claude literally cannot do
 **Example with 6 tasks:**
 
 ```
-Task A (User model): needs nothing, creates src/models/user.ts
-Task B (Product model): needs nothing, creates src/models/product.ts
-Task C (User API): needs Task A, creates src/api/users.ts
-Task D (Product API): needs Task B, creates src/api/products.ts
-Task E (Dashboard): needs Task C + D, creates src/components/Dashboard.tsx
+Task A (User model): needs nothing, creates Sources/Models/User.swift
+Task B (Product model): needs nothing, creates Sources/Models/Product.swift
+Task C (User service): needs Task A, creates Sources/Features/Users/UserService.swift
+Task D (Product service): needs Task B, creates Sources/Features/Products/ProductService.swift
+Task E (Dashboard): needs Task C + D, creates Sources/Features/Dashboard/DashboardView.swift
 Task F (Verify UI): checkpoint:human-verify, needs Task E
 
 Graph:
@@ -246,17 +274,17 @@ Wave analysis:
 
 **Vertical slices (PREFER):**
 ```
-Plan 01: User feature (model + API + UI)
-Plan 02: Product feature (model + API + UI)
-Plan 03: Order feature (model + API + UI)
+Plan 01: User feature (model + service + view)
+Plan 02: Product feature (model + service + view)
+Plan 03: Order feature (model + service + view)
 ```
 Result: All three run parallel (Wave 1)
 
 **Horizontal layers (AVOID):**
 ```
 Plan 01: Create User model, Product model, Order model
-Plan 02: Create User API, Product API, Order API
-Plan 03: Create User UI, Product UI, Order UI
+Plan 02: Create UserService, ProductService, OrderService
+Plan 03: Create UserView, ProductView, OrderView
 ```
 Result: Fully sequential (02 needs 01, 03 needs 02)
 
@@ -270,10 +298,10 @@ Exclusive file ownership prevents conflicts:
 
 ```yaml
 # Plan 01 frontmatter
-files_modified: [src/models/user.ts, src/api/users.ts]
+files_modified: [Sources/Models/User.swift, Sources/Features/Users/UserService.swift]
 
 # Plan 02 frontmatter (no overlap = parallel)
-files_modified: [src/models/product.ts, src/api/products.ts]
+files_modified: [Sources/Models/Product.swift, Sources/Features/Products/ProductService.swift]
 ```
 
 No overlap → can run parallel. File in multiple plans → later plan depends on earlier.
@@ -363,6 +391,9 @@ Output: [Artifacts created]
 <execution_context>
 @~/.claude/get-shit-done/workflows/execute-plan.md
 @~/.claude/get-shit-done/templates/summary.md
+@~/.claude/get-shit-done/references/ios-swift-guidelines.md
+@~/.claude/get-shit-done/references/ios-frameworks.md
+@~/.claude/get-shit-done/references/ios-testing.md
 </execution_context>
 
 <context>
@@ -371,14 +402,14 @@ Output: [Artifacts created]
 @.planning/STATE.md
 
 # Only reference prior plan SUMMARYs if genuinely needed
-@path/to/relevant/source.ts
+@path/to/relevant/Source.swift
 </context>
 
 <tasks>
 
 <task type="auto">
   <name>Task 1: [Action-oriented name]</name>
-  <files>path/to/file.ext</files>
+  <files>Sources/Features/FeatureName/File.swift</files>
   <action>[Specific implementation]</action>
   <verify>[Command or check]</verify>
   <done>[Acceptance criteria]</done>
@@ -423,18 +454,29 @@ Only include prior plan SUMMARY references if genuinely needed (uses types/expor
 
 ## User Setup Frontmatter
 
-When external services involved:
+When external services or Apple capabilities involved:
 
 ```yaml
 user_setup:
-  - service: stripe
-    why: "Payment processing"
-    env_vars:
-      - name: STRIPE_SECRET_KEY
-        source: "Stripe Dashboard -> Developers -> API keys"
-    dashboard_config:
-      - task: "Create webhook endpoint"
-        location: "Stripe Dashboard -> Developers -> Webhooks"
+  - service: RevenueCat
+    why: "In-app purchase management"
+    config_keys:
+      - name: REVENUECAT_API_KEY
+        source: "RevenueCat Dashboard -> Project Settings -> API Keys"
+    portal_config:
+      - task: "Create in-app purchase products"
+        location: "App Store Connect -> In-App Purchases"
+      - task: "Configure RevenueCat webhook"
+        location: "RevenueCat Dashboard -> Integrations"
+  - service: apple_capability
+    why: "Push Notifications"
+    entitlements:
+      - "aps-environment"
+    portal_config:
+      - task: "Enable Push Notifications capability"
+        location: "Xcode -> Signing & Capabilities -> + Capability"
+      - task: "Create APNs key"
+        location: "Apple Developer Portal -> Keys"
 ```
 
 Only include what Claude literally cannot do.
@@ -471,29 +513,30 @@ For "working chat interface":
 For each truth: "What must EXIST for this to be true?"
 
 "User can see existing messages" requires:
-- Message list component (renders Message[])
-- Messages state (loaded from somewhere)
-- API route or data source (provides messages)
-- Message type definition (shapes the data)
+- MessageListView (renders [Message] via ForEach)
+- ChatViewModel (@Observable, holds messages state)
+- MessageService or SwiftData query (provides messages)
+- Message model (@Model or struct conforming to Identifiable)
 
-**Test:** Each artifact = a specific file or database object.
+**Test:** Each artifact = a specific Swift file or SwiftData model.
 
 **Step 4: Derive Required Wiring**
 For each artifact: "What must be CONNECTED for this to function?"
 
-Message list component wiring:
-- Imports Message type (not using `any`)
-- Receives messages prop or fetches from API
-- Maps over messages to render (not hardcoded)
-- Handles empty state (not just crashes)
+MessageListView wiring:
+- References Message type (not using Any)
+- Receives messages via @ObservedObject/@Bindable ViewModel or @Query
+- ForEach over messages with proper Identifiable conformance (not hardcoded)
+- Handles empty state with ContentUnavailableView (not just blank screen)
 
 **Step 5: Identify Key Links**
 "Where is this most likely to break?" Key links = critical connections where breakage causes cascading failures.
 
 For chat interface:
-- Input onSubmit -> API call (if broken: typing works but sending doesn't)
-- API save -> database (if broken: appears to send but doesn't persist)
-- Component -> real data (if broken: shows placeholder, not messages)
+- Send button action -> ViewModel method -> service call (if broken: typing works but sending doesn't)
+- Service save -> SwiftData ModelContext (if broken: appears to send but doesn't persist)
+- View -> @Query or ViewModel published property -> real data (if broken: shows placeholder, not messages)
+- NavigationLink/NavigationDestination wiring (if broken: tapping does nothing)
 
 ## Must-Haves Output Format
 
@@ -502,26 +545,26 @@ must_haves:
   truths:
     - "User can see existing messages"
     - "User can send a message"
-    - "Messages persist across refresh"
+    - "Messages persist across app relaunch"
   artifacts:
-    - path: "src/components/Chat.tsx"
+    - path: "Sources/Features/Chat/ChatView.swift"
       provides: "Message list rendering"
       min_lines: 30
-    - path: "src/app/api/chat/route.ts"
-      provides: "Message CRUD operations"
-      exports: ["GET", "POST"]
-    - path: "prisma/schema.prisma"
-      provides: "Message model"
-      contains: "model Message"
+    - path: "Sources/Features/Chat/ChatViewModel.swift"
+      provides: "Message state management and send logic"
+      exports: ["ChatViewModel"]
+    - path: "Sources/Models/Message.swift"
+      provides: "Message SwiftData model"
+      contains: "@Model.*class Message"
   key_links:
-    - from: "src/components/Chat.tsx"
-      to: "/api/chat"
-      via: "fetch in useEffect"
-      pattern: "fetch.*api/chat"
-    - from: "src/app/api/chat/route.ts"
-      to: "prisma.message"
-      via: "database query"
-      pattern: "prisma\\.message\\.(find|create)"
+    - from: "Sources/Features/Chat/ChatView.swift"
+      to: "ChatViewModel"
+      via: "@ObservedObject or @Bindable property"
+      pattern: "@(ObservedObject|Bindable).*ChatViewModel"
+    - from: "Sources/Features/Chat/ChatViewModel.swift"
+      to: "ModelContext"
+      via: "SwiftData insert/fetch"
+      pattern: "modelContext\\.(insert|fetch)"
 ```
 
 ## Common Failures
@@ -532,11 +575,11 @@ must_haves:
 
 **Artifacts too abstract:**
 - Bad: "Chat system", "Auth module"
-- Good: "src/components/Chat.tsx", "src/app/api/auth/login/route.ts"
+- Good: "Sources/Features/Chat/ChatView.swift", "Sources/Features/Auth/SignInWithAppleViewModel.swift"
 
 **Missing wiring:**
-- Bad: Listing components without how they connect
-- Good: "Chat.tsx fetches from /api/chat via useEffect on mount"
+- Bad: Listing views without how they connect
+- Good: "ChatView observes ChatViewModel via @ObservedObject, ViewModel fetches from SwiftData on init"
 
 </goal_backward>
 
@@ -582,9 +625,9 @@ Use for: Technology selection, architecture decisions, design choices.
 **checkpoint:human-action (1% - rare)**
 Action has NO CLI/API and requires human-only interaction.
 
-Use ONLY for: Email verification links, SMS 2FA codes, manual account approvals, credit card 3D Secure flows.
+Use ONLY for: Email verification links, SMS 2FA codes, manual account approvals, Apple Developer Portal provisioning, TestFlight external testing approval.
 
-Do NOT use for: Deploying (use CLI), creating webhooks (use API), creating databases (use provider CLI), running builds/tests (use Bash), creating files (use Write).
+Do NOT use for: Building (use xcodebuild), running tests (use swift test), creating files (use Write), SPM dependency resolution (use swift package resolve), archiving (use xcodebuild archive).
 
 ## Authentication Gates
 
@@ -592,7 +635,7 @@ When Claude tries CLI/API and gets auth error → creates checkpoint → user au
 
 ## Writing Guidelines
 
-**DO:** Automate everything before checkpoint, be specific ("Visit https://myapp.vercel.app" not "check deployment"), number verification steps, state expected outcomes.
+**DO:** Automate everything before checkpoint, be specific ("Run on iPhone 16 Pro simulator, navigate to Settings tab" not "check the app"), number verification steps, state expected outcomes.
 
 **DON'T:** Ask human to do work Claude can automate, mix multiple verifications, place checkpoints before automation completes.
 
@@ -601,11 +644,11 @@ When Claude tries CLI/API and gets auth error → creates checkpoint → user au
 **Bad - Asking human to automate:**
 ```xml
 <task type="checkpoint:human-action">
-  <action>Deploy to Vercel</action>
-  <instructions>Visit vercel.com, import repo, click deploy...</instructions>
+  <action>Build the project</action>
+  <instructions>Open Xcode, select scheme, click build...</instructions>
 </task>
 ```
-Why bad: Vercel has a CLI. Claude should run `vercel --yes`.
+Why bad: Xcode has xcodebuild CLI. Claude should run `xcodebuild build -scheme App -destination 'platform=iOS Simulator,name=iPhone 16'`.
 
 **Bad - Too many checkpoints:**
 ```xml
@@ -618,12 +661,12 @@ Why bad: Verification fatigue. Combine into one checkpoint at end.
 
 **Good - Single verification checkpoint:**
 ```xml
-<task type="auto">Create schema</task>
-<task type="auto">Create API</task>
-<task type="auto">Create UI</task>
+<task type="auto">Create SwiftData model</task>
+<task type="auto">Create ViewModel</task>
+<task type="auto">Create SwiftUI View</task>
 <task type="checkpoint:human-verify">
-  <what-built>Complete auth flow (schema + API + UI)</what-built>
-  <how-to-verify>Test full flow: register, login, access protected page</how-to-verify>
+  <what-built>Complete auth flow (model + ViewModel + View)</what-built>
+  <how-to-verify>Test full flow: tap Sign in with Apple, authorize, verify authenticated state persists after relaunch</how-to-verify>
 </task>
 ```
 
@@ -650,7 +693,7 @@ Output: [Working, tested feature]
 
 <feature>
   <name>[Feature name]</name>
-  <files>[source file, test file]</files>
+  <files>[Sources/Features/.../Feature.swift, Tests/Features/.../FeatureTests.swift]</files>
   <behavior>
     [Expected behavior in testable terms]
     Cases: input -> expected output
@@ -661,11 +704,11 @@ Output: [Working, tested feature]
 
 ## Red-Green-Refactor Cycle
 
-**RED:** Create test file → write test describing expected behavior → run test (MUST fail) → commit: `test({phase}-{plan}): add failing test for [feature]`
+**RED:** Create test file (Swift Testing `@Test` or XCTest) → write test describing expected behavior → run `swift test` (MUST fail) → commit: `test({phase}-{plan}): add failing test for [feature]`
 
-**GREEN:** Write minimal code to pass → run test (MUST pass) → commit: `feat({phase}-{plan}): implement [feature]`
+**GREEN:** Write minimal code to pass → run `swift test` (MUST pass) → commit: `feat({phase}-{plan}): implement [feature]`
 
-**REFACTOR (if needed):** Clean up → run tests (MUST pass) → commit: `refactor({phase}-{plan}): clean up [feature]`
+**REFACTOR (if needed):** Clean up → run `swift test` (MUST pass) → commit: `refactor({phase}-{plan}): clean up [feature]`
 
 Each TDD plan produces 2-3 atomic commits.
 
@@ -857,13 +900,13 @@ If exists, load relevant documents by phase type:
 
 | Phase Keywords | Load These |
 |----------------|------------|
-| UI, frontend, components | CONVENTIONS.md, STRUCTURE.md |
-| API, backend, endpoints | ARCHITECTURE.md, CONVENTIONS.md |
-| database, schema, models | ARCHITECTURE.md, STACK.md |
-| testing, tests | TESTING.md, CONVENTIONS.md |
-| integration, external API | INTEGRATIONS.md, STACK.md |
+| UI, views, screens, SwiftUI | CONVENTIONS.md, STRUCTURE.md |
+| networking, services, API client | ARCHITECTURE.md, CONVENTIONS.md |
+| database, SwiftData, models, persistence | ARCHITECTURE.md, STACK.md |
+| testing, tests, XCTest, Swift Testing | TESTING.md, CONVENTIONS.md |
+| integration, SDK, third-party, SPM | INTEGRATIONS.md, STACK.md |
 | refactor, cleanup | CONCERNS.md, ARCHITECTURE.md |
-| setup, config | STACK.md, STRUCTURE.md |
+| setup, config, Xcode, targets | STACK.md, STRUCTURE.md |
 | (default) | STACK.md, ARCHITECTURE.md |
 </step>
 

@@ -39,6 +39,9 @@ Output: [What artifacts will be created]
 <execution_context>
 @~/.claude/get-shit-done/workflows/execute-plan.md
 @~/.claude/get-shit-done/templates/summary.md
+@~/.claude/get-shit-done/references/ios-swift-guidelines.md
+@~/.claude/get-shit-done/references/ios-frameworks.md
+@~/.claude/get-shit-done/references/ios-testing.md
 [If plan contains checkpoint tasks (type="checkpoint:*"), add:]
 @~/.claude/get-shit-done/references/checkpoints.md
 </execution_context>
@@ -54,7 +57,7 @@ Output: [What artifacts will be created]
 # Do NOT reflexively chain: Plan 02 refs 01, Plan 03 refs 02...
 
 [Relevant source files:]
-@src/path/to/relevant.ts
+@Sources/Path/To/RelevantFile.swift
 </context>
 
 <tasks>
@@ -76,7 +79,7 @@ Output: [What artifacts will be created]
 </task>
 
 <!-- For checkpoint task examples and patterns, see @~/.claude/get-shit-done/references/checkpoints.md -->
-<!-- Key rule: Claude starts dev server BEFORE human-verify checkpoints. User only visits URLs. -->
+<!-- Key rule: Claude builds and launches Simulator BEFORE human-verify checkpoints. User only verifies in Simulator or Preview. -->
 
 <task type="checkpoint:decision" gate="blocking">
   <decision>[What needs deciding]</decision>
@@ -89,8 +92,8 @@ Output: [What artifacts will be created]
 </task>
 
 <task type="checkpoint:human-verify" gate="blocking">
-  <what-built>[What Claude built] - server running at [URL]</what-built>
-  <how-to-verify>Visit [URL] and verify: [visual checks only, NO CLI commands]</how-to-verify>
+  <what-built>[What Claude built] - app running in Simulator / #Preview rendering</what-built>
+  <how-to-verify>Open Simulator or Xcode Preview and verify: [visual checks only, NO CLI commands]</how-to-verify>
   <resume-signal>Type "approved" or describe issues</resume-signal>
 </task>
 
@@ -148,19 +151,19 @@ After completion, create `.planning/phases/XX-name/{phase}-{plan}-SUMMARY.md`
 # Plan 01 - User feature
 wave: 1
 depends_on: []
-files_modified: [src/models/user.ts, src/api/users.ts]
+files_modified: [Sources/Features/User/UserModel.swift, Sources/Features/User/UserService.swift]
 autonomous: true
 
 # Plan 02 - Product feature (no overlap with Plan 01)
 wave: 1
 depends_on: []
-files_modified: [src/models/product.ts, src/api/products.ts]
+files_modified: [Sources/Features/Product/ProductModel.swift, Sources/Features/Product/ProductService.swift]
 autonomous: true
 
 # Plan 03 - Order feature (no overlap)
 wave: 1
 depends_on: []
-files_modified: [src/models/order.ts, src/api/orders.ts]
+files_modified: [Sources/Features/Order/OrderModel.swift, Sources/Features/Order/OrderService.swift]
 autonomous: true
 ```
 
@@ -172,13 +175,13 @@ All three run in parallel (Wave 1) - no dependencies, no file conflicts.
 # Plan 01 - Auth foundation
 wave: 1
 depends_on: []
-files_modified: [src/lib/auth.ts, src/middleware/auth.ts]
+files_modified: [Sources/Core/Auth/AuthManager.swift, Sources/Core/Auth/AuthMiddleware.swift]
 autonomous: true
 
 # Plan 02 - Protected features (needs auth)
 wave: 2
 depends_on: ["01"]
-files_modified: [src/features/dashboard.ts]
+files_modified: [Sources/Features/Dashboard/DashboardView.swift]
 autonomous: true
 ```
 
@@ -190,7 +193,7 @@ Plan 02 in Wave 2 waits for Plan 01 in Wave 1 - genuine dependency on auth types
 # Plan 03 - UI with verification
 wave: 3
 depends_on: ["01", "02"]
-files_modified: [src/components/Dashboard.tsx]
+files_modified: [Sources/Features/Dashboard/DashboardView.swift]
 autonomous: false  # Has checkpoint:human-verify
 ```
 
@@ -218,7 +221,7 @@ Wave 3 runs after Waves 1 and 2. Pauses at checkpoint, orchestrator presents to 
 # Independent plans need NO prior SUMMARY references.
 # Do NOT reflexively chain: 02 refs 01, 03 refs 02...
 
-@src/relevant/source.ts
+@Sources/Relevant/SourceFile.swift
 </context>
 ```
 
@@ -250,12 +253,12 @@ Wave 3 runs after Waves 1 and 2. Pauses at checkpoint, orchestrator presents to 
 **Vertical slices preferred:**
 
 ```
-PREFER: Plan 01 = User (model + API + UI)
-        Plan 02 = Product (model + API + UI)
+PREFER: Plan 01 = User (model + service + view)
+        Plan 02 = Product (model + service + view)
 
 AVOID:  Plan 01 = All models
-        Plan 02 = All APIs
-        Plan 03 = All UIs
+        Plan 02 = All services
+        Plan 03 = All views
 ```
 
 ---
@@ -264,7 +267,7 @@ AVOID:  Plan 01 = All models
 
 TDD features get dedicated plans with `type: tdd`.
 
-**Heuristic:** Can you write `expect(fn(input)).toBe(output)` before writing `fn`?
+**Heuristic:** Can you write `XCTAssertEqual(fn(input), expectedOutput)` before writing `fn`?
 → Yes: Create a TDD plan
 → No: Standard task in standard plan
 
@@ -301,7 +304,7 @@ plan: 01
 type: execute
 wave: 1
 depends_on: []
-files_modified: [src/features/user/model.ts, src/features/user/api.ts, src/features/user/UserList.tsx]
+files_modified: [Sources/Features/User/UserModel.swift, Sources/Features/User/UserService.swift, Sources/Features/User/UserListView.swift]
 autonomous: true
 ---
 
@@ -309,7 +312,7 @@ autonomous: true
 Implement complete User feature as vertical slice.
 
 Purpose: Self-contained user management that can run parallel to other features.
-Output: User model, API endpoints, and UI components.
+Output: User model, service layer, and SwiftUI views.
 </objective>
 
 <context>
@@ -321,24 +324,24 @@ Output: User model, API endpoints, and UI components.
 <tasks>
 <task type="auto">
   <name>Task 1: Create User model</name>
-  <files>src/features/user/model.ts</files>
-  <action>Define User type with id, email, name, createdAt. Export TypeScript interface.</action>
-  <verify>tsc --noEmit passes</verify>
-  <done>User type exported and usable</done>
+  <files>Sources/Features/User/UserModel.swift</files>
+  <action>Define User struct conforming to Identifiable, Codable with id, email, name, createdAt properties.</action>
+  <verify>xcodebuild build -scheme AppName -destination 'platform=iOS Simulator,name=iPhone 16' succeeds</verify>
+  <done>User model compiles and is usable across the feature</done>
 </task>
 
 <task type="auto">
-  <name>Task 2: Create User API endpoints</name>
-  <files>src/features/user/api.ts</files>
-  <action>GET /users (list), GET /users/:id (single), POST /users (create). Use User type from model.</action>
-  <verify>curl tests pass for all endpoints</verify>
-  <done>All CRUD operations work</done>
+  <name>Task 2: Create User service layer</name>
+  <files>Sources/Features/User/UserService.swift</files>
+  <action>Create UserService with async methods: fetchUsers() -> [User], fetchUser(id:) -> User, createUser(_:) -> User. Use URLSession for networking.</action>
+  <verify>xcodebuild test -scheme AppName -destination 'platform=iOS Simulator,name=iPhone 16' passes</verify>
+  <done>All service methods compile and unit tests pass</done>
 </task>
 </tasks>
 
 <verification>
-- [ ] npm run build succeeds
-- [ ] API endpoints respond correctly
+- [ ] xcodebuild build succeeds with no errors
+- [ ] xcodebuild test passes for User feature
 </verification>
 
 <success_criteria>
@@ -360,7 +363,7 @@ plan: 03
 type: execute
 wave: 2
 depends_on: ["03-01", "03-02"]
-files_modified: [src/components/Dashboard.tsx]
+files_modified: [Sources/Features/Dashboard/DashboardView.swift]
 autonomous: false
 ---
 
@@ -368,12 +371,15 @@ autonomous: false
 Build dashboard with visual verification.
 
 Purpose: Integrate user and product features into unified view.
-Output: Working dashboard component.
+Output: Working SwiftUI dashboard view.
 </objective>
 
 <execution_context>
 @~/.claude/get-shit-done/workflows/execute-plan.md
 @~/.claude/get-shit-done/templates/summary.md
+@~/.claude/get-shit-done/references/ios-swift-guidelines.md
+@~/.claude/get-shit-done/references/ios-frameworks.md
+@~/.claude/get-shit-done/references/ios-testing.md
 @~/.claude/get-shit-done/references/checkpoints.md
 </execution_context>
 
@@ -387,29 +393,29 @@ Output: Working dashboard component.
 <tasks>
 <task type="auto">
   <name>Task 1: Build Dashboard layout</name>
-  <files>src/components/Dashboard.tsx</files>
-  <action>Create responsive grid with UserList and ProductList components. Use Tailwind for styling.</action>
-  <verify>npm run build succeeds</verify>
+  <files>Sources/Features/Dashboard/DashboardView.swift</files>
+  <action>Create SwiftUI view with NavigationStack, UserListView and ProductListView sections. Use adaptive layout with ViewThatFits or GeometryReader for iPad/iPhone.</action>
+  <verify>xcodebuild build -scheme AppName -destination 'platform=iOS Simulator,name=iPhone 16' succeeds</verify>
   <done>Dashboard renders without errors</done>
 </task>
 
-<!-- Checkpoint pattern: Claude starts server, user visits URL. See checkpoints.md for full patterns. -->
+<!-- Checkpoint pattern: Claude builds and launches Simulator, user verifies in Simulator. See checkpoints.md for full patterns. -->
 <task type="auto">
-  <name>Start dev server</name>
-  <action>Run `npm run dev` in background, wait for ready</action>
-  <verify>curl localhost:3000 returns 200</verify>
+  <name>Launch app in Simulator</name>
+  <action>Build and launch app in Simulator: `xcodebuild build -scheme AppName -destination 'platform=iOS Simulator,name=iPhone 16'` then `xcrun simctl launch booted com.app.bundleid`</action>
+  <verify>App launches in Simulator without crash</verify>
 </task>
 
 <task type="checkpoint:human-verify" gate="blocking">
-  <what-built>Dashboard - server at http://localhost:3000</what-built>
-  <how-to-verify>Visit localhost:3000/dashboard. Check: desktop grid, mobile stack, no scroll issues.</how-to-verify>
+  <what-built>Dashboard view - app running in iOS Simulator</what-built>
+  <how-to-verify>Open the Simulator. Navigate to Dashboard tab. Check: layout adapts to iPhone/iPad, no clipping, scroll works smoothly.</how-to-verify>
   <resume-signal>Type "approved" or describe issues</resume-signal>
 </task>
 </tasks>
 
 <verification>
-- [ ] npm run build succeeds
-- [ ] Visual verification passed
+- [ ] xcodebuild build succeeds with no errors
+- [ ] Visual verification passed in Simulator
 </verification>
 
 <success_criteria>
@@ -434,8 +440,8 @@ depends_on: ["03-01"]  # Just because 01 comes before 02
 **Bad: Horizontal layer grouping**
 ```
 Plan 01: All models
-Plan 02: All APIs (depends on 01)
-Plan 03: All UIs (depends on 02)
+Plan 02: All services (depends on 01)
+Plan 03: All views (depends on 02)
 ```
 
 **Bad: Missing autonomy flag**
@@ -473,27 +479,30 @@ When a plan introduces external services requiring human configuration, declare 
 
 ```yaml
 user_setup:
-  - service: stripe
-    why: "Payment processing requires API keys"
-    env_vars:
-      - name: STRIPE_SECRET_KEY
-        source: "Stripe Dashboard → Developers → API keys → Secret key"
-      - name: STRIPE_WEBHOOK_SECRET
-        source: "Stripe Dashboard → Developers → Webhooks → Signing secret"
+  - service: apple-developer
+    why: "Push notifications require APNs certificate and provisioning profile"
+    xcode_config:
+      - task: "Enable Push Notifications capability"
+        location: "Xcode → Target → Signing & Capabilities → + Capability → Push Notifications"
+      - task: "Select development team"
+        location: "Xcode → Target → Signing & Capabilities → Team"
     dashboard_config:
-      - task: "Create webhook endpoint"
-        location: "Stripe Dashboard → Developers → Webhooks → Add endpoint"
-        details: "URL: https://[your-domain]/api/webhooks/stripe"
+      - task: "Create APNs key"
+        location: "Apple Developer Portal → Certificates, Identifiers & Profiles → Keys → Create Key → Apple Push Notifications service (APNs)"
+      - task: "Register App ID with push entitlement"
+        location: "Apple Developer Portal → Identifiers → App IDs → Edit → Push Notifications → Enable"
     local_dev:
-      - "stripe listen --forward-to localhost:3000/api/webhooks/stripe"
+      - "Ensure device is registered in provisioning profile for testing"
 ```
 
 **The automation-first rule:** `user_setup` contains ONLY what Claude literally cannot do:
-- Account creation (requires human signup)
-- Secret retrieval (requires dashboard access)
-- Dashboard configuration (requires human in browser)
+- Apple Developer account enrollment (requires human signup)
+- Provisioning profile and certificate management (requires Apple Developer Portal access)
+- Xcode capability configuration (requires Xcode GUI interaction)
+- Physical device registration (requires device UDID)
+- App Store Connect configuration (requires human in browser)
 
-**NOT included:** Package installs, code changes, file creation, CLI commands Claude can run.
+**NOT included:** SPM dependency additions, code changes, file creation, xcodebuild commands Claude can run.
 
 **Result:** Execute-plan generates `{phase}-USER-SETUP.md` with checklist for the user.
 
@@ -510,28 +519,28 @@ The `must_haves` field defines what must be TRUE for the phase goal to be achiev
 ```yaml
 must_haves:
   truths:
-    - "User can see existing messages"
-    - "User can send a message"
-    - "Messages persist across refresh"
+    - "User can see existing messages in a scrollable list"
+    - "User can send a message via the compose view"
+    - "Messages persist across app relaunch (SwiftData/Core Data)"
   artifacts:
-    - path: "src/components/Chat.tsx"
-      provides: "Message list rendering"
+    - path: "Sources/Features/Chat/ChatView.swift"
+      provides: "Message list rendering with SwiftUI"
       min_lines: 30
-    - path: "src/app/api/chat/route.ts"
-      provides: "Message CRUD operations"
-      exports: ["GET", "POST"]
-    - path: "prisma/schema.prisma"
-      provides: "Message model"
-      contains: "model Message"
+    - path: "Sources/Features/Chat/ChatViewModel.swift"
+      provides: "Message business logic and state management"
+      exports: ["ChatViewModel"]
+    - path: "Sources/Models/Message.swift"
+      provides: "Message model with SwiftData persistence"
+      contains: "@Model class Message"
   key_links:
-    - from: "src/components/Chat.tsx"
-      to: "/api/chat"
-      via: "fetch in useEffect"
-      pattern: "fetch.*api/chat"
-    - from: "src/app/api/chat/route.ts"
-      to: "prisma.message"
-      via: "database query"
-      pattern: "prisma\\.message\\.(find|create)"
+    - from: "Sources/Features/Chat/ChatView.swift"
+      to: "Sources/Features/Chat/ChatViewModel.swift"
+      via: "@StateObject or @State property"
+      pattern: "@(StateObject|State).*ChatViewModel"
+    - from: "Sources/Features/Chat/ChatViewModel.swift"
+      to: "Sources/Models/Message.swift"
+      via: "ModelContext query"
+      pattern: "modelContext\\.(fetch|insert|delete)"
 ```
 
 **Field descriptions:**
