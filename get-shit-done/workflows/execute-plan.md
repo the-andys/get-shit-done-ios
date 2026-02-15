@@ -237,8 +237,8 @@ After each task (verification passed, done criteria met), commit immediately.
 
 **2. Stage individually** (NEVER `git add .` or `git add -A`):
 ```bash
-git add src/api/auth.ts
-git add src/types/user.ts
+git add Sources/Services/AuthService.swift
+git add Sources/Models/User.swift
 ```
 
 **3. Commit type:**

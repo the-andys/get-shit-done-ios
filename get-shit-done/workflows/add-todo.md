@@ -46,11 +46,11 @@ Infer area from file paths:
 
 | Path pattern | Area |
 |--------------|------|
-| `src/api/*`, `api/*` | `api` |
-| `src/components/*`, `src/ui/*` | `ui` |
-| `src/auth/*`, `auth/*` | `auth` |
-| `src/db/*`, `database/*` | `database` |
-| `tests/*`, `__tests__/*` | `testing` |
+| `Sources/Services/*`, `Sources/Networking/*` | `services` |
+| `Sources/Views/*`, `Sources/Views/Components/*` | `ui` |
+| `Sources/ViewModels/*` | `viewmodels` |
+| `Sources/Models/*` | `models` |
+| `Tests/*`, `UITests/*` | `testing` |
 | `docs/*` | `docs` |
 | `.planning/*` | `planning` |
 | `scripts/*`, `bin/*` | `tooling` |
