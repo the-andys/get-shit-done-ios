@@ -32,22 +32,22 @@
 
 ## Wave 4 — Templates, References and Workflows (depends on Waves 2-3)
 
-- [ ] Adapt `get-shit-done/references/questioning.md` — iOS-specific questions
-- [ ] Adapt `get-shit-done/references/tdd.md` — Swift Testing + XCTest
-- [ ] Adapt `get-shit-done/references/verification-patterns.md` — iOS verification
-- [ ] Adapt `get-shit-done/templates/codebase/stack.md` + other codebase templates
-- [ ] Adapt `get-shit-done/workflows/verify-phase.md` — iOS verification workflow
-- [ ] Adapt `get-shit-done/templates/verification-report.md` — iOS verification report examples
-- [ ] Adapt `get-shit-done/workflows/plan-milestone-gaps.md` — iOS gap planning examples
-- [ ] Adapt `get-shit-done/workflows/diagnose-issues.md` — iOS diagnosis examples
+- [x] Adapt `get-shit-done/references/questioning.md` — iOS-specific questions (clean, no changes needed)
+- [x] Adapt `get-shit-done/references/tdd.md` — Swift Testing + XCTest (clean, no changes needed)
+- [x] Adapt `get-shit-done/references/verification-patterns.md` — iOS verification
+- [x] Adapt `get-shit-done/templates/codebase/stack.md` + other codebase templates
+- [x] Adapt `get-shit-done/workflows/verify-phase.md` — iOS verification workflow
+- [x] Adapt `get-shit-done/templates/verification-report.md` — iOS verification report examples
+- [x] Adapt `get-shit-done/workflows/plan-milestone-gaps.md` — iOS gap planning examples
+- [x] Adapt `get-shit-done/workflows/diagnose-issues.md` — iOS diagnosis examples
 
 ## Wave 5 — Complementary References and Workflows
 
-- [ ] Create `get-shit-done/references/ios-app-lifecycle.md`
-- [ ] Create `get-shit-done/references/ios-permissions.md`
-- [ ] Adapt `get-shit-done/workflows/complete-milestone.md` — iOS milestone examples
-- [ ] Adapt `get-shit-done/workflows/execute-plan.md` — iOS execution path examples
-- [ ] Adapt `get-shit-done/workflows/add-todo.md` — iOS area references
+- [x] Create `get-shit-done/references/ios-app-lifecycle.md`
+- [x] Create `get-shit-done/references/ios-permissions.md`
+- [x] Adapt `get-shit-done/workflows/complete-milestone.md` — iOS milestone examples
+- [x] Adapt `get-shit-done/workflows/execute-plan.md` — iOS execution path examples
+- [x] Adapt `get-shit-done/workflows/add-todo.md` — iOS area references
 
 ## Version Tracking
 
@@ -56,8 +56,8 @@
 | 0+1  | 0.1.0   | Complete |
 | 2    | 0.2.0   | Complete |
 | 3    | 0.3.0   | Complete |
-| 4    | 0.4.0   | Pending |
-| 5    | 0.5.0   | Pending |
+| 4    | 0.4.0   | Complete |
+| 5    | 0.5.0   | Complete |
 
 ## Verification
 
