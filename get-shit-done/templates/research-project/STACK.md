@@ -38,15 +38,14 @@ Template for `.planning/research/STACK.md` — recommended technologies for the 
 
 ## Installation
 
-```bash
-# Core
-npm install [packages]
+```swift
+// In Package.swift or via Xcode: File > Add Package Dependencies
+dependencies: [
+    .package(url: "[repo URL]", from: "[version]"),
+]
 
-# Supporting
-npm install [packages]
-
-# Dev dependencies
-npm install -D [packages]
+// Or add via Xcode GUI:
+// Project > Package Dependencies > + > Search for package
 ```
 
 ## Alternatives Considered
@@ -77,7 +76,7 @@ npm install -D [packages]
 
 | Package A | Compatible With | Notes |
 |-----------|-----------------|-------|
-| [package@version] | [package@version] | [compatibility notes] |
+| [package from: "version"] | [package from: "version"] | [compatibility notes] |
 
 ## Sources
 

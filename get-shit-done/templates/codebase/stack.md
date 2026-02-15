@@ -1,186 +1,305 @@
-# Technology Stack Template
+# Stack Analysis Template — iOS
 
-Template for `.planning/codebase/STACK.md` - captures the technology foundation.
+Analysis of the project's technology stack, dependencies, build tools, and deployment pipeline.
 
-**Purpose:** Document what technologies run this codebase. Focused on "what executes when you run the code."
-
----
-
-## File Template
-
-```markdown
-# Technology Stack
-
-**Analysis Date:** [YYYY-MM-DD]
-
-## Languages
-
-**Primary:**
-- [Language] [Version] - [Where used: e.g., "all application code"]
-
-**Secondary:**
-- [Language] [Version] - [Where used: e.g., "build scripts, tooling"]
-
-## Runtime
-
-**Environment:**
-- [Runtime] [Version] - [e.g., "Node.js 20.x"]
-- [Additional requirements if any]
-
-**Package Manager:**
-- [Manager] [Version] - [e.g., "npm 10.x"]
-- Lockfile: [e.g., "package-lock.json present"]
-
-## Frameworks
-
-**Core:**
-- [Framework] [Version] - [Purpose: e.g., "web server", "UI framework"]
-
-**Testing:**
-- [Framework] [Version] - [e.g., "Jest for unit tests"]
-- [Framework] [Version] - [e.g., "Playwright for E2E"]
-
-**Build/Dev:**
-- [Tool] [Version] - [e.g., "Vite for bundling"]
-- [Tool] [Version] - [e.g., "TypeScript compiler"]
-
-## Key Dependencies
-
-[Only include dependencies critical to understanding the stack - limit to 5-10 most important]
-
-**Critical:**
-- [Package] [Version] - [Why it matters: e.g., "authentication", "database access"]
-- [Package] [Version] - [Why it matters]
-
-**Infrastructure:**
-- [Package] [Version] - [e.g., "Express for HTTP routing"]
-- [Package] [Version] - [e.g., "PostgreSQL client"]
-
-## Configuration
-
-**Environment:**
-- [How configured: e.g., ".env files", "environment variables"]
-- [Key configs: e.g., "DATABASE_URL, API_KEY required"]
-
-**Build:**
-- [Build config files: e.g., "vite.config.ts, tsconfig.json"]
-
-## Platform Requirements
-
-**Development:**
-- [OS requirements or "any platform"]
-- [Additional tooling: e.g., "Docker for local DB"]
-
-**Production:**
-- [Deployment target: e.g., "Vercel", "AWS Lambda", "Docker container"]
-- [Version requirements]
+> **For the codebase mapper agent** — Fill this template when analyzing an existing iOS project's stack.
 
 ---
 
-*Stack analysis: [date]*
-*Update after major dependency changes*
+## Language & Runtime
+
+**Primary Language:** Swift {version}
+**Minimum Deployment Target:** iOS {version}+ (e.g., iOS 17.0)
+**Supported Platforms:** {iPhone / iPad / Mac (Designed for iPad) / Mac Catalyst / visionOS}
+**Xcode Version:** {version}+ required
+**Swift Toolchain:** {default / custom — specify if using Swift nightly or specific toolchain}
+
+### Language Features in Use
+```
+- [ ] Swift Concurrency (async/await, actors, Sendable)
+- [ ] Swift Macros (@Observable, @Model, custom)
+- [ ] Opaque/Existential Types (some/any)
+- [ ] Result Builders (@ViewBuilder, custom)
+- [ ] Property Wrappers (@State, @Binding, @Environment, custom)
+- [ ] String Catalogs (Localizable.xcstrings)
+- [ ] RegexBuilder
+- [ ] Swift 6 strict concurrency mode
 ```
 
-<good_examples>
-```markdown
-# Technology Stack
-
-**Analysis Date:** 2025-01-20
-
-## Languages
-
-**Primary:**
-- TypeScript 5.3 - All application code
-
-**Secondary:**
-- JavaScript - Build scripts, config files
-
-## Runtime
-
-**Environment:**
-- Node.js 20.x (LTS)
-- No browser runtime (CLI tool only)
-
-**Package Manager:**
-- npm 10.x
-- Lockfile: `package-lock.json` present
-
-## Frameworks
-
-**Core:**
-- None (vanilla Node.js CLI)
-
-**Testing:**
-- Vitest 1.0 - Unit tests
-- tsx - TypeScript execution without build step
-
-**Build/Dev:**
-- TypeScript 5.3 - Compilation to JavaScript
-- esbuild - Used by Vitest for fast transforms
-
-## Key Dependencies
-
-**Critical:**
-- commander 11.x - CLI argument parsing and command structure
-- chalk 5.x - Terminal output styling
-- fs-extra 11.x - Extended file system operations
-
-**Infrastructure:**
-- Node.js built-ins - fs, path, child_process for file operations
-
-## Configuration
-
-**Environment:**
-- No environment variables required
-- Configuration via CLI flags only
-
-**Build:**
-- `tsconfig.json` - TypeScript compiler options
-- `vitest.config.ts` - Test runner configuration
-
-## Platform Requirements
-
-**Development:**
-- macOS/Linux/Windows (any platform with Node.js)
-- No external dependencies
-
-**Production:**
-- Distributed as npm package
-- Installed globally via npm install -g
-- Runs on user's Node.js installation
+### Concurrency Model
+```
+Preference hierarchy:
+1. Swift Concurrency (async/await, actors) — preferred
+2. Combine — only for reactive streams (publisher/subscriber patterns)
+3. GCD (Dispatch) — only for legacy/interop
+```
 
 ---
 
-*Stack analysis: 2025-01-20*
-*Update after major dependency changes*
+## UI Framework
+
+**Primary:** {SwiftUI / UIKit / Mixed}
+**Navigation:** {NavigationStack / NavigationSplitView / UINavigationController / Coordinator pattern}
+**Architecture:** {MVVM with @Observable / MVC / TCA / VIPER}
+
+### SwiftUI Patterns
 ```
-</good_examples>
+- [ ] @Observable (iOS 17+) vs ObservableObject (legacy)
+- [ ] @Environment for dependency injection
+- [ ] @Bindable for two-way bindings
+- [ ] #Preview macro (not PreviewProvider)
+- [ ] ViewModifiers for reusable styling
+- [ ] Custom Shapes and Paths
+- [ ] GeometryReader usage
+- [ ] Animations (.animation, withAnimation, matchedGeometryEffect)
+- [ ] Liquid Glass effects (iOS 26+)
+```
 
-<guidelines>
-**What belongs in STACK.md:**
-- Languages and versions
-- Runtime requirements (Node, Bun, Deno, browser)
-- Package manager and lockfile
-- Framework choices
-- Critical dependencies (limit to 5-10 most important)
-- Build tooling
-- Platform/deployment requirements
+### UIKit Integration (if mixed)
+```
+- [ ] UIViewRepresentable wrappers
+- [ ] UIViewControllerRepresentable wrappers
+- [ ] Hosting controllers (UIHostingController)
+- [ ] Coordinator pattern for UIKit navigation
+```
 
-**What does NOT belong here:**
-- File structure (that's STRUCTURE.md)
-- Architectural patterns (that's ARCHITECTURE.md)
-- Every dependency in package.json (only critical ones)
-- Implementation details (defer to code)
+---
 
-**When filling this template:**
-- Check package.json for dependencies
-- Note runtime version from .nvmrc or package.json engines
-- Include only dependencies that affect understanding (not every utility)
-- Specify versions only when version matters (breaking changes, compatibility)
+## Data & Persistence
 
-**Useful for phase planning when:**
-- Adding new dependencies (check compatibility)
-- Upgrading frameworks (know what's in use)
-- Choosing implementation approach (must work with existing stack)
-- Understanding build requirements
-</guidelines>
+**Primary Persistence:** {SwiftData / Core Data / UserDefaults / None}
+**Cloud Sync:** {CloudKit / Firebase / Custom backend / None}
+**Keychain:** {Used for: tokens, credentials, sensitive data / Not used}
+**File Storage:** {FileManager usage: documents, caches, app groups / Not used}
+
+### SwiftData Configuration (if used)
+```
+Models: {list @Model classes}
+Container: {ModelContainer configuration — in-memory for previews, persistent for app}
+Migration: {Lightweight / Custom VersionedSchema / None needed}
+```
+
+### Core Data Configuration (if used)
+```
+Model: {.xcdatamodeld name}
+Stack: {NSPersistentContainer / NSPersistentCloudKitContainer}
+Migration: {Lightweight / Custom mapping model}
+```
+
+---
+
+## Networking
+
+**HTTP Client:** {URLSession (native) / Alamofire / Custom}
+**API Style:** {REST / GraphQL / gRPC / WebSocket}
+**Base URL Configuration:** {Hardcoded / Environment-based / Server config}
+**Authentication:** {Bearer token / Sign in with Apple / OAuth / API key / None}
+
+### Network Layer Architecture
+```
+Pattern: {Direct URLSession / Protocol-based APIClient / Repository pattern}
+Decoding: {JSONDecoder with custom strategies / Manual / Codable}
+Error Handling: {Custom error types / URLError passthrough / Result type}
+Caching: {URLCache / Custom / None}
+Certificate Pinning: {Yes / No}
+```
+
+---
+
+## Dependencies
+
+**Manager:** {Swift Package Manager (SPM) / CocoaPods / Carthage / Mixed}
+
+### SPM Dependencies (Package.swift or Xcode project)
+```
+| Package | Version | Purpose | Critical? |
+|---------|---------|---------|-----------|
+| {name} | {version constraint} | {what it does} | {Yes/No} |
+```
+
+### CocoaPods Dependencies (if used)
+```
+| Pod | Version | Purpose | Migration plan to SPM? |
+|-----|---------|---------|----------------------|
+| {name} | {version} | {what it does} | {Yes/No/N/A} |
+```
+
+### Vendor / Manual Dependencies
+```
+| Framework | Source | Purpose |
+|-----------|--------|---------|
+| {name} | {local .xcframework / binary} | {what it does} |
+```
+
+---
+
+## Testing
+
+**Unit Tests:** {Swift Testing / XCTest / Both}
+**UI Tests:** {XCUITest / Not configured}
+**Snapshot Tests:** {swift-snapshot-testing / None}
+**Code Coverage:** {Enabled in scheme / Not configured}
+
+### Test Structure
+```
+TestTarget/
+├── UnitTests/
+│   ├── ViewModelTests/    # @Suite, @Test, #expect
+│   ├── ServiceTests/      # Network/data layer
+│   └── ModelTests/        # Data model logic
+├── IntegrationTests/      # Cross-layer tests
+└── UITests/               # XCUITest flows
+```
+
+### Test Configuration
+```
+Scheme: {scheme name for testing}
+Simulator: {default test destination — e.g., iPhone 16}
+Parallel: {Yes / No}
+Test Plans: {.xctestplan files / Default}
+```
+
+---
+
+## Build & CI/CD
+
+**Build System:** Xcode Build System (xcodebuild)
+**CI/CD:** {Xcode Cloud / GitHub Actions / Fastlane / Bitrise / None}
+
+### Build Configuration
+```
+Configurations: {Debug / Release / custom}
+Schemes: {list schemes and their purposes}
+Build Settings: {notable custom settings — OTHER_SWIFT_FLAGS, etc.}
+Preprocessor Flags: {DEBUG, STAGING, etc.}
+```
+
+### Xcode Cloud / CI Pipeline (if configured)
+```
+Triggers: {branch push / PR / tag}
+Workflows: {build / test / archive / distribute}
+Post-actions: {TestFlight upload / App Store submission / Slack notification}
+```
+
+### Fastlane Configuration (if used)
+```
+Lanes: {list lanes — e.g., beta, release, test}
+Match: {code signing via match / manual}
+Pilot: {TestFlight distribution}
+```
+
+---
+
+## Code Signing & Distribution
+
+**Team:** {Apple Developer Team ID}
+**Signing:** {Automatic / Manual}
+**Provisioning:** {Xcode Managed / Fastlane Match / Manual profiles}
+**Distribution:** {App Store / TestFlight / Ad Hoc / Enterprise}
+
+### Certificates & Profiles
+```
+Development: {status}
+Distribution: {status}
+Push Notifications: {APNs key / certificate / not configured}
+```
+
+---
+
+## Project Structure
+
+**Organization:** {Single target / Multi-target / Multi-module SPM / Workspace}
+**Architecture Layers:** {describe folder organization}
+
+### Target Structure
+```
+| Target | Type | Purpose |
+|--------|------|---------|
+| {AppName} | App | Main application |
+| {AppName}Tests | Unit Test | Swift Testing + XCTest |
+| {AppName}UITests | UI Test | XCUITest flows |
+| {WidgetExtension} | Widget | Home screen widgets |
+| {NotificationExtension} | Notification | Rich push notifications |
+```
+
+### Module/Package Structure (if multi-module)
+```
+| Module | Dependencies | Purpose |
+|--------|-------------|---------|
+| Core | Foundation | Shared models, utilities |
+| Networking | Core | API client, DTOs |
+| Features | Core, Networking | Feature modules |
+| DesignSystem | SwiftUI | Reusable UI components |
+```
+
+---
+
+## App Capabilities & Entitlements
+
+### Capabilities Enabled
+```
+- [ ] Push Notifications (APNs)
+- [ ] Sign in with Apple
+- [ ] iCloud (CloudKit / Key-value / Documents)
+- [ ] App Groups (shared data between targets)
+- [ ] Keychain Sharing
+- [ ] Background Modes (fetch, processing, location, audio)
+- [ ] HealthKit
+- [ ] HomeKit
+- [ ] In-App Purchase (StoreKit 2)
+- [ ] Maps / Location Services
+- [ ] Camera / Photo Library
+- [ ] Siri / App Intents
+- [ ] Associated Domains (universal links)
+- [ ] Network Extensions
+```
+
+### Info.plist Privacy Keys
+```
+| Key | Value | Used by |
+|-----|-------|---------|
+| NSCameraUsageDescription | {description} | {feature} |
+| NSLocationWhenInUseUsageDescription | {description} | {feature} |
+| NSPhotoLibraryUsageDescription | {description} | {feature} |
+```
+
+---
+
+## Environment & Configuration
+
+**Configuration Files:**
+```
+- [ ] .xcconfig files (per-environment settings)
+- [ ] Info.plist (app metadata, privacy keys)
+- [ ] Entitlements file (capabilities)
+- [ ] GoogleService-Info.plist (Firebase, if used)
+- [ ] Secrets management (keychain / .xcconfig not in git / environment vars in CI)
+```
+
+**Environment Switching:**
+```
+Method: {Xcode schemes / build configurations / custom enum}
+Environments: {Development / Staging / Production}
+Base URLs: {how API endpoints change per environment}
+```
+
+---
+
+## Accessibility
+
+```
+- [ ] VoiceOver labels on interactive elements
+- [ ] Dynamic Type support (no fixed font sizes)
+- [ ] Color contrast WCAG AA compliance
+- [ ] Bold Text support
+- [ ] Reduce Motion support
+- [ ] Accessibility traits (.isButton, .isHeader, etc.)
+- [ ] Accessibility actions (custom swipe actions)
+- [ ] Accessibility audit passes in Xcode
+```
+
+---
+
+## Notes
+
+{Any additional observations about the stack — unusual patterns, migration plans, known tech debt, performance considerations, third-party SDK limitations}
