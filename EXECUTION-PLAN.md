@@ -60,9 +60,9 @@
 > **Lesson learned:** Classification of "OK/generic" should require a confirmatory grep
 > before being accepted. Generic logic ≠ generic content.
 
-- [ ] Adapt `agents/gsd-plan-checker.md` — Replace web examples (Chat.tsx, LoginForm.tsx, Prisma, fetch) with iOS (MVVM, SwiftData, @Observable)
-- [ ] Adapt `agents/gsd-integration-checker.md` — Replace web grep patterns and flow examples with iOS (Services, ViewModels, Views)
-- [ ] Adapt `get-shit-done/references/checkpoints.md` — Replace npm/Next.js/Vercel examples with xcodebuild/Simulator/TestFlight/Fastlane
+- [x] Adapt `agents/gsd-plan-checker.md` — Replace web examples (Chat.tsx, LoginForm.tsx, Prisma, fetch) with iOS (MVVM, SwiftData, @Observable)
+- [x] Adapt `agents/gsd-integration-checker.md` — Replace web grep patterns and flow examples with iOS (Services, ViewModels, Views)
+- [x] Adapt `get-shit-done/references/checkpoints.md` — Replace npm/Next.js/Vercel examples with xcodebuild/Simulator/TestFlight/Fastlane
 
 ## Version Tracking
 
@@ -73,7 +73,7 @@
 | 3    | 0.3.0   | Complete |
 | 4    | 0.4.0   | Complete |
 | 5    | 0.5.0   | Complete |
-| 6    | 0.6.0   | Pending  |
+| 6    | 0.6.0   | Complete |
 
 ## Verification
 
