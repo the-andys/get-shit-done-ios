@@ -23,13 +23,13 @@ Your job: Explore thoroughly, then write document(s) directly. Return confirmati
 **`/gsd:plan-phase`** loads relevant codebase docs when creating implementation plans:
 | Phase Type | Documents Loaded |
 |------------|------------------|
-| UI, frontend, components | CONVENTIONS.md, STRUCTURE.md |
-| API, backend, endpoints | ARCHITECTURE.md, CONVENTIONS.md |
-| database, schema, models | ARCHITECTURE.md, STACK.md |
+| UI, views, components | CONVENTIONS.md, STRUCTURE.md |
+| networking, API client | ARCHITECTURE.md, CONVENTIONS.md |
+| data, persistence, models | ARCHITECTURE.md, STACK.md |
 | testing, tests | TESTING.md, CONVENTIONS.md |
-| integration, external API | INTEGRATIONS.md, STACK.md |
+| integration, external SDK | INTEGRATIONS.md, STACK.md |
 | refactor, cleanup | CONCERNS.md, ARCHITECTURE.md |
-| setup, config | STACK.md, STRUCTURE.md |
+| setup, config, Xcode | STACK.md, STRUCTURE.md |
 
 **`/gsd:execute-phase`** references codebase docs to:
 - Follow existing conventions when writing code
@@ -39,7 +39,7 @@ Your job: Explore thoroughly, then write document(s) directly. Return confirmati
 
 **What this means for your output:**
 
-1. **File paths are critical** - The planner/executor needs to navigate directly to files. `src/services/user.ts` not "the user service"
+1. **File paths are critical** - The planner/executor needs to navigate directly to files. `Sources/Services/UserService.swift` not "the user service"
 
 2. **Patterns matter more than lists** - Show HOW things are done (code examples) not just WHAT exists
 
@@ -55,7 +55,7 @@ Your job: Explore thoroughly, then write document(s) directly. Return confirmati
 Include enough detail to be useful as reference. A 200-line TESTING.md with real patterns is more valuable than a 74-line summary.
 
 **Always include file paths:**
-Vague descriptions like "UserService handles users" are not actionable. Always include actual file paths formatted with backticks: `src/services/user.ts`. This allows Claude to navigate directly to relevant code.
+Vague descriptions like "UserService handles users" are not actionable. Always include actual file paths formatted with backticks: `Sources/Services/UserService.swift`. This allows Claude to navigate directly to relevant code.
 
 **Write current state only:**
 Describe only what IS, never what WAS or what you considered. No temporal language.
@@ -81,54 +81,73 @@ Explore the codebase thoroughly for your focus area.
 
 **For tech focus:**
 ```bash
-# Package manifests
-ls package.json requirements.txt Cargo.toml go.mod pyproject.toml 2>/dev/null
-cat package.json 2>/dev/null | head -100
+# Project manifests
+ls Package.swift *.xcodeproj/project.pbxproj *.xcworkspace 2>/dev/null
+cat Package.swift 2>/dev/null | head -100
 
-# Config files (list only - DO NOT read .env contents)
-ls -la *.config.* tsconfig.json .nvmrc .python-version 2>/dev/null
+# Xcode project config
+ls -la *.xcconfig **/*.xcconfig 2>/dev/null
 ls .env* 2>/dev/null  # Note existence only, never read contents
 
-# Find SDK/API imports
-grep -r "import.*stripe\|import.*supabase\|import.*aws\|import.*@" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -50
+# Find SDK/framework imports
+grep -r "import \(Foundation\|UIKit\|SwiftUI\|Combine\|SwiftData\|CoreData\|MapKit\|StoreKit\|CloudKit\|Firebase\|Alamofire\)" --include="*.swift" 2>/dev/null | head -50
+
+# SPM dependencies
+cat Package.swift 2>/dev/null | grep -A2 ".package("
+ls *.xcodeproj/project.pbxproj 2>/dev/null && grep "XCRemoteSwiftPackageReference" *.xcodeproj/project.pbxproj 2>/dev/null | head -20
 ```
 
 **For arch focus:**
 ```bash
 # Directory structure
-find . -type d -not -path '*/node_modules/*' -not -path '*/.git/*' | head -50
+find . -type d -not -path '*/.build/*' -not -path '*/.git/*' -not -path '*/DerivedData/*' -not -path '*/Pods/*' | head -50
 
 # Entry points
-ls src/index.* src/main.* src/app.* src/server.* app/page.* 2>/dev/null
+find . -name "*App.swift" -o -name "AppDelegate.swift" -o -name "SceneDelegate.swift" -o -name "ContentView.swift" 2>/dev/null
 
 # Import patterns to understand layers
-grep -r "^import" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -100
+grep -r "^import" --include="*.swift" 2>/dev/null | sort | uniq -c | sort -rn | head -30
 ```
 
 **For quality focus:**
 ```bash
 # Linting/formatting config
-ls .eslintrc* .prettierrc* eslint.config.* biome.json 2>/dev/null
-cat .prettierrc 2>/dev/null
+ls .swiftlint.yml .swiftformat 2>/dev/null
+cat .swiftlint.yml 2>/dev/null
 
-# Test files and config
-ls jest.config.* vitest.config.* 2>/dev/null
-find . -name "*.test.*" -o -name "*.spec.*" | head -30
+# Test targets and files
+find . -path "*/Tests/*.swift" -o -path "*Tests*/*.swift" | head -30
+grep -r "XCTestCase\|@Test\|@Suite" --include="*.swift" -l 2>/dev/null | head -20
 
 # Sample source files for convention analysis
-ls src/**/*.ts 2>/dev/null | head -10
+find . -name "*.swift" -not -path "*/.build/*" -not -path "*/Tests/*" 2>/dev/null | head -10
+
+# Localization patterns
+find . -name "Localizable.xcstrings" -o -name "Localizable.strings" -o -name "*.lproj" 2>/dev/null | head -10
+grep -rn "String(localized:\|NSLocalizedString\|LocalizedStringKey" --include="*.swift" 2>/dev/null | head -20
+# Hardcoded user-facing strings (potential localization gap)
+grep -rn 'Text("[A-Za-z]' --include="*.swift" 2>/dev/null | grep -v 'String(localized:\|LocalizedStringKey\|accessibilityLabel\|#Preview' | head -20
 ```
 
 **For concerns focus:**
 ```bash
 # TODO/FIXME comments
-grep -rn "TODO\|FIXME\|HACK\|XXX" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -50
+grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.swift" 2>/dev/null | head -50
 
 # Large files (potential complexity)
-find src/ -name "*.ts" -o -name "*.tsx" | xargs wc -l 2>/dev/null | sort -rn | head -20
+find . -name "*.swift" -not -path "*/.build/*" -not -path "*/DerivedData/*" | xargs wc -l 2>/dev/null | sort -rn | head -20
 
-# Empty returns/stubs
-grep -rn "return null\|return \[\]\|return {}" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -30
+# Force unwraps (crash risk)
+grep -rn "![^=]" --include="*.swift" 2>/dev/null | grep -v "//\|///\|IBOutlet\|IBAction" | head -30
+
+# Retain cycle risks (missing [weak self])
+grep -rn "{ self\." --include="*.swift" 2>/dev/null | grep -v "\[weak self\]\|\[unowned self\]" | head -30
+
+# Deprecated API usage
+grep -rn "@available.*deprecated\|UIWebView\|UIAlertView\|UIActionSheet" --include="*.swift" 2>/dev/null | head -20
+
+# Hardcoded user-facing strings (localization gaps)
+grep -rn '(Text\|Label\|Button\|Toggle\|\.navigationTitle)("[A-Za-z]' --include="*.swift" 2>/dev/null | grep -v 'String(localized:\|LocalizedStringKey\|accessibilityLabel\|#Preview' | head -30
 ```
 
 Read key files identified during exploration. Use Glob and Grep liberally.
@@ -178,32 +197,38 @@ Ready for orchestrator summary.
 ## Languages
 
 **Primary:**
-- [Language] [Version] - [Where used]
+- Swift [Version] - [Where used]
 
 **Secondary:**
-- [Language] [Version] - [Where used]
+- Objective-C - [Where used, if any]
 
-## Runtime
+## Development Environment
 
-**Environment:**
-- [Runtime] [Version]
+**IDE:**
+- Xcode [Version]
 
 **Package Manager:**
-- [Manager] [Version]
-- Lockfile: [present/missing]
+- Swift Package Manager (SPM)
+- Package.resolved: [present/missing]
 
 ## Frameworks
 
 **Core:**
-- [Framework] [Version] - [Purpose]
+- [Framework] - [Purpose] (e.g., SwiftUI, UIKit, Combine)
+
+**Persistence:**
+- [Framework] - [Purpose] (e.g., SwiftData, Core Data, Realm)
+
+**Networking:**
+- [Framework/Library] - [Purpose] (e.g., URLSession, Alamofire)
 
 **Testing:**
-- [Framework] [Version] - [Purpose]
+- [Framework] - [Purpose] (e.g., Swift Testing, XCTest, XCUITest)
 
 **Build/Dev:**
-- [Tool] [Version] - [Purpose]
+- [Tool] - [Purpose] (e.g., Fastlane, SwiftLint, SwiftFormat)
 
-## Key Dependencies
+## Key Dependencies (SPM)
 
 **Critical:**
 - [Package] [Version] - [Why it matters]
@@ -213,20 +238,28 @@ Ready for orchestrator summary.
 
 ## Configuration
 
-**Environment:**
-- [How configured]
-- [Key configs required]
+**Xcode Project:**
+- Project type: [.xcodeproj / .xcworkspace / SPM-only]
+- Schemes: [List of schemes]
+- Build configurations: [Debug, Release, etc.]
 
-**Build:**
-- [Build config files]
+**Build Settings:**
+- [xcconfig files or Xcode build settings of note]
+
+**Signing:**
+- Team: [Team ID or "Automatic"]
+- Provisioning: [Automatic / Manual]
 
 ## Platform Requirements
 
 **Development:**
-- [Requirements]
+- Xcode [Version]+
+- macOS [Version]+
 
-**Production:**
-- [Deployment target]
+**Deployment Target:**
+- iOS [Version]+
+- Supported devices: [iPhone / iPad / Universal]
+- Supported orientations: [Portrait / Landscape / All]
 
 ---
 
@@ -244,59 +277,77 @@ Ready for orchestrator summary.
 
 **[Category]:**
 - [Service] - [What it's used for]
-  - SDK/Client: [package]
-  - Auth: [env var name]
+  - SDK/Client: [SPM package or framework]
+  - Auth: [How API keys are stored — e.g., xcconfig, Keychain, plist]
 
 ## Data Storage
 
-**Databases:**
-- [Type/Provider]
-  - Connection: [env var]
-  - Client: [ORM/client]
+**Local Persistence:**
+- [SwiftData / Core Data / Realm / UserDefaults / Keychain]
+  - Model location: `[path]`
+  - Migration strategy: [approach]
+
+**Remote/Cloud:**
+- [CloudKit / Firebase / Supabase / Custom API]
 
 **File Storage:**
-- [Service or "Local filesystem only"]
+- [FileManager paths or "Not used"]
 
 **Caching:**
-- [Service or "None"]
+- [URLCache / NSCache / Custom or "None"]
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- [Service or "Custom"]
+- [Sign in with Apple / Firebase Auth / Custom]
   - Implementation: [approach]
+  - Token storage: [Keychain / other]
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- [Service or "None"]
+- [Crashlytics / Sentry / None]
+
+**Analytics:**
+- [Firebase Analytics / Mixpanel / None]
 
 **Logs:**
-- [Approach]
+- [os.Logger / OSLog / print / third-party]
 
 ## CI/CD & Deployment
 
-**Hosting:**
-- [Platform]
+**Distribution:**
+- [App Store / TestFlight / Enterprise / Ad Hoc]
 
 **CI Pipeline:**
-- [Service or "None"]
+- [Xcode Cloud / GitHub Actions / Fastlane / None]
 
-## Environment Configuration
+**Code Signing:**
+- [Automatic / Manual / Fastlane Match]
 
-**Required env vars:**
-- [List critical vars]
+## Configuration
 
-**Secrets location:**
-- [Where secrets are stored]
+**Required config files:**
+- [List critical config files]
 
-## Webhooks & Callbacks
+**Secrets management:**
+- [How secrets are stored — xcconfig, Keychain, build phase scripts]
 
-**Incoming:**
-- [Endpoints or "None"]
+## Push Notifications
 
-**Outgoing:**
-- [Endpoints or "None"]
+**Provider:**
+- [APNs / Firebase Cloud Messaging / None]
+
+**Implementation:**
+- [Approach or "Not used"]
+
+## Deep Links & URL Schemes
+
+**Universal Links:**
+- [Configured / Not used]
+
+**Custom URL Schemes:**
+- [Schemes or "None"]
 
 ---
 
@@ -348,14 +399,18 @@ Ready for orchestrator summary.
 
 ## Entry Points
 
-**[Entry Point]:**
-- Location: `[path]`
-- Triggers: [What invokes it]
+**App Entry (@main):**
+- Location: `[path to App struct or AppDelegate]`
+- Lifecycle: [SwiftUI App protocol / UIKit AppDelegate]
 - Responsibilities: [What it does]
+
+**Scene Configuration:**
+- Location: `[path]`
+- Pattern: [SwiftUI Scene / UISceneDelegate]
 
 ## Error Handling
 
-**Strategy:** [Approach]
+**Strategy:** [Approach — e.g., Result type, throws, Combine errors]
 
 **Patterns:**
 - [Pattern 1]
@@ -363,9 +418,10 @@ Ready for orchestrator summary.
 
 ## Cross-Cutting Concerns
 
-**Logging:** [Approach]
+**Logging:** [Approach — e.g., os.Logger, OSLog, print]
 **Validation:** [Approach]
-**Authentication:** [Approach]
+**Authentication:** [Approach — e.g., Keychain, Sign in with Apple, third-party]
+**Navigation:** [Approach — e.g., NavigationStack, Coordinator pattern, Router]
 
 ---
 
@@ -398,12 +454,15 @@ Ready for orchestrator summary.
 ## Key File Locations
 
 **Entry Points:**
-- `[path]`: [Purpose]
+- `[path to App.swift or AppDelegate.swift]`: [Purpose]
 
 **Configuration:**
-- `[path]`: [Purpose]
+- `[path to Info.plist, xcconfig, etc.]`: [Purpose]
 
 **Core Logic:**
+- `[path]`: [Purpose]
+
+**Views/Screens:**
 - `[path]`: [Purpose]
 
 **Testing:**
@@ -420,13 +479,18 @@ Ready for orchestrator summary.
 ## Where to Add New Code
 
 **New Feature:**
-- Primary code: `[path]`
+- Views: `[path]`
+- ViewModels: `[path]`
+- Models: `[path]`
 - Tests: `[path]`
 
-**New Component/Module:**
+**New View/Screen:**
 - Implementation: `[path]`
 
-**Utilities:**
+**New Service:**
+- Implementation: `[path]`
+
+**Utilities/Extensions:**
 - Shared helpers: `[path]`
 
 ## Special Directories
@@ -435,6 +499,11 @@ Ready for orchestrator summary.
 - Purpose: [What it contains]
 - Generated: [Yes/No]
 - Committed: [Yes/No]
+
+**Directories to exclude from search:**
+- `.build/` - SPM build artifacts
+- `DerivedData/` - Xcode build cache
+- `Pods/` - CocoaPods (if used)
 
 ---
 
@@ -475,12 +544,12 @@ Ready for orchestrator summary.
 ## Import Organization
 
 **Order:**
-1. [First group]
-2. [Second group]
-3. [Third group]
+1. [First group, e.g., Apple frameworks]
+2. [Second group, e.g., third-party packages]
+3. [Third group, e.g., internal modules]
 
-**Path Aliases:**
-- [Aliases used]
+**@testable imports:**
+- [Usage pattern in test targets]
 
 ## Error Handling
 
@@ -499,10 +568,10 @@ Ready for orchestrator summary.
 **When to Comment:**
 - [Guidelines observed]
 
-**JSDoc/TSDoc:**
+**Documentation Comments (///):**
 - [Usage pattern]
 
-## Function Design
+## Function/Method Design
 
 **Size:** [Guidelines]
 
@@ -510,11 +579,32 @@ Ready for orchestrator summary.
 
 **Return Values:** [Pattern]
 
-## Module Design
+## Type Design
 
-**Exports:** [Pattern]
+**Structs vs Classes:** [When each is used]
 
-**Barrel Files:** [Usage]
+**Protocols:** [How protocols are used]
+
+**Access Control:** [public/internal/private/fileprivate patterns]
+
+**Extensions:** [How extensions are organized]
+
+## Localization
+
+**String Catalog:**
+- [Localizable.xcstrings present / Localizable.strings / Not configured]
+- Location: `[path]`
+- Languages: [List of configured languages]
+
+**Pattern:**
+- [String(localized:) / NSLocalizedString / Raw strings — which is dominant]
+
+**Examples from codebase:**
+```swift
+[Show actual localization pattern found, or "No localization pattern detected — all strings are hardcoded"]
+```
+
+**Prescriptive rule:** [Use String(localized:) for all user-facing strings / Match existing pattern]
 
 ---
 
@@ -530,27 +620,27 @@ Ready for orchestrator summary.
 
 ## Test Framework
 
-**Runner:**
-- [Framework] [Version]
-- Config: `[config file]`
+**Unit Testing:**
+- [Swift Testing / XCTest]
+- Test target: `[target name]`
 
-**Assertion Library:**
-- [Library]
+**UI Testing:**
+- [XCUITest / Not used]
+- Test target: `[target name]`
 
 **Run Commands:**
 ```bash
-[command]              # Run all tests
-[command]              # Watch mode
-[command]              # Coverage
+xcodebuild test -scheme [Scheme] -destination 'platform=iOS Simulator,name=iPhone 16'  # Run all tests
+swift test                                                                              # SPM tests
 ```
 
 ## Test File Organization
 
 **Location:**
-- [Pattern: co-located or separate]
+- [Pattern: separate test targets]
 
 **Naming:**
-- [Pattern]
+- [Pattern, e.g., FeatureNameTests.swift]
 
 **Structure:**
 ```
@@ -560,39 +650,38 @@ Ready for orchestrator summary.
 ## Test Structure
 
 **Suite Organization:**
-```typescript
-[Show actual pattern from codebase]
+```swift
+[Show actual pattern from codebase — Swift Testing @Suite/@Test or XCTestCase subclass]
 ```
 
 **Patterns:**
-- [Setup pattern]
-- [Teardown pattern]
-- [Assertion pattern]
+- [setUp/tearDown or init/deinit pattern]
+- [Assertion pattern: #expect / XCTAssert]
 
 ## Mocking
 
-**Framework:** [Tool]
+**Approach:** [Protocols with manual mocks / third-party framework]
 
 **Patterns:**
-```typescript
+```swift
 [Show actual mocking pattern from codebase]
 ```
 
 **What to Mock:**
-- [Guidelines]
+- [Guidelines, e.g., network layer, persistence]
 
 **What NOT to Mock:**
-- [Guidelines]
+- [Guidelines, e.g., value types, pure functions]
 
 ## Fixtures and Factories
 
 **Test Data:**
-```typescript
+```swift
 [Show pattern from codebase]
 ```
 
 **Location:**
-- [Where fixtures live]
+- [Where fixtures/helpers live]
 
 ## Coverage
 
@@ -600,7 +689,7 @@ Ready for orchestrator summary.
 
 **View Coverage:**
 ```bash
-[command]
+xcodebuild test -scheme [Scheme] -enableCodeCoverage YES -resultBundlePath TestResults.xcresult
 ```
 
 ## Test Types
@@ -611,19 +700,22 @@ Ready for orchestrator summary.
 **Integration Tests:**
 - [Scope and approach]
 
-**E2E Tests:**
+**UI Tests (XCUITest):**
+- [Scope and approach, or "Not used"]
+
+**Snapshot Tests:**
 - [Framework or "Not used"]
 
 ## Common Patterns
 
 **Async Testing:**
-```typescript
-[Pattern]
+```swift
+[Pattern — e.g., async/await in tests, expectations]
 ```
 
 **Error Testing:**
-```typescript
-[Pattern]
+```swift
+[Pattern — e.g., #expect(throws:), XCTAssertThrowsError]
 ```
 
 ---
@@ -685,10 +777,32 @@ Ready for orchestrator summary.
 - Limit: [Where it breaks]
 - Scaling path: [How to increase]
 
+## Memory & Retain Cycles
+
+**[Component/View]:**
+- Files: `[file paths]`
+- Issue: [Missing [weak self], strong reference cycles, closures capturing self]
+- Fix: [How to resolve]
+
+## Force Unwraps & Unsafe Code
+
+**[Area]:**
+- Files: `[file paths]`
+- Occurrences: [Number of force unwraps]
+- Risk: [Crash scenarios]
+- Fix: [Guard let, if let, nil coalescing]
+
+## Deprecated API Usage
+
+**[API/Framework]:**
+- Files: `[file paths]`
+- Deprecated in: [iOS version]
+- Replacement: [Modern alternative]
+
 ## Dependencies at Risk
 
 **[Package]:**
-- Risk: [What's wrong]
+- Risk: [What's wrong — unmaintained, no Swift 6 support, etc.]
 - Impact: [What breaks]
 - Migration plan: [Alternative]
 
@@ -697,6 +811,21 @@ Ready for orchestrator summary.
 **[Feature gap]:**
 - Problem: [What's missing]
 - Blocks: [What can't be done]
+
+## Accessibility Gaps
+
+**[Screen/Component]:**
+- Files: `[file paths]`
+- Issue: [Missing labels, traits, dynamic type support]
+- Impact: [VoiceOver/accessibility impact]
+
+## Localization Gaps
+
+**[Screen/Component]:**
+- Files: `[file paths]`
+- Issue: [Hardcoded user-facing strings, missing String(localized:), no string catalog]
+- Impact: [App cannot be localized, App Store rejection risk for target markets]
+- Fix approach: [Replace with String(localized:), create Localizable.xcstrings if missing]
 
 ## Test Coverage Gaps
 
@@ -719,12 +848,16 @@ Ready for orchestrator summary.
 - `.env`, `.env.*`, `*.env` - Environment variables with secrets
 - `credentials.*`, `secrets.*`, `*secret*`, `*credential*` - Credential files
 - `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.jks` - Certificates and private keys
+- `*.cer`, `*.mobileprovision` - iOS signing certificates and provisioning profiles
 - `id_rsa*`, `id_ed25519*`, `id_dsa*` - SSH private keys
-- `.npmrc`, `.pypirc`, `.netrc` - Package manager auth tokens
+- `.netrc` - Auth tokens
 - `config/secrets/*`, `.secrets/*`, `secrets/` - Secret directories
-- `*.keystore`, `*.truststore` - Java keystores
+- `*.keystore`, `*.truststore` - Keystores
 - `serviceAccountKey.json`, `*-credentials.json` - Cloud service credentials
-- `docker-compose*.yml` sections with passwords - May contain inline secrets
+- `GoogleService-Info.plist` - Firebase/Google config with API keys
+- `Authkey_*.p8` - Apple auth keys (APNs, App Store Connect)
+- `*.xcconfig` files containing API keys or secrets - Build configuration secrets
+- `ExportOptions.plist` - May contain signing identities
 - Any file in `.gitignore` that appears to contain secrets
 
 **If you encounter these files:**
