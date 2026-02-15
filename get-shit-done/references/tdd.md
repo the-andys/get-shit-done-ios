@@ -1,7 +1,12 @@
 <overview>
 TDD is about design quality, not coverage metrics. The red-green-refactor cycle forces you to think about behavior before implementation, producing cleaner interfaces and more testable code.
 
-**Principle:** If you can describe the behavior as `expect(fn(input)).toBe(output)` before writing `fn`, TDD improves the result.
+**Principle:** If you can describe the behavior as `#expect(fn(input) == output)` before writing `fn`, TDD improves the result.
+
+**iOS Testing Stack:**
+- **Swift Testing** (`@Suite`, `@Test`, `#expect`) — Primary framework for unit tests
+- **XCTest** (`XCTestCase`) — For UI tests (XCUITest) and iOS 16 compatibility
+- See `@~/.claude/get-shit-done/references/ios-testing.md` for complete patterns
 
 **Key insight:** TDD work is fundamentally heavier than standard tasks—it requires 2-3 execution cycles (RED → GREEN → REFACTOR), each with file reads, test runs, and potential debugging. TDD features get dedicated plans to ensure full context is available throughout the cycle.
 </overview>
@@ -10,23 +15,22 @@ TDD is about design quality, not coverage metrics. The red-green-refactor cycle 
 ## When TDD Improves Quality
 
 **TDD candidates (create a TDD plan):**
-- Business logic with defined inputs/outputs
-- API endpoints with request/response contracts
-- Data transformations, parsing, formatting
+- ViewModels with defined inputs/outputs
+- Services and repositories with request/response contracts
+- Data transformations, Codable parsing, formatting
 - Validation rules and constraints
 - Algorithms with testable behavior
 - State machines and workflows
-- Utility functions with clear specifications
+- Utility functions and extensions with clear specifications
 
 **Skip TDD (use standard plan with `type="auto"` tasks):**
-- UI layout, styling, visual components
-- Configuration changes
-- Glue code connecting existing components
-- One-off scripts and migrations
-- Simple CRUD with no business logic
+- SwiftUI View body layout and styling
+- Configuration and Info.plist changes
+- Navigation setup and routing
+- Simple @Model definitions with no business logic
 - Exploratory prototyping
 
-**Heuristic:** Can you write `expect(fn(input)).toBe(output)` before writing `fn`?
+**Heuristic:** Can you write `#expect(fn(input) == output)` before writing `fn`?
 → Yes: Create a TDD plan
 → No: Use standard plan, add tests after if needed
 </when_to_use_tdd>
@@ -52,7 +56,8 @@ Output: [Working, tested feature]
 <context>
 @.planning/PROJECT.md
 @.planning/ROADMAP.md
-@relevant/source/files.ts
+@~/.claude/get-shit-done/references/ios-testing.md
+@relevant/source/File.swift
 </context>
 
 <feature>
@@ -134,55 +139,64 @@ After completion, create SUMMARY.md with:
 </test_quality>
 
 <framework_setup>
-## Test Framework Setup (If None Exists)
+## Test Framework Setup (iOS)
 
-When executing a TDD plan but no test framework is configured, set it up as part of the RED phase:
+Swift Testing and XCTest are built into Xcode — no installation needed.
 
 **1. Detect project type:**
 ```bash
-# JavaScript/TypeScript
-if [ -f package.json ]; then echo "node"; fi
+# Xcode project
+if [ -d *.xcodeproj ] || [ -d *.xcworkspace ]; then echo "xcode"; fi
 
-# Python
-if [ -f requirements.txt ] || [ -f pyproject.toml ]; then echo "python"; fi
-
-# Go
-if [ -f go.mod ]; then echo "go"; fi
-
-# Rust
-if [ -f Cargo.toml ]; then echo "rust"; fi
+# Swift Package
+if [ -f Package.swift ]; then echo "spm"; fi
 ```
 
-**2. Install minimal framework:**
-| Project | Framework | Install |
-|---------|-----------|---------|
-| Node.js | Jest | `npm install -D jest @types/jest ts-jest` |
-| Node.js (Vite) | Vitest | `npm install -D vitest` |
-| Python | pytest | `pip install pytest` |
-| Go | testing | Built-in |
-| Rust | cargo test | Built-in |
+**2. Framework availability:**
+| Project | Framework | Setup |
+|---------|-----------|-------|
+| Xcode project | Swift Testing | Built-in (Xcode 16+) |
+| Xcode project | XCTest | Built-in |
+| SPM package | Swift Testing | Add to `testTarget` in Package.swift |
+| SPM package | XCTest | Built-in |
 
-**3. Create config if needed:**
-- Jest: `jest.config.js` with ts-jest preset
-- Vitest: `vitest.config.ts` with test globals
-- pytest: `pytest.ini` or `pyproject.toml` section
-
-**4. Verify setup:**
+**3. Verify setup:**
 ```bash
-# Run empty test suite - should pass with 0 tests
-npm test  # Node
-pytest    # Python
-go test ./...  # Go
-cargo test    # Rust
+# SPM package
+swift test
+
+# Xcode project
+xcodebuild test -scheme AppName -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
-**5. Create first test file:**
-Follow project conventions for test location:
-- `*.test.ts` / `*.spec.ts` next to source
-- `__tests__/` directory
-- `tests/` directory at root
+**4. Create first test file:**
+Follow iOS conventions for test location:
+- `Tests/FeatureNameTests/` for SPM packages
+- `AppNameTests/` group in Xcode project
+- Name: `FeatureNameTests.swift`
 
-Framework setup is a one-time cost included in the first TDD plan's RED phase.
+**5. Test file structure (Swift Testing):**
+```swift
+import Testing
+@testable import AppName
+
+@Suite("Feature Name")
+struct FeatureNameTests {
+    @Test("should do expected behavior")
+    func testBehavior() async throws {
+        // Arrange
+        let sut = FeatureName()
+
+        // Act
+        let result = sut.process(input)
+
+        // Assert
+        #expect(result == expected)
+    }
+}
+```
+
+Framework setup is trivial on iOS — Swift Testing is built-in since Xcode 16.
 </framework_setup>
 
 <error_handling>
