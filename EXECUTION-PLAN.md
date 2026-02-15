@@ -49,6 +49,21 @@
 - [x] Adapt `get-shit-done/workflows/execute-plan.md` — iOS execution path examples
 - [x] Adapt `get-shit-done/workflows/add-todo.md` — iOS area references
 
+## Wave 6 — Missed Files (originally classified as 🟢 OK)
+
+> **Discovery:** The original adaptation plan (02-gsd-ios-edition-plan.md) mapped these 3 files
+> but classified them as "generic/universal" — assuming their logic was platform-agnostic.
+> Post-Wave 5 audit revealed all 3 contain hardcoded web examples (tsx, npm, React, Prisma,
+> fetch/axios, Next.js routing, Vercel, etc.). The structure IS generic, but the examples
+> that teach agents what to look for are 100% web.
+>
+> **Lesson learned:** Classification of "OK/generic" should require a confirmatory grep
+> before being accepted. Generic logic ≠ generic content.
+
+- [ ] Adapt `agents/gsd-plan-checker.md` — Replace web examples (Chat.tsx, LoginForm.tsx, Prisma, fetch) with iOS (MVVM, SwiftData, @Observable)
+- [ ] Adapt `agents/gsd-integration-checker.md` — Replace web grep patterns and flow examples with iOS (Services, ViewModels, Views)
+- [ ] Adapt `get-shit-done/references/checkpoints.md` — Replace npm/Next.js/Vercel examples with xcodebuild/Simulator/TestFlight/Fastlane
+
 ## Version Tracking
 
 | Wave | Version | Status |
@@ -58,6 +73,7 @@
 | 3    | 0.3.0   | Complete |
 | 4    | 0.4.0   | Complete |
 | 5    | 0.5.0   | Complete |
+| 6    | 0.6.0   | Pending  |
 
 ## Verification
 
