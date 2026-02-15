@@ -167,10 +167,10 @@ issue:
 
 **What to check:**
 ```
-Component -> API: Does action mention fetch/axios call?
-API -> Database: Does action mention Prisma/query?
-Form -> Handler: Does action mention onSubmit implementation?
-State -> Render: Does action mention displaying state?
+View -> ViewModel: Does action mention @Observable property access?
+ViewModel -> Service: Does action mention async service call?
+Service -> SwiftData: Does action mention modelContext query/insert?
+Model -> View: Does action mention data binding in body?
 ```
 
 **Example issue:**
@@ -178,10 +178,10 @@ State -> Render: Does action mention displaying state?
 issue:
   dimension: key_links_planned
   severity: warning
-  description: "Chat.tsx created but no task wires it to /api/chat"
+  description: "ChatView.swift created but no task wires it to ChatViewModel"
   plan: "01"
-  artifacts: ["src/components/Chat.tsx", "src/app/api/chat/route.ts"]
-  fix_hint: "Add fetch call in Chat.tsx action or create wiring task"
+  artifacts: ["Sources/Views/Chat/ChatView.swift", "Sources/ViewModels/ChatViewModel.swift"]
+  fix_hint: "Add @Observable ViewModel binding in ChatView or create wiring task"
 ```
 
 ## Dimension 5: Scope Sanity
@@ -243,8 +243,8 @@ issue:
   description: "Plan 02 must_haves.truths are implementation-focused"
   plan: "02"
   problematic_truths:
-    - "JWT library installed"
-    - "Prisma schema updated"
+    - "Keychain wrapper added"
+    - "SwiftData @Model created"
   fix_hint: "Reframe as user-observable: 'User can log in', 'Session persists'"
 ```
 
@@ -349,16 +349,16 @@ Returns JSON: `{ truths: [...], artifacts: [...], key_links: [...] }`
 ```yaml
 must_haves:
   truths:
-    - "User can log in with email/password"
-    - "Invalid credentials return 401"
+    - "User can sign in with Apple ID"
+    - "Invalid credentials show error alert"
   artifacts:
-    - path: "src/app/api/auth/login/route.ts"
-      provides: "Login endpoint"
+    - path: "Sources/Services/AuthService.swift"
+      provides: "Authentication service"
       min_lines: 30
   key_links:
-    - from: "src/components/LoginForm.tsx"
-      to: "/api/auth/login"
-      via: "fetch in onSubmit"
+    - from: "Sources/Views/Auth/LoginView.swift"
+      to: "Sources/ViewModels/AuthViewModel.swift"
+      via: "@Observable binding and signIn() call"
 ```
 
 Aggregate across plans for full picture of what phase delivers.
@@ -413,9 +413,9 @@ Validate: all referenced plans exist, no cycles, wave numbers consistent, no for
 For each key_link in must_haves: find source artifact task, check if action mentions the connection, flag missing wiring.
 
 ```
-key_link: Chat.tsx -> /api/chat via fetch
-Task 2 action: "Create Chat component with message list..."
-Missing: No mention of fetch/API call → Issue: Key link not planned
+key_link: ChatView.swift -> ChatViewModel via @Observable
+Task 2 action: "Create ChatView with message list..."
+Missing: No mention of ViewModel binding → Issue: Key link not planned
 ```
 
 ## Step 8: Assess Scope
@@ -433,7 +433,7 @@ Thresholds: 2-3 tasks/plan good, 4 warning, 5+ blocker (split required).
 
 **Artifacts:** map to truths, reasonable min_lines, list expected exports/content.
 
-**Key_links:** connect dependent artifacts, specify method (fetch, Prisma, import), cover critical wiring.
+**Key_links:** connect dependent artifacts, specify method (@Observable binding, modelContext query, service call), cover critical wiring.
 
 ## Step 10: Determine Overall Status
 
@@ -453,18 +453,18 @@ Severities: `blocker` (must fix), `warning` (should fix), `info` (suggestions).
 ```
 Tasks: 5
 Files modified: 12
-  - prisma/schema.prisma
-  - src/app/api/auth/login/route.ts
-  - src/app/api/auth/logout/route.ts
-  - src/app/api/auth/refresh/route.ts
-  - src/middleware.ts
-  - src/lib/auth.ts
-  - src/lib/jwt.ts
-  - src/components/LoginForm.tsx
-  - src/components/LogoutButton.tsx
-  - src/app/login/page.tsx
-  - src/app/dashboard/page.tsx
-  - src/types/auth.ts
+  - Sources/Models/User.swift
+  - Sources/Services/AuthService.swift
+  - Sources/Services/KeychainService.swift
+  - Sources/Services/TokenManager.swift
+  - Sources/ViewModels/AuthViewModel.swift
+  - Sources/ViewModels/ProfileViewModel.swift
+  - Sources/Views/Auth/LoginView.swift
+  - Sources/Views/Auth/SignUpView.swift
+  - Sources/Views/Profile/ProfileView.swift
+  - Sources/Views/Dashboard/DashboardView.swift
+  - Sources/Navigation/AuthRouter.swift
+  - Sources/Extensions/String+Validation.swift
 ```
 
 5 tasks exceeds 2-3 target, 12 files is high, auth is complex domain → quality degradation risk.
@@ -479,7 +479,7 @@ issue:
     tasks: 5
     files: 12
     estimated_context: "~80%"
-  fix_hint: "Split into: 01 (schema + API), 02 (middleware + lib), 03 (UI components)"
+  fix_hint: "Split into: 01 (Models + Services), 02 (ViewModels), 03 (Views + Navigation)"
 ```
 
 </examples>

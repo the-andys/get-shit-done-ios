@@ -18,10 +18,10 @@ Your job: Check cross-phase wiring (exports used, APIs called, data flows) and v
 
 Integration verification checks connections:
 
-1. **Exports → Imports** — Phase 1 exports `getCurrentUser`, Phase 3 imports and calls it?
-2. **APIs → Consumers** — `/api/users` route exists, something fetches from it?
-3. **Forms → Handlers** — Form submits to API, API processes, result displays?
-4. **Data → Display** — Database has data, UI renders it?
+1. **Services → ViewModels** — Phase 1 exports `AuthService`, Phase 3 ViewModel calls it?
+2. **ViewModels → Views** — `UserViewModel` exists, a View observes it?
+3. **Models → Persistence** — `@Model User` defined, `modelContext` queries it?
+4. **Data → Display** — ViewModel has published data, View renders it in `body`?
 
 A "complete" codebase with broken wiring is a broken product.
 </core_principle>
@@ -37,9 +37,9 @@ A "complete" codebase with broken wiring is a broken product.
 
 **Codebase Structure:**
 
-- `src/` or equivalent source directory
-- API routes location (`app/api/` or `pages/api/`)
-- Component locations
+- `Sources/` directory structure
+- Service layer location (`Sources/Services/`)
+- View and ViewModel locations (`Sources/Views/`, `Sources/ViewModels/`)
 
 **Expected Connections:**
 
@@ -67,16 +67,16 @@ done
 
 ```
 Phase 1 (Auth):
-  provides: getCurrentUser, AuthProvider, useAuth, /api/auth/*
+  provides: AuthService, AuthViewModel, KeychainService
   consumes: nothing (foundation)
 
-Phase 2 (API):
-  provides: /api/users/*, /api/data/*, UserType, DataType
-  consumes: getCurrentUser (for protected routes)
+Phase 2 (Data):
+  provides: UserService, User @Model, BookmarkService, Bookmark @Model
+  consumes: AuthService (for authenticated requests)
 
-Phase 3 (Dashboard):
-  provides: Dashboard, UserCard, DataList
-  consumes: /api/users/*, /api/data/*, useAuth
+Phase 3 (UI):
+  provides: DashboardView, ProfileView, BookmarkListView
+  consumes: UserService, BookmarkService, AuthViewModel
 ```
 
 ## Step 2: Verify Export Usage
@@ -89,34 +89,34 @@ For each phase's exports, verify they're imported and used.
 check_export_used() {
   local export_name="$1"
   local source_phase="$2"
-  local search_path="${3:-src/}"
+  local search_path="${3:-Sources/}"
 
-  # Find imports
-  local imports=$(grep -r "import.*$export_name" "$search_path" \
-    --include="*.ts" --include="*.tsx" 2>/dev/null | \
+  # Find references (Swift uses direct type/function names, not import statements per symbol)
+  local imports=$(grep -r "$export_name" "$search_path" \
+    --include="*.swift" 2>/dev/null | \
     grep -v "$source_phase" | wc -l)
 
-  # Find usage (not just import)
+  # Find usage (initialization, method calls — not just type declarations)
   local uses=$(grep -r "$export_name" "$search_path" \
-    --include="*.ts" --include="*.tsx" 2>/dev/null | \
-    grep -v "import" | grep -v "$source_phase" | wc -l)
+    --include="*.swift" 2>/dev/null | \
+    grep -v "import " | grep -v "$source_phase" | wc -l)
 
   if [ "$imports" -gt 0 ] && [ "$uses" -gt 0 ]; then
-    echo "CONNECTED ($imports imports, $uses uses)"
+    echo "CONNECTED ($imports refs, $uses uses)"
   elif [ "$imports" -gt 0 ]; then
-    echo "IMPORTED_NOT_USED ($imports imports, 0 uses)"
+    echo "REFERENCED_NOT_USED ($imports refs, 0 uses)"
   else
-    echo "ORPHANED (0 imports)"
+    echo "ORPHANED (0 references)"
   fi
 }
 ```
 
 **Run for key exports:**
 
-- Auth exports (getCurrentUser, useAuth, AuthProvider)
-- Type exports (UserType, etc.)
-- Utility exports (formatDate, etc.)
-- Component exports (shared components)
+- Auth exports (AuthService, AuthViewModel, KeychainService)
+- Model types (User, Bookmark, etc.)
+- Utility exports (extensions, helpers)
+- Shared Views (reusable SwiftUI components)
 
 ## Step 3: Verify API Coverage
 
@@ -125,42 +125,29 @@ Check that API routes have consumers.
 **Find all API routes:**
 
 ```bash
-# Next.js App Router
-find src/app/api -name "route.ts" 2>/dev/null | while read route; do
-  # Extract route path from file path
-  path=$(echo "$route" | sed 's|src/app/api||' | sed 's|/route.ts||')
-  echo "/api$path"
-done
-
-# Next.js Pages Router
-find src/pages/api -name "*.ts" 2>/dev/null | while read route; do
-  path=$(echo "$route" | sed 's|src/pages/api||' | sed 's|\.ts||')
-  echo "/api$path"
+# Find all service files
+find Sources/Services -name "*.swift" 2>/dev/null | while read service; do
+  name=$(basename "$service" .swift)
+  echo "$name"
 done
 ```
 
 **Check each route has consumers:**
 
 ```bash
-check_api_consumed() {
-  local route="$1"
-  local search_path="${2:-src/}"
+check_service_consumed() {
+  local service_name="$1"
+  local search_path="${2:-Sources/}"
 
-  # Search for fetch/axios calls to this route
-  local fetches=$(grep -r "fetch.*['\"]$route\|axios.*['\"]$route" "$search_path" \
-    --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l)
+  # Search for usage in ViewModels and other services
+  local uses=$(grep -r "$service_name" "$search_path" \
+    --include="*.swift" 2>/dev/null | \
+    grep -v "Sources/Services/" | wc -l)
 
-  # Also check for dynamic routes (replace [id] with pattern)
-  local dynamic_route=$(echo "$route" | sed 's/\[.*\]/.*/g')
-  local dynamic_fetches=$(grep -r "fetch.*['\"]$dynamic_route\|axios.*['\"]$dynamic_route" "$search_path" \
-    --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l)
-
-  local total=$((fetches + dynamic_fetches))
-
-  if [ "$total" -gt 0 ]; then
-    echo "CONSUMED ($total calls)"
+  if [ "$uses" -gt 0 ]; then
+    echo "CONSUMED ($uses references)"
   else
-    echo "ORPHANED (no calls found)"
+    echo "ORPHANED (no references outside Services/)"
   fi
 }
 ```
@@ -172,11 +159,11 @@ Check that routes requiring auth actually check auth.
 **Find protected route indicators:**
 
 ```bash
-# Routes that should be protected (dashboard, settings, user data)
-protected_patterns="dashboard|settings|profile|account|user"
+# Views that should check authentication
+protected_patterns="Dashboard\|Settings\|Profile\|Account"
 
-# Find components/pages matching these patterns
-grep -r -l "$protected_patterns" src/ --include="*.tsx" 2>/dev/null
+# Find Views matching these patterns
+grep -r -l "$protected_patterns" Sources/Views/ --include="*.swift" 2>/dev/null
 ```
 
 **Check auth usage in protected areas:**
@@ -185,11 +172,11 @@ grep -r -l "$protected_patterns" src/ --include="*.tsx" 2>/dev/null
 check_auth_protection() {
   local file="$1"
 
-  # Check for auth hooks/context usage
-  local has_auth=$(grep -E "useAuth|useSession|getCurrentUser|isAuthenticated" "$file" 2>/dev/null)
+  # Check for auth state observation
+  local has_auth=$(grep -E "AuthViewModel|AuthService|isAuthenticated|authState" "$file" 2>/dev/null)
 
-  # Check for redirect on no auth
-  local has_redirect=$(grep -E "redirect.*login|router.push.*login|navigate.*login" "$file" 2>/dev/null)
+  # Check for unauthenticated handling
+  local has_redirect=$(grep -E "LoginView|AuthView|NavigationPath.*login|fullScreenCover.*login" "$file" 2>/dev/null)
 
   if [ -n "$has_auth" ] || [ -n "$has_redirect" ]; then
     echo "PROTECTED"
@@ -211,24 +198,24 @@ Derive flows from milestone goals and trace through codebase.
 verify_auth_flow() {
   echo "=== Auth Flow ==="
 
-  # Step 1: Login form exists
-  local login_form=$(grep -r -l "login\|Login" src/ --include="*.tsx" 2>/dev/null | head -1)
-  [ -n "$login_form" ] && echo "✓ Login form: $login_form" || echo "✗ Login form: MISSING"
+  # Step 1: Login view exists
+  local login_view=$(grep -r -l "LoginView\|SignInView" Sources/Views/ --include="*.swift" 2>/dev/null | head -1)
+  [ -n "$login_view" ] && echo "✓ Login view: $login_view" || echo "✗ Login view: MISSING"
 
-  # Step 2: Form submits to API
-  if [ -n "$login_form" ]; then
-    local submits=$(grep -E "fetch.*auth|axios.*auth|/api/auth" "$login_form" 2>/dev/null)
-    [ -n "$submits" ] && echo "✓ Submits to API" || echo "✗ Form doesn't submit to API"
+  # Step 2: View connects to ViewModel
+  if [ -n "$login_view" ]; then
+    local has_vm=$(grep -E "AuthViewModel|AuthService|@Environment.*auth" "$login_view" 2>/dev/null)
+    [ -n "$has_vm" ] && echo "✓ Connected to AuthViewModel" || echo "✗ View doesn't reference AuthViewModel"
   fi
 
-  # Step 3: API route exists
-  local api_route=$(find src -path "*api/auth*" -name "*.ts" 2>/dev/null | head -1)
-  [ -n "$api_route" ] && echo "✓ API route: $api_route" || echo "✗ API route: MISSING"
+  # Step 3: AuthService exists
+  local auth_service=$(find Sources/Services -name "*Auth*" -name "*.swift" 2>/dev/null | head -1)
+  [ -n "$auth_service" ] && echo "✓ AuthService: $auth_service" || echo "✗ AuthService: MISSING"
 
-  # Step 4: Redirect after success
-  if [ -n "$login_form" ]; then
-    local redirect=$(grep -E "redirect|router.push|navigate" "$login_form" 2>/dev/null)
-    [ -n "$redirect" ] && echo "✓ Redirects after login" || echo "✗ No redirect after login"
+  # Step 4: Navigation after success
+  if [ -n "$login_view" ]; then
+    local navigation=$(grep -E "NavigationPath|NavigationStack|fullScreenCover|dismiss|isAuthenticated" "$login_view" 2>/dev/null)
+    [ -n "$navigation" ] && echo "✓ Navigates after login" || echo "✗ No navigation after login"
   fi
 }
 ```
@@ -237,37 +224,37 @@ verify_auth_flow() {
 
 ```bash
 verify_data_flow() {
-  local component="$1"
-  local api_route="$2"
-  local data_var="$3"
+  local view_name="$1"
+  local service_name="$2"
+  local data_property="$3"
 
-  echo "=== Data Flow: $component → $api_route ==="
+  echo "=== Data Flow: $view_name → $service_name ==="
 
-  # Step 1: Component exists
-  local comp_file=$(find src -name "*$component*" -name "*.tsx" 2>/dev/null | head -1)
-  [ -n "$comp_file" ] && echo "✓ Component: $comp_file" || echo "✗ Component: MISSING"
+  # Step 1: View exists
+  local view_file=$(find Sources/Views -name "*$view_name*" -name "*.swift" 2>/dev/null | head -1)
+  [ -n "$view_file" ] && echo "✓ View: $view_file" || echo "✗ View: MISSING"
 
-  if [ -n "$comp_file" ]; then
-    # Step 2: Fetches data
-    local fetches=$(grep -E "fetch|axios|useSWR|useQuery" "$comp_file" 2>/dev/null)
-    [ -n "$fetches" ] && echo "✓ Has fetch call" || echo "✗ No fetch call"
+  if [ -n "$view_file" ]; then
+    # Step 2: Has ViewModel reference
+    local has_vm=$(grep -E "@Observable|ViewModel|@Environment|@State" "$view_file" 2>/dev/null)
+    [ -n "$has_vm" ] && echo "✓ Has ViewModel/state" || echo "✗ No ViewModel or state"
 
-    # Step 3: Has state for data
-    local has_state=$(grep -E "useState|useQuery|useSWR" "$comp_file" 2>/dev/null)
-    [ -n "$has_state" ] && echo "✓ Has state" || echo "✗ No state for data"
+    # Step 3: Loads data (async task)
+    local loads_data=$(grep -E "\.task|\.onAppear|await.*load|await.*fetch" "$view_file" 2>/dev/null)
+    [ -n "$loads_data" ] && echo "✓ Loads data" || echo "✗ No data loading"
 
     # Step 4: Renders data
-    local renders=$(grep -E "\{.*$data_var.*\}|\{$data_var\." "$comp_file" 2>/dev/null)
+    local renders=$(grep -E "ForEach|$data_property|List.*\{" "$view_file" 2>/dev/null)
     [ -n "$renders" ] && echo "✓ Renders data" || echo "✗ Doesn't render data"
   fi
 
-  # Step 5: API route exists and returns data
-  local route_file=$(find src -path "*$api_route*" -name "*.ts" 2>/dev/null | head -1)
-  [ -n "$route_file" ] && echo "✓ API route: $route_file" || echo "✗ API route: MISSING"
+  # Step 5: Service exists
+  local service_file=$(find Sources/Services -name "*$service_name*" -name "*.swift" 2>/dev/null | head -1)
+  [ -n "$service_file" ] && echo "✓ Service: $service_file" || echo "✗ Service: MISSING"
 
-  if [ -n "$route_file" ]; then
-    local returns_data=$(grep -E "return.*json|res.json" "$route_file" 2>/dev/null)
-    [ -n "$returns_data" ] && echo "✓ API returns data" || echo "✗ API doesn't return data"
+  if [ -n "$service_file" ]; then
+    local returns_data=$(grep -E "func.*async.*throws|func.*->.*\[" "$service_file" 2>/dev/null)
+    [ -n "$returns_data" ] && echo "✓ Service returns data" || echo "✗ Service doesn't return data"
   fi
 }
 ```
@@ -276,28 +263,28 @@ verify_data_flow() {
 
 ```bash
 verify_form_flow() {
-  local form_component="$1"
-  local api_route="$2"
+  local view_name="$1"
+  local service_name="$2"
 
-  echo "=== Form Flow: $form_component → $api_route ==="
+  echo "=== Form Flow: $view_name → $service_name ==="
 
-  local form_file=$(find src -name "*$form_component*" -name "*.tsx" 2>/dev/null | head -1)
+  local view_file=$(find Sources/Views -name "*$view_name*" -name "*.swift" 2>/dev/null | head -1)
 
-  if [ -n "$form_file" ]; then
-    # Step 1: Has form element
-    local has_form=$(grep -E "<form|onSubmit" "$form_file" 2>/dev/null)
-    [ -n "$has_form" ] && echo "✓ Has form" || echo "✗ No form element"
+  if [ -n "$view_file" ]; then
+    # Step 1: Has form elements
+    local has_form=$(grep -E "Form|TextField|SecureField|TextEditor|@State.*var.*:" "$view_file" 2>/dev/null)
+    [ -n "$has_form" ] && echo "✓ Has form elements" || echo "✗ No form elements"
 
-    # Step 2: Handler calls API
-    local calls_api=$(grep -E "fetch.*$api_route|axios.*$api_route" "$form_file" 2>/dev/null)
-    [ -n "$calls_api" ] && echo "✓ Calls API" || echo "✗ Doesn't call API"
+    # Step 2: Has submit action
+    local calls_service=$(grep -E "Button.*save|Button.*submit|await.*viewModel\.|\.task|onSubmit" "$view_file" 2>/dev/null)
+    [ -n "$calls_service" ] && echo "✓ Has submit action" || echo "✗ No submit action"
 
     # Step 3: Handles response
-    local handles_response=$(grep -E "\.then|await.*fetch|setError|setSuccess" "$form_file" 2>/dev/null)
+    local handles_response=$(grep -E "do.*try.*await|catch|Result<|\.failure|\.success" "$view_file" 2>/dev/null)
     [ -n "$handles_response" ] && echo "✓ Handles response" || echo "✗ Doesn't handle response"
 
     # Step 4: Shows feedback
-    local shows_feedback=$(grep -E "error|success|loading|isLoading" "$form_file" 2>/dev/null)
+    local shows_feedback=$(grep -E "\.alert|errorMessage|isLoading|ProgressView|showError|showSuccess" "$view_file" 2>/dev/null)
     [ -n "$shows_feedback" ] && echo "✓ Shows feedback" || echo "✗ No user feedback"
   fi
 }
@@ -312,20 +299,20 @@ Structure findings for milestone auditor.
 ```yaml
 wiring:
   connected:
-    - export: "getCurrentUser"
+    - export: "AuthService"
       from: "Phase 1 (Auth)"
-      used_by: ["Phase 3 (Dashboard)", "Phase 4 (Settings)"]
+      used_by: ["Phase 3 (DashboardViewModel)", "Phase 4 (SettingsViewModel)"]
 
   orphaned:
-    - export: "formatUserData"
+    - export: "UserFormatter"
       from: "Phase 2 (Utils)"
-      reason: "Exported but never imported"
+      reason: "Defined but never referenced"
 
   missing:
-    - expected: "Auth check in Dashboard"
+    - expected: "Auth check in DashboardView"
       from: "Phase 1"
       to: "Phase 3"
-      reason: "Dashboard doesn't call useAuth or check session"
+      reason: "DashboardView doesn't reference AuthViewModel or check isAuthenticated"
 ```
 
 **Flow status:**
@@ -334,14 +321,14 @@ wiring:
 flows:
   complete:
     - name: "User signup"
-      steps: ["Form", "API", "DB", "Redirect"]
+      steps: ["SignUpView", "AuthViewModel", "AuthService", "Navigation"]
 
   broken:
     - name: "View dashboard"
-      broken_at: "Data fetch"
-      reason: "Dashboard component doesn't fetch user data"
-      steps_complete: ["Route", "Component render"]
-      steps_missing: ["Fetch", "State", "Display"]
+      broken_at: "Data loading"
+      reason: "DashboardView doesn't call ViewModel.load() in .task"
+      steps_complete: ["NavigationStack", "View renders"]
+      steps_missing: ["ViewModel.load()", "State binding", "Data display"]
 ```
 
 </verification_process>
@@ -403,7 +390,7 @@ Return structured report to milestone auditor:
 
 **Check both directions.** Export exists AND import exists AND import is used AND used correctly.
 
-**Be specific about breaks.** "Dashboard doesn't work" is useless. "Dashboard.tsx line 45 fetches /api/users but doesn't await response" is actionable.
+**Be specific about breaks.** "Dashboard doesn't work" is useless. "DashboardViewModel.swift line 45 calls UserService.fetchAll() but doesn't await response" is actionable.
 
 **Return structured data.** The milestone auditor aggregates your findings. Use consistent format.
 
