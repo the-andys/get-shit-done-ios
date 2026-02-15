@@ -49,15 +49,15 @@ Cluster related gaps into logical phases:
 
 **Example grouping:**
 ```
-Gap: DASH-01 unsatisfied (Dashboard doesn't fetch)
-Gap: Integration Phase 1→3 (Auth not passed to API calls)
-Gap: Flow "View dashboard" broken at data fetch
+Gap: DASH-01 unsatisfied (Dashboard doesn't load data)
+Gap: Integration Phase 1→3 (Auth token not passed to ViewModel)
+Gap: Flow "View dashboard" broken at data load
 
-→ Phase 6: "Wire Dashboard to API"
-  - Add fetch to Dashboard.tsx
-  - Include auth header in fetch
-  - Handle response, update state
-  - Render user data
+→ Phase 6: "Wire Dashboard ViewModel to Service"
+  - Implement DashboardViewModel.loadData() with service call
+  - Pass auth token via Environment to service layer
+  - Store response in @Observable state, handle errors
+  - Render data in DashboardView via ForEach
 ```
 
 ## 4. Determine Phase Numbers
@@ -178,27 +178,27 @@ node ~/.claude/get-shit-done/bin/gsd-tools.js commit "docs(roadmap): add gap clo
 gap:
   id: DASH-01
   description: "User sees their data"
-  reason: "Dashboard exists but doesn't fetch from API"
+  reason: "Dashboard exists but ViewModel doesn't fetch from service"
   missing:
-    - "useEffect with fetch to /api/user/data"
-    - "State for user data"
-    - "Render user data in JSX"
+    - ".task modifier calling viewModel.loadData()"
+    - "ViewModel state for userData, isLoading, errorMessage"
+    - "ForEach rendering of userData in View body"
 
 becomes:
 
 phase: "Wire Dashboard Data"
 tasks:
   - name: "Add data fetching"
-    files: [src/components/Dashboard.tsx]
-    action: "Add useEffect that fetches /api/user/data on mount"
+    files: [Sources/ViewModels/DashboardViewModel.swift]
+    action: "Implement loadData() with try await service.fetchUserData()"
 
   - name: "Add state management"
-    files: [src/components/Dashboard.tsx]
-    action: "Add useState for userData, loading, error states"
+    files: [Sources/ViewModels/DashboardViewModel.swift]
+    action: "Add userData, isLoading, errorMessage properties to @Observable class"
 
   - name: "Render user data"
-    files: [src/components/Dashboard.tsx]
-    action: "Replace placeholder with userData.map rendering"
+    files: [Sources/Views/Dashboard/DashboardView.swift]
+    action: "Replace placeholder Text with ForEach over viewModel.userData, add .task { await viewModel.loadData() }"
 ```
 
 **Integration gap → Tasks:**
@@ -206,23 +206,23 @@ tasks:
 gap:
   from_phase: 1
   to_phase: 3
-  connection: "Auth token → API calls"
-  reason: "Dashboard API calls don't include auth header"
+  connection: "Auth token → Service layer"
+  reason: "Dashboard service calls don't include auth token"
   missing:
-    - "Auth header in fetch calls"
-    - "Token refresh on 401"
+    - "Auth token passed to service via Environment or init"
+    - "Token refresh on 401 response"
 
 becomes:
 
-phase: "Add Auth to Dashboard API Calls"
+phase: "Add Auth to Dashboard Service"
 tasks:
-  - name: "Add auth header to fetches"
-    files: [src/components/Dashboard.tsx, src/lib/api.ts]
-    action: "Include Authorization header with token in all API calls"
+  - name: "Pass auth token to service"
+    files: [Sources/ViewModels/DashboardViewModel.swift, Sources/Services/APIClient.swift]
+    action: "Inject AuthService via Environment, include bearer token in URLRequest headers"
 
   - name: "Handle 401 responses"
-    files: [src/lib/api.ts]
-    action: "Add interceptor to refresh token or redirect to login on 401"
+    files: [Sources/Services/APIClient.swift]
+    action: "Check HTTPURLResponse statusCode, trigger token refresh or navigate to login on 401"
 ```
 
 **Flow gap → Tasks:**

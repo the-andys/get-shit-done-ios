@@ -36,9 +36,9 @@ score: N/M must-haves verified
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `src/components/Chat.tsx` | Message list component | ✓ EXISTS + SUBSTANTIVE | Exports ChatList, renders Message[], no stubs |
-| `src/app/api/chat/route.ts` | Message CRUD | ✗ STUB | File exists but POST returns placeholder |
-| `prisma/schema.prisma` | Message model | ✓ EXISTS + SUBSTANTIVE | Model defined with all fields |
+| `Sources/Views/Chat/ChatListView.swift` | Message list view | ✓ EXISTS + SUBSTANTIVE | Conforms to View, renders ForEach over messages, no stubs |
+| `Sources/ViewModels/ChatViewModel.swift` | Message data provider | ✗ STUB | File exists but loadMessages() returns hardcoded [] |
+| `Sources/Models/ChatMessage.swift` | Message model | ✓ EXISTS + SUBSTANTIVE | @Model with all fields (id, content, sender, createdAt) |
 
 **Artifacts:** {N}/{M} verified
 
@@ -46,9 +46,9 @@ score: N/M must-haves verified
 
 | From | To | Via | Status | Details |
 |------|----|----|--------|---------|
-| Chat.tsx | /api/chat | fetch in useEffect | ✓ WIRED | Line 23: `fetch('/api/chat')` with response handling |
-| ChatInput | /api/chat POST | onSubmit handler | ✗ NOT WIRED | onSubmit only calls console.log |
-| /api/chat POST | database | prisma.message.create | ✗ NOT WIRED | Returns hardcoded response, no DB call |
+| ChatListView | ChatViewModel | @Environment in body | ✓ WIRED | Line 12: `@Environment(ChatViewModel.self)` with ForEach over viewModel.messages |
+| ChatInputView | ChatViewModel | sendMessage() call | ✗ NOT WIRED | Send button action only calls print() |
+| ChatViewModel | ChatMessage | modelContext.insert | ✗ NOT WIRED | Returns hardcoded response, no SwiftData insert |
 
 **Wiring:** {N}/{M} connections verified
 
@@ -66,9 +66,9 @@ score: N/M must-haves verified
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| src/app/api/chat/route.ts | 12 | `// TODO: implement` | ⚠️ Warning | Indicates incomplete |
-| src/components/Chat.tsx | 45 | `return <div>Placeholder</div>` | 🛑 Blocker | Renders no content |
-| src/hooks/useChat.ts | - | File missing | 🛑 Blocker | Expected hook doesn't exist |
+| Sources/ViewModels/ChatViewModel.swift | 12 | `// TODO: implement` | ⚠️ Warning | Indicates incomplete |
+| Sources/Views/Chat/ChatListView.swift | 15 | `Text("Chat will be here")` | 🛑 Blocker | Renders placeholder, not message data |
+| Sources/Services/ChatService.swift | - | File missing | 🛑 Blocker | Expected service doesn't exist |
 
 **Anti-patterns:** {N} found ({blockers} blockers, {warnings} warnings)
 
@@ -207,11 +207,11 @@ score: 2/5 must-haves verified
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | User can see existing messages | ✗ FAILED | Component renders placeholder, not message data |
-| 2 | User can type a message | ✓ VERIFIED | Input field exists with onChange handler |
-| 3 | User can send a message | ✗ FAILED | onSubmit handler is console.log only |
+| 1 | User can see existing messages | ✗ FAILED | View body returns Text("Chat will be here"), not message data |
+| 2 | User can type a message | ✓ VERIFIED | TextField exists with @State binding for input text |
+| 3 | User can send a message | ✗ FAILED | Send button action only calls print(), no ViewModel method |
 | 4 | Sent message appears in list | ✗ FAILED | No state update after send |
-| 5 | Messages persist across refresh | ? UNCERTAIN | Can't verify - send doesn't work |
+| 5 | Messages persist across app launch | ? UNCERTAIN | Can't verify — send doesn't work |
 
 **Score:** 1/5 truths verified
 
@@ -219,10 +219,10 @@ score: 2/5 must-haves verified
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `src/components/Chat.tsx` | Message list component | ✗ STUB | Returns `<div>Chat will be here</div>` |
-| `src/components/ChatInput.tsx` | Message input | ✓ EXISTS + SUBSTANTIVE | Form with input, submit button, handlers |
-| `src/app/api/chat/route.ts` | Message CRUD | ✗ STUB | GET returns [], POST returns { ok: true } |
-| `prisma/schema.prisma` | Message model | ✓ EXISTS + SUBSTANTIVE | Message model with id, content, userId, createdAt |
+| `Sources/Views/Chat/ChatListView.swift` | Message list view | ✗ STUB | body returns `Text("Chat will be here")` |
+| `Sources/Views/Chat/ChatInputView.swift` | Message input | ✓ EXISTS + SUBSTANTIVE | TextField with @State binding, Send button with action |
+| `Sources/ViewModels/ChatViewModel.swift` | Message data provider | ✗ STUB | loadMessages() is empty async func, messages always [] |
+| `Sources/Models/ChatMessage.swift` | Message model | ✓ EXISTS + SUBSTANTIVE | @Model with id, content, sender, createdAt fields |
 
 **Artifacts:** 2/4 verified
 
@@ -230,10 +230,10 @@ score: 2/5 must-haves verified
 
 | From | To | Via | Status | Details |
 |------|----|----|--------|---------|
-| Chat.tsx | /api/chat GET | fetch | ✗ NOT WIRED | No fetch call in component |
-| ChatInput | /api/chat POST | onSubmit | ✗ NOT WIRED | Handler only logs, doesn't fetch |
-| /api/chat GET | database | prisma.message.findMany | ✗ NOT WIRED | Returns hardcoded [] |
-| /api/chat POST | database | prisma.message.create | ✗ NOT WIRED | Returns { ok: true }, no DB call |
+| ChatListView | ChatViewModel | @Environment | ✗ NOT WIRED | ViewModel declared but not read in body |
+| ChatInputView | ChatViewModel | sendMessage() | ✗ NOT WIRED | Button action only calls print("send tapped") |
+| ChatViewModel | ChatMessage | modelContext.fetch | ✗ NOT WIRED | loadMessages() body is empty |
+| ChatViewModel | ChatMessage | modelContext.insert | ✗ NOT WIRED | sendMessage() body is empty |
 
 **Wiring:** 0/4 connections verified
 
@@ -241,9 +241,9 @@ score: 2/5 must-haves verified
 
 | Requirement | Status | Blocking Issue |
 |-------------|--------|----------------|
-| CHAT-01: User can send message | ✗ BLOCKED | API POST is stub |
-| CHAT-02: User can view messages | ✗ BLOCKED | Component is placeholder |
-| CHAT-03: Messages persist | ✗ BLOCKED | No database integration |
+| CHAT-01: User can send message | ✗ BLOCKED | ViewModel sendMessage() is stub |
+| CHAT-02: User can view messages | ✗ BLOCKED | View body is placeholder |
+| CHAT-03: Messages persist | ✗ BLOCKED | No SwiftData integration |
 
 **Coverage:** 0/3 requirements satisfied
 
@@ -251,11 +251,12 @@ score: 2/5 must-haves verified
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| src/components/Chat.tsx | 8 | `<div>Chat will be here</div>` | 🛑 Blocker | No actual content |
-| src/app/api/chat/route.ts | 5 | `return Response.json([])` | 🛑 Blocker | Hardcoded empty |
-| src/app/api/chat/route.ts | 12 | `// TODO: save to database` | ⚠️ Warning | Incomplete |
+| Sources/Views/Chat/ChatListView.swift | 8 | `Text("Chat will be here")` | 🛑 Blocker | Placeholder, no real content |
+| Sources/ViewModels/ChatViewModel.swift | 15 | `func loadMessages() async { }` | 🛑 Blocker | Empty async function |
+| Sources/ViewModels/ChatViewModel.swift | 22 | `// TODO: save to SwiftData` | ⚠️ Warning | Incomplete |
+| Sources/Views/Chat/ChatInputView.swift | 18 | `print("send tapped")` | ⚠️ Warning | Print-only action |
 
-**Anti-patterns:** 3 found (2 blockers, 1 warning)
+**Anti-patterns:** 4 found (2 blockers, 2 warnings)
 
 ## Human Verification Required
 
@@ -265,44 +266,44 @@ None needed until automated gaps are fixed.
 
 ### Critical Gaps (Block Progress)
 
-1. **Chat component is placeholder**
-   - Missing: Actual message list rendering
+1. **Chat list view is placeholder**
+   - Missing: Actual message list rendering with ForEach over ViewModel data
    - Impact: Users see "Chat will be here" instead of messages
-   - Fix: Implement Chat.tsx to fetch and render messages
+   - Fix: Implement ChatListView to read ChatViewModel.messages and render via ForEach
 
-2. **API routes are stubs**
-   - Missing: Database integration in GET and POST
-   - Impact: No data persistence, no real functionality
-   - Fix: Wire prisma calls in route handlers
+2. **ViewModel methods are stubs**
+   - Missing: SwiftData integration in loadMessages() and sendMessage()
+   - Impact: No data loading or persistence
+   - Fix: Wire modelContext.fetch and modelContext.insert in ViewModel methods
 
-3. **No wiring between frontend and backend**
-   - Missing: fetch calls in components
-   - Impact: Even if API worked, UI wouldn't call it
-   - Fix: Add useEffect fetch in Chat, onSubmit fetch in ChatInput
+3. **No wiring between View and ViewModel**
+   - Missing: @Environment usage in View body, method calls in .task and button actions
+   - Impact: Even if ViewModel worked, View wouldn't call it
+   - Fix: Add .task { await viewModel.loadMessages() } and wire send button to viewModel.sendMessage()
 
 ## Recommended Fix Plans
 
-### 03-04-PLAN.md: Implement Chat API
+### 03-04-PLAN.md: Implement Chat ViewModel
 
-**Objective:** Wire API routes to database
+**Objective:** Wire ViewModel to SwiftData
 
 **Tasks:**
-1. Implement GET /api/chat with prisma.message.findMany
-2. Implement POST /api/chat with prisma.message.create
-3. Verify: API returns real data, POST creates records
+1. Implement loadMessages() with modelContext.fetch(FetchDescriptor<ChatMessage>())
+2. Implement sendMessage() with modelContext.insert(ChatMessage(...))
+3. Verify: ViewModel populates messages array, new messages persist
 
 **Estimated scope:** Small
 
 ---
 
-### 03-05-PLAN.md: Implement Chat UI
+### 03-05-PLAN.md: Implement Chat Views
 
-**Objective:** Wire Chat component to API
+**Objective:** Wire Chat views to ViewModel
 
 **Tasks:**
-1. Implement Chat.tsx with useEffect fetch and message rendering
-2. Wire ChatInput onSubmit to POST /api/chat
-3. Verify: Messages display, new messages appear after send
+1. Implement ChatListView with @Environment(ChatViewModel.self) and ForEach rendering
+2. Wire ChatInputView send button to viewModel.sendMessage()
+3. Verify: Messages display on load, new messages appear after send
 
 **Estimated scope:** Small
 

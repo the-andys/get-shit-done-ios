@@ -18,7 +18,7 @@ Debug files use the `.planning/debug/` path (hidden directory with leading dot).
 UAT tells us WHAT is broken (symptoms). Debug agents find WHY (root cause). plan-phase --gaps then creates targeted fixes based on actual causes, not guesses.
 
 Without diagnosis: "Comment doesn't refresh" → guess at fix → maybe wrong
-With diagnosis: "Comment doesn't refresh" → "useEffect missing dependency" → precise fix
+With diagnosis: "Comment doesn't refresh" → ".task modifier missing id: parameter for re-trigger" → precise fix
 </core_principle>
 
 <process>
@@ -144,13 +144,13 @@ For each gap in the Gaps section, add artifacts and missing fields:
   reason: "User reported: works but doesn't show until I refresh the page"
   severity: major
   test: 2
-  root_cause: "useEffect in CommentList.tsx missing commentCount dependency"
+  root_cause: ".task modifier in CommentListView.swift missing id: commentCount for re-trigger"
   artifacts:
-    - path: "src/components/CommentList.tsx"
-      issue: "useEffect missing dependency"
+    - path: "Sources/Views/CommentListView.swift"
+      issue: ".task missing id: parameter to re-trigger on new comment"
   missing:
-    - "Add commentCount to useEffect dependency array"
-    - "Trigger re-render when new comment added"
+    - "Add .task(id: viewModel.commentCount) to re-fetch when count changes"
+    - "Ensure ViewModel publishes commentCount for View to observe"
   debug_session: .planning/debug/comment-not-refreshing.md
 ```
 
@@ -173,9 +173,9 @@ Display:
 
 | Gap (Truth) | Root Cause | Files |
 |-------------|------------|-------|
-| Comment appears immediately | useEffect missing dependency | CommentList.tsx |
-| Reply button positioned correctly | CSS flex order incorrect | ReplyButton.tsx |
-| Delete removes comment | API missing auth header | api/comments.ts |
+| Comment appears immediately | .task missing id: parameter for re-trigger | CommentListView.swift |
+| Reply button positioned correctly | VStack alignment incorrect, needs .leading | ReplyView.swift |
+| Delete removes comment | URLRequest missing Authorization header | CommentService.swift |
 
 Debug sessions: ${DEBUG_DIR}/
 
