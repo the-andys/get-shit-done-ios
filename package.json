@@ -1,6 +1,6 @@
 {
-  "name": "get-shit-done-cc",
-  "version": "0.1.0",
+  "name": "get-shit-done-ios-cc",
+  "version": "0.2.0",
   "description": "A meta-prompting, context engineering and spec-driven development system for Claude Code, OpenCode and Gemini by TÂCHES.",
   "bin": {
     "get-shit-done-cc": "bin/install.js"
@@ -27,11 +27,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/glittercowboy/get-shit-done.git"
+    "url": "git+https://github.com/yourhfdev/get-shit-done-ios.git"
   },
-  "homepage": "https://github.com/glittercowboy/get-shit-done",
+  "homepage": "https://github.com/yourhfdev/get-shit-done-ios",
   "bugs": {
-    "url": "https://github.com/glittercowboy/get-shit-done/issues"
+    "url": "https://github.com/yourhfdev/get-shit-done-ios/issues"
   },
   "engines": {
     "node": ">=16.7.0"
@@ -43,6 +43,6 @@
   "scripts": {
     "build:hooks": "node scripts/build-hooks.js",
     "prepublishOnly": "npm run build:hooks",
-    "test": "node --test get-shit-done/bin/gsd-tools.test.js"
+    "test": "node --test get-shit-done/bin/gsd-tools.test.cjs"
   }
 }
