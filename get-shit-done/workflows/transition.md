@@ -378,7 +378,7 @@ Next: Phase [X+1] — [Name]
 ⚡ Auto-continuing: Plan Phase [X+1] in detail
 ```
 
-Exit skill and invoke SlashCommand("/gsd:plan-phase [X+1]")
+Exit skill and invoke SlashCommand("/gsd:plan-phase [X+1] --auto")
 
 **If CONTEXT.md does NOT exist:**
 
@@ -390,7 +390,7 @@ Next: Phase [X+1] — [Name]
 ⚡ Auto-continuing: Discuss Phase [X+1] first
 ```
 
-Exit skill and invoke SlashCommand("/gsd:discuss-phase [X+1]")
+Exit skill and invoke SlashCommand("/gsd:discuss-phase [X+1] --auto")
 
 </if>
 
@@ -450,6 +450,11 @@ Exit skill and invoke SlashCommand("/gsd:discuss-phase [X+1]")
 ---
 
 **Route B: Milestone complete (all phases done)**
+
+**Clear auto-advance** — milestone boundary is the natural stopping point:
+```bash
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs config-set workflow.auto_advance false
+```
 
 <if mode="yolo">
 
