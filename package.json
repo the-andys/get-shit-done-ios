@@ -1,6 +1,6 @@
 {
   "name": "get-shit-done-ios-cc",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A meta-prompting, context engineering and spec-driven development system for Claude Code, OpenCode and Gemini by TÂCHES.",
   "bin": {
     "get-shit-done-cc": "bin/install.js"
