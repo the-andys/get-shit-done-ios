@@ -156,6 +156,21 @@ If you prefer not to use that flag, add this to your project's `.claude/settings
 
 </details>
 
+### Using Alongside GSD (Web)
+
+If you already use the original GSD for web development, GSD:iOS works side by side without conflicts. Claude Code resolves commands by priority: **local commands shadow global ones with the same name.**
+
+The recommended setup:
+
+| Your setup | Web projects | iOS projects |
+|---|---|---|
+| GSD Web global + GSD:iOS local | Global commands apply | Local iOS commands take priority |
+| GSD:iOS global + GSD Web local | Global iOS commands apply | Local web commands take priority |
+
+When both are installed, you won't see duplicate commands — the local version always wins. Agents, references, and templates follow the same resolution order.
+
+In practice: install whichever you use most as `--global`, and the other as `--local` in the relevant projects.
+
 ---
 
 ## How It Works
