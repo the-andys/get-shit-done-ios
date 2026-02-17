@@ -1,30 +1,21 @@
 <div align="center">
 
-# GET SHIT DONE
+# GET SHIT DONE — iOS Edition
 
-**A light-weight and powerful meta-prompting, context engineering and spec-driven development system for Claude Code, OpenCode, and Gemini CLI.**
+**A meta-prompting, context engineering, and spec-driven development system for building native iOS apps with Claude Code.**
+
+**Optimized for Swift, SwiftUI, SwiftData, and MVVM.**
 
 **Solves context rot — the quality degradation that happens as Claude fills its context window.**
 
-[![npm version](https://img.shields.io/npm/v/get-shit-done-cc?style=for-the-badge&logo=npm&logoColor=white&color=CB3837)](https://www.npmjs.com/package/get-shit-done-cc)
-[![npm downloads](https://img.shields.io/npm/dm/get-shit-done-cc?style=for-the-badge&logo=npm&logoColor=white&color=CB3837)](https://www.npmjs.com/package/get-shit-done-cc)
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/5JJgD5svVS)
-[![X (Twitter)](https://img.shields.io/badge/X-@gsd__foundation-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/gsd_foundation)
-[![$GSD Token](https://img.shields.io/badge/$GSD-Dexscreener-1C1C1C?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzAwRkYwMCIvPjwvc3ZnPg==&logoColor=00FF00)](https://dexscreener.com/solana/dwudwjvan7bzkw9zwlbyv6kspdlvhwzrqy6ebk8xzxkv)
-[![GitHub stars](https://img.shields.io/github/stars/glittercowboy/get-shit-done?style=for-the-badge&logo=github&color=181717)](https://github.com/glittercowboy/get-shit-done)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
+[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.20.0-orange?style=for-the-badge)](https://github.com/glittercowboy/get-shit-done)
 
 <br>
 
-```bash
-npx get-shit-done-cc@latest
-```
-
-**Works on Mac, Windows, and Linux.**
-
-<br>
-
-![GSD Install](assets/terminal.svg)
+> **Built on [Get Shit Done](https://github.com/glittercowboy/get-shit-done) by TÂCHES.**
+> This is an iOS-native fork — all agents, references, templates, and workflows
+> have been adapted for Swift, SwiftUI, and native iOS development patterns.
 
 <br>
 
@@ -36,97 +27,86 @@ npx get-shit-done-cc@latest
 
 <br>
 
-**Trusted by engineers at Amazon, Google, Shopify, and Webflow.**
+**Built on the GSD framework, trusted by engineers at Amazon, Google, Shopify, and Webflow.**
 
-[Why I Built This](#why-i-built-this) · [How It Works](#how-it-works) · [Commands](#commands) · [Why It Works](#why-it-works) · [User Guide](docs/USER-GUIDE.md)
+[Why This Fork Exists](#why-this-fork-exists) · [How It Works](#how-it-works) · [Commands](#commands) · [Why It Works](#why-it-works) · [User Guide](docs/USER-GUIDE.md)
 
 </div>
 
 ---
 
-## Why I Built This
+## Why This Fork Exists
 
-I'm a solo developer. I don't write code — Claude Code does.
+GSD is an incredible system for building software with Claude Code. But its agents, examples, and references assume web development — React components, API routes, npm packages, TypeScript patterns.
 
-Other spec-driven development tools exist; BMAD, Speckit... But they all seem to make things way more complicated than they need to be (sprint ceremonies, story points, stakeholder syncs, retrospectives, Jira workflows) or lack real big picture understanding of what you're building. I'm not a 50-person software company. I don't want to play enterprise theater. I'm just a creative person trying to build great things that work.
+If you're building native iOS apps, that context mismatch matters. Claude works best when every reference it sees matches the world it's building in. An executor told to "create a component in `src/`" when you need a SwiftUI View in `Sources/Views/` is wasted context at best, hallucinated code at worst.
 
-So I built GSD. The complexity is in the system, not in your workflow. Behind the scenes: context engineering, XML prompt formatting, subagent orchestration, state management. What you see: a few commands that just work.
+This fork adapts every layer of GSD for native iOS development:
 
-The system gives Claude everything it needs to do the work *and* verify it. I trust the workflow. It just does a good job.
+- **Agents** — Executor, planner, verifier, roadmapper all speak Swift, SwiftUI, and MVVM
+- **References** — iOS guidelines for Swift style, frameworks, testing, permissions, and app lifecycle
+- **Templates** — File paths use `Sources/`, verification checks SwiftUI wiring and `@Observable` state
+- **Accessibility built-in** — VoiceOver labels, Dynamic Type, and WCAG AA are part of every phase, not afterthoughts
+- **Localization enforced** — No hardcoded user-facing strings, `String(localized:)` from day one
 
-That's what this is. No enterprise roleplay bullshit. Just an incredibly effective system for building cool stuff consistently using Claude Code.
-
-— **TÂCHES**
+The framework logic is identical to upstream GSD. The context is native iOS.
 
 ---
 
 Vibecoding has a bad reputation. You describe what you want, AI generates code, and you get inconsistent garbage that falls apart at scale.
 
-GSD fixes that. It's the context engineering layer that makes Claude Code reliable. Describe your idea, let the system extract everything it needs to know, and let Claude Code get to work.
+GSD fixes that. It's the context engineering layer that makes Claude Code reliable. Describe your app idea, let the system extract everything it needs to know, and let Claude Code build it with proper SwiftUI architecture, accessibility, and native patterns.
 
 ---
 
 ## Who This Is For
 
-People who want to describe what they want and have it built correctly — without pretending they're running a 50-person engineering org.
+iOS developers who want to describe their app idea and have it built correctly — with proper SwiftUI architecture, accessibility, native patterns, and clean Swift — without pretending they're running a 50-person engineering org.
 
 ---
 
 ## Getting Started
 
-```bash
-npx get-shit-done-cc@latest
-```
-
-The installer prompts you to choose:
-1. **Runtime** — Claude Code, OpenCode, Gemini, or all
-2. **Location** — Global (all projects) or local (current project only)
-
-Verify with `/gsd:help` inside your chosen runtime.
-
-### Staying Updated
-
-GSD evolves fast. Update periodically:
+Clone the repository and install:
 
 ```bash
-npx get-shit-done-cc@latest
-```
-
-<details>
-<summary><strong>Non-interactive Install (Docker, CI, Scripts)</strong></summary>
-
-```bash
-# Claude Code
-npx get-shit-done-cc --claude --global   # Install to ~/.claude/
-npx get-shit-done-cc --claude --local    # Install to ./.claude/
-
-# OpenCode (open source, free models)
-npx get-shit-done-cc --opencode --global # Install to ~/.config/opencode/
-
-# Gemini CLI
-npx get-shit-done-cc --gemini --global   # Install to ~/.gemini/
-
-# All runtimes
-npx get-shit-done-cc --all --global      # Install to all directories
-```
-
-Use `--global` (`-g`) or `--local` (`-l`) to skip the location prompt.
-Use `--claude`, `--opencode`, `--gemini`, or `--all` to skip the runtime prompt.
-
-</details>
-
-<details>
-<summary><strong>Development Installation</strong></summary>
-
-Clone the repository and run the installer locally:
-
-```bash
-git clone https://github.com/glittercowboy/get-shit-done.git
-cd get-shit-done
+git clone <FORK_REPO_URL>
+cd get-shit-done-ios
 node bin/install.js --claude --local
 ```
 
-Installs to `./.claude/` for testing modifications before contributing.
+This installs GSD to `./.claude/` in your iOS project. Verify with `/gsd:help` inside Claude Code.
+
+> **Requires:** macOS (iOS development), Node.js 18+, Claude Code.
+
+### Staying Updated
+
+Pull the latest changes and reinstall:
+
+```bash
+cd get-shit-done-ios
+git pull
+node bin/install.js --claude --local
+```
+
+Or for global installation (all projects):
+
+```bash
+node bin/install.js --claude --global
+```
+
+<details>
+<summary><strong>Non-Interactive Install (CI, Scripts)</strong></summary>
+
+```bash
+# Claude Code — local (current project)
+node bin/install.js --claude --local
+
+# Claude Code — global (all projects)
+node bin/install.js --claude --global
+```
+
+Use `--global` (`-g`) or `--local` (`-l`) to skip the location prompt.
 
 </details>
 
@@ -188,7 +168,7 @@ If you prefer not to use that flag, add this to your project's `.claude/settings
 
 One command, one flow. The system:
 
-1. **Questions** — Asks until it understands your idea completely (goals, constraints, tech preferences, edge cases)
+1. **Questions** — Asks until it understands your app completely (goals, constraints, tech preferences, edge cases)
 2. **Research** — Spawns parallel agents to investigate the domain (optional but recommended)
 3. **Requirements** — Extracts what's v1, v2, and out of scope
 4. **Roadmap** — Creates phases mapped to requirements
@@ -218,8 +198,8 @@ The system analyzes the phase and identifies gray areas based on what's being bu
 
 For each area you select, it asks until you're satisfied. The output — `CONTEXT.md` — feeds directly into the next two steps:
 
-1. **Researcher reads it** — Knows what patterns to investigate ("user wants card layout" → research card component libraries)
-2. **Planner reads it** — Knows what decisions are locked ("infinite scroll decided" → plan includes scroll handling)
+1. **Researcher reads it** — Knows what patterns to investigate ("user wants card layout" → research SwiftUI card patterns and LazyVGrid)
+2. **Planner reads it** — Knows what decisions are locked ("tab navigation decided" → plan includes TabView with NavigationStack per tab)
 
 The deeper you go here, the more the system builds what you actually want. Skip it and you get reasonable defaults. Use it and you get *your* vision.
 
@@ -304,7 +284,7 @@ This is why "vertical slices" (Plan 01: User feature end-to-end) parallelize bet
 
 **This is where you confirm it actually works.**
 
-Automated verification checks that code exists and tests pass. But does the feature *work* the way you expected? This is your chance to use it.
+Automated verification checks that code exists and tests pass. But does the feature *work* the way you expected? This is your chance to run it in the Simulator, test VoiceOver navigation, and try different Dynamic Type sizes.
 
 The system:
 
@@ -359,10 +339,10 @@ Use for: bug fixes, small features, config changes, one-off tasks.
 
 ```
 /gsd:quick
-> What do you want to do? "Add dark mode toggle to settings"
+> What do you want to do? "Add haptic feedback to the save button"
 ```
 
-**Creates:** `.planning/quick/001-add-dark-mode-toggle/PLAN.md`, `SUMMARY.md`
+**Creates:** `.planning/quick/001-add-haptic-feedback/PLAN.md`, `SUMMARY.md`
 
 ---
 
@@ -393,15 +373,19 @@ Every plan is structured XML optimized for Claude:
 
 ```xml
 <task type="auto">
-  <name>Create login endpoint</name>
-  <files>src/app/api/auth/login/route.ts</files>
+  <n>Create authentication service</n>
+  <files>Sources/Features/Auth/AuthService.swift</files>
   <action>
-    Use jose for JWT (not jsonwebtoken - CommonJS issues).
-    Validate credentials against users table.
-    Return httpOnly cookie on success.
+    Use URLSession with async/await for authentication.
+    Validate credentials against the server.
+    Store token securely in Keychain.
+    Mark class with @MainActor for UI-safe state updates.
   </action>
-  <verify>curl -X POST localhost:3000/api/auth/login returns 200 + Set-Cookie</verify>
-  <done>Valid credentials return cookie, invalid return 401</done>
+  <verify>
+    xcodebuild test -scheme MyApp -destination 'platform=iOS Simulator,name=iPhone 16'
+    -only-testing:MyAppTests/AuthServiceTests
+  </verify>
+  <done>Valid credentials return token stored in Keychain, invalid throw AuthError.unauthorized</done>
 </task>
 ```
 
@@ -471,7 +455,6 @@ You're never locked in. The system adapts.
 | `/gsd:progress` | Where am I? What's next? |
 | `/gsd:help` | Show all commands and usage guide |
 | `/gsd:update` | Update GSD with changelog preview |
-| `/gsd:join-discord` | Join the GSD Discord community |
 
 ### Brownfield
 
@@ -599,7 +582,11 @@ GSD's codebase mapping and analysis commands read files to understand your proje
       "Read(**/secrets/*)",
       "Read(**/*credential*)",
       "Read(**/*.pem)",
-      "Read(**/*.key)"
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/*.mobileprovision)",
+      "Read(**/*Provisioning*/)",
+      "Read(**/Certificates/)"
     ]
   }
 }
@@ -620,61 +607,29 @@ This prevents Claude from reading these files entirely, regardless of what comma
 
 **Commands not working as expected?**
 - Run `/gsd:help` to verify installation
-- Re-run `npx get-shit-done-cc` to reinstall
+- Reinstall: `node bin/install.js --claude --local`
 
 **Updating to the latest version?**
 ```bash
-npx get-shit-done-cc@latest
+cd get-shit-done-ios && git pull && node bin/install.js --claude --local
 ```
 
-**Using Docker or containerized environments?**
-
-If file reads fail with tilde paths (`~/.claude/...`), set `CLAUDE_CONFIG_DIR` before installing:
-```bash
-CLAUDE_CONFIG_DIR=/home/youruser/.claude npx get-shit-done-cc --global
-```
-This ensures absolute paths are used instead of `~` which may not expand correctly in containers.
+**Xcode build fails after GSD changes?**
+GSD only writes to `.planning/` and generates Swift source files. If Xcode can't find new files, add them to your target in Xcode (File → Add Files to Project). If a generated file has compile errors, run `/gsd:debug` with the error message.
 
 ### Uninstalling
 
 To remove GSD completely:
 
 ```bash
-# Global installs
-npx get-shit-done-cc --claude --global --uninstall
-npx get-shit-done-cc --opencode --global --uninstall
+# Local install (current project)
+node bin/install.js --claude --local --uninstall
 
-# Local installs (current project)
-npx get-shit-done-cc --claude --local --uninstall
-npx get-shit-done-cc --opencode --local --uninstall
+# Global install
+node bin/install.js --claude --global --uninstall
 ```
 
 This removes all GSD commands, agents, hooks, and settings while preserving your other configurations.
-
----
-
-## Community Ports
-
-OpenCode and Gemini CLI are now natively supported via `npx get-shit-done-cc`.
-
-These community ports pioneered multi-runtime support:
-
-| Project | Platform | Description |
-|---------|----------|-------------|
-| [gsd-opencode](https://github.com/rokicool/gsd-opencode) | OpenCode | Original OpenCode adaptation |
-| gsd-gemini (archived) | Gemini CLI | Original Gemini adaptation by uberfuzzy |
-
----
-
-## Star History
-
-<a href="https://star-history.com/#glittercowboy/get-shit-done&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=glittercowboy/get-shit-done&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=glittercowboy/get-shit-done&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=glittercowboy/get-shit-done&type=Date" />
- </picture>
-</a>
 
 ---
 
@@ -686,6 +641,6 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-**Claude Code is powerful. GSD makes it reliable.**
+**Claude Code is powerful. GSD makes it reliable. This fork makes it native iOS.**
 
 </div>
