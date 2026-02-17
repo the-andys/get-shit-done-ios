@@ -15,7 +15,15 @@ Read all files referenced by the invoking prompt's execution_context before star
 Load all context in one call (include file contents to avoid redundant reads):
 
 ```bash
-INIT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init plan-phase "$PHASE" --include state,roadmap,requirements,context,research,verification,uat)
+INIT_RAW=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init plan-phase "$PHASE" --include state,roadmap,requirements,context,research,verification,uat)
+# Large payloads are written to a tmpfile — output starts with @file:/path
+if [[ "$INIT_RAW" == @file:* ]]; then
+  INIT_FILE="${INIT_RAW#@file:}"
+  INIT=$(cat "$INIT_FILE")
+  rm -f "$INIT_FILE"
+else
+  INIT="$INIT_RAW"
+fi
 ```
 
 Parse JSON for: `researcher_model`, `planner_model`, `checker_model`, `research_enabled`, `plan_checker_enabled`, `commit_docs`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `padded_phase`, `has_research`, `has_context`, `has_plans`, `plan_count`, `planning_exists`, `roadmap_exists`.
@@ -52,6 +60,18 @@ Use `context_content` from init JSON (already loaded via `--include context`).
 **CRITICAL:** Use `context_content` from INIT — pass to researcher, planner, checker, and revision agents.
 
 If `context_content` is not null, display: `Using phase context from: ${PHASE_DIR}/*-CONTEXT.md`
+
+**If `context_content` is null (no CONTEXT.md exists):**
+
+Use AskUserQuestion:
+- header: "No context"
+- question: "No CONTEXT.md found for Phase {X}. Plans will use research and requirements only — your design preferences won't be included. Continue or capture context first?"
+- options:
+  - "Continue without context" — Plan using research + requirements only
+  - "Run discuss-phase first" — Capture design decisions before planning
+
+If "Continue without context": Proceed to step 5.
+If "Run discuss-phase first": Display `/gsd:discuss-phase {X}` and exit workflow.
 
 ## 5. Handle Research
 
@@ -104,7 +124,7 @@ IMPORTANT: If CONTEXT.md exists below, it contains user decisions from /gsd:disc
 </additional_context>
 
 <output>
-Write to: {phase_dir}/{phase}-RESEARCH.md
+Write to: {phase_dir}/{phase_num}-RESEARCH.md
 </output>
 ```
 

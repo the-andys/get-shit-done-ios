@@ -22,12 +22,18 @@ Check if `--auto` flag is present in $ARGUMENTS.
   - Roadmap approval: Auto-approve
 
 **Document requirement:**
-Auto mode requires an idea document via @ reference (e.g., `/gsd:new-project --auto @prd.md`). If no document provided, error:
+Auto mode requires an idea document — either:
+- File reference: `/gsd:new-project --auto @prd.md`
+- Pasted/written text in the prompt
+
+If no document content provided, error:
 
 ```
-Error: --auto requires an idea document via @ reference.
+Error: --auto requires an idea document.
 
-Usage: /gsd:new-project --auto @your-idea.md
+Usage:
+  /gsd:new-project --auto @your-idea.md
+  /gsd:new-project --auto [paste or write your idea here]
 
 The document should describe what you want to build.
 ```

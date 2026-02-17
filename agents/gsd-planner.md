@@ -1037,6 +1037,8 @@ Present breakdown with wave structure. Wait for confirmation in interactive mode
 </step>
 
 <step name="write_phase_prompt">
+**ALWAYS use the Write tool to create files** — never use `Bash(cat << 'EOF')` or heredoc commands for file creation.
+
 Use template structure for each PLAN.md.
 
 Write to `.planning/phases/XX-name/{phase}-{NN}-PLAN.md`
