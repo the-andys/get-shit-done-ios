@@ -323,7 +323,7 @@ claude --dangerously-skip-permissions
 
 ```bash
 /gsd:quick
-> "Fix the login button not responding on mobile Safari"
+> "Fix the login button not responding on iOS 17 when VoiceOver is active"
 ```
 
 ### Resuming After a Break
