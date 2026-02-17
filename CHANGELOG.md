@@ -4,6 +4,19 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0] - 2026-02-17
+
+### Changed
+- README.md fully adapted for iOS fork identity (title, badges, attribution, install, examples, troubleshooting)
+- SECURITY.md dual-contact model — GSD core issues and iOS fork issues with separate contacts
+- USER-GUIDE.md quick fix example updated from mobile Safari to iOS 17 VoiceOver scenario
+- Security deny list expanded with `.p12`, `.mobileprovision`, `Provisioning/`, `Certificates/` patterns
+
+### Removed
+- Upstream-only README sections: Community Ports, Star History, Discord/Twitter badges, $GSD token badge
+- npx install commands replaced with git clone workflow
+- OpenCode/Gemini CLI references from README
+
 ## [0.4.0] - 2026-02-17
 
 ### Added
