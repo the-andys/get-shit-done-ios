@@ -88,9 +88,25 @@ must_haves:
       via: "@StateObject or @ObservedObject property"
 ```
 
-**Option B: Derive from phase goal**
+**Option B: Use Success Criteria from ROADMAP.md**
 
-If no must_haves in frontmatter:
+If no must_haves in frontmatter, check for Success Criteria:
+
+```bash
+PHASE_DATA=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs roadmap get-phase "$PHASE_NUM" --raw)
+```
+
+Parse the `success_criteria` array from the JSON output. If non-empty:
+1. **Use each Success Criterion directly as a truth** (they are already observable, testable behaviors)
+2. **Derive artifacts:** For each truth, "What must EXIST?" — map to concrete file paths
+3. **Derive key links:** For each artifact, "What must be CONNECTED?" — this is where stubs hide
+4. **Document must-haves** before proceeding
+
+Success Criteria from ROADMAP.md are the contract — they take priority over Goal-derived truths.
+
+**Option C: Derive from phase goal (fallback)**
+
+If no must_haves in frontmatter AND no Success Criteria in ROADMAP:
 
 1. **State the goal** from ROADMAP.md
 2. **Derive truths:** "What must be TRUE?" — list 3-7 observable, testable behaviors
@@ -411,6 +427,8 @@ gaps:
 <output>
 
 ## Create VERIFICATION.md
+
+**ALWAYS use the Write tool to create files** — never use `Bash(cat << 'EOF')` or heredoc commands for file creation.
 
 Create `.planning/phases/{phase_dir}/{phase}-VERIFICATION.md`:
 
