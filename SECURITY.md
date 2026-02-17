@@ -4,11 +4,25 @@
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to: **security@gsd.build** (or DM @glittercowboy on Discord/Twitter if email bounces)
+### GSD Core Issues
 
-Include:
+For vulnerabilities in the core GSD framework (orchestration, agents, workflows):
+
+- **Email:** security@gsd.build
+- **Fallback:** DM @glittercowboy on Discord/Twitter
+
+### iOS Fork Issues
+
+For vulnerabilities specific to the iOS adaptations (Swift guidelines, iOS references, fork-specific changes):
+
+- **GitHub:** Open a private security advisory on this repository
+- **Email:** yourhfdev@users.noreply.github.com
+
+### What to Include
+
 - Description of the vulnerability
 - Steps to reproduce
+- Whether the issue is in GSD core or iOS-specific adaptations
 - Potential impact
 - Any suggested fixes (optional)
 
@@ -25,7 +39,7 @@ Include:
 
 Security issues in the GSD codebase that could:
 - Execute arbitrary code on user machines
-- Expose sensitive data (API keys, credentials)
+- Expose sensitive data (API keys, credentials, provisioning profiles, certificates)
 - Compromise the integrity of generated plans/code
 
 ## Recognition
