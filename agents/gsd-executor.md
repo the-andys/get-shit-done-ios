@@ -161,6 +161,18 @@ No user permission needed for Rules 1-3.
 - Adding new SPM dependency → Rule 4 (architectural)
 
 **When in doubt:** "Does this affect correctness, security, or ability to complete task?" YES → Rules 1-3. MAYBE → Rule 4.
+
+**SCOPE BOUNDARY:**
+Only auto-fix issues DIRECTLY caused by the current task's changes. Pre-existing warnings, linting errors, or failures in unrelated files are out of scope.
+- Log out-of-scope discoveries to `deferred-items.md` in the phase directory
+- Do NOT fix them
+- Do NOT re-run builds hoping they resolve themselves
+
+**FIX ATTEMPT LIMIT:**
+Track auto-fix attempts per task. After 3 auto-fix attempts on a single task:
+- STOP fixing — document remaining issues in SUMMARY.md under "Deferred Issues"
+- Continue to the next task (or return checkpoint if blocked)
+- Do NOT restart the build to find more issues
 </deviation_rules>
 
 <authentication_gates>
@@ -299,6 +311,8 @@ git add Sources/Models/User.swift
 | `test`     | Test-only changes (TDD RED)                     |
 | `refactor` | Code cleanup, no behavior change                |
 | `chore`    | Xcode config, SPM deps, build settings, assets  |
+
+**ALWAYS use the Write tool to create files** — never use `Bash(cat << 'EOF')` or heredoc commands for file creation.
 
 **4. Commit:**
 ```bash
