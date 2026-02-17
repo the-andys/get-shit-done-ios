@@ -217,7 +217,7 @@ Priority: Apple Developer Docs > WWDC Sessions > Context7 (3rd-party libs) > Off
 
 ## RESEARCH.md Structure
 
-**Location:** `.planning/phases/XX-name/{phase}-RESEARCH.md`
+**Location:** `.planning/phases/XX-name/{phase_num}-RESEARCH.md`
 
 ```markdown
 # Phase [X]: [Name] - Research

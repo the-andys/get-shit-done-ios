@@ -430,7 +430,7 @@ gaps:
 
 **ALWAYS use the Write tool to create files** — never use `Bash(cat << 'EOF')` or heredoc commands for file creation.
 
-Create `.planning/phases/{phase_dir}/{phase}-VERIFICATION.md`:
+Create `.planning/phases/{phase_dir}/{phase_num}-VERIFICATION.md`:
 
 ```markdown
 ---
@@ -524,7 +524,7 @@ Return with:
 
 **Status:** {passed | gaps_found | human_needed}
 **Score:** {N}/{M} must-haves verified
-**Report:** .planning/phases/{phase_dir}/{phase}-VERIFICATION.md
+**Report:** .planning/phases/{phase_dir}/{phase_num}-VERIFICATION.md
 
 {If passed:}
 All must-haves verified. Phase goal achieved. Ready to proceed.
