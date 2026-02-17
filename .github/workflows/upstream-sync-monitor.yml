@@ -1,0 +1,299 @@
+name: Upstream Sync Monitor
+
+on:
+  schedule:
+    - cron: '0 12 * * *'  # daily at 12:00 UTC (9:00 BRT)
+  workflow_dispatch:       # manual trigger
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/gsd-build/get-shit-done.git
+          git fetch upstream main --tags
+
+      - name: Detect new commits
+        id: detect
+        run: |
+          # Read our last synced version from .dev/STATUS.md
+          LAST_SYNC=$(grep -oP 'Upstream sync:\s*\K[\d.]+' .dev/STATUS.md || echo "1.20.0")
+          echo "last_sync=v${LAST_SYNC}" >> $GITHUB_OUTPUT
+          echo "Last synced version: v${LAST_SYNC}"
+
+          # Find the upstream tag for our last sync
+          SYNC_TAG=$(git tag -l "v${LAST_SYNC}" --sort=-v:refname | head -1 || echo "")
+
+          if [ -z "$SYNC_TAG" ]; then
+            # Fallback: use commit from package.json version match
+            echo "Tag not found, using log search..."
+            SYNC_COMMIT=$(git log upstream/main --oneline --grep="^${LAST_SYNC}$" --format="%H" | head -1)
+          else
+            SYNC_COMMIT=$(git rev-parse "$SYNC_TAG")
+          fi
+
+          if [ -z "$SYNC_COMMIT" ]; then
+            echo "Could not find sync point. Checking last 10 commits."
+            SYNC_COMMIT=$(git log upstream/main -10 --format="%H" | tail -1)
+          fi
+
+          echo "sync_commit=${SYNC_COMMIT}" >> $GITHUB_OUTPUT
+
+          # Get new commits
+          COMMIT_COUNT=$(git log ${SYNC_COMMIT}..upstream/main --oneline | wc -l | tr -d ' ')
+          echo "commit_count=${COMMIT_COUNT}" >> $GITHUB_OUTPUT
+          echo "Found ${COMMIT_COUNT} new commits since v${LAST_SYNC}"
+
+          if [ "$COMMIT_COUNT" -eq 0 ]; then
+            echo "has_new=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "has_new=true" >> $GITHUB_OUTPUT
+
+          # Get upstream version
+          git show upstream/main:package.json | python3 -c "import sys,json; print(json.load(sys.stdin)['version'])" > /tmp/upstream_version.txt
+          UPSTREAM_VERSION=$(cat /tmp/upstream_version.txt)
+          echo "upstream_version=${UPSTREAM_VERSION}" >> $GITHUB_OUTPUT
+
+          # Build commit data as JSON for Claude
+          echo "[" > /tmp/commits.json
+          FIRST=true
+          git log ${SYNC_COMMIT}..upstream/main --format="%H|||%s" | while IFS='|||' read -r hash msg; do
+            # Get changed files for this commit
+            FILES=$(git diff-tree --no-commit-id --name-only -r "$hash" 2>/dev/null | tr '\n' ', ' | sed 's/,$//')
+            if [ "$FIRST" = true ]; then
+              FIRST=false
+            else
+              echo "," >> /tmp/commits.json
+            fi
+            # Escape JSON strings
+            MSG_ESCAPED=$(echo "$msg" | sed 's/"/\\"/g')
+            FILES_ESCAPED=$(echo "$FILES" | sed 's/"/\\"/g')
+            SHORT=$(echo "$hash" | cut -c1-7)
+            echo "  {\"hash\": \"${SHORT}\", \"message\": \"${MSG_ESCAPED}\", \"files\": \"${FILES_ESCAPED}\"}" >> /tmp/commits.json
+          done
+          echo "]" >> /tmp/commits.json
+
+          cat /tmp/commits.json
+
+      - name: Check for existing issue
+        if: steps.detect.outputs.has_new == 'true'
+        id: existing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'upstream-sync',
+              per_page: 5
+            });
+            const exists = issues.data.length > 0;
+            core.setOutput('exists', exists.toString());
+            if (exists) {
+              core.setOutput('issue_number', issues.data[0].number.toString());
+              console.log(`Open upstream-sync issue already exists: #${issues.data[0].number}`);
+            }
+
+      - name: Classify with Claude
+        if: steps.detect.outputs.has_new == 'true' && steps.existing.outputs.exists == 'false'
+        id: classify
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          COMMITS_JSON=$(cat /tmp/commits.json)
+          LAST_SYNC=${{ steps.detect.outputs.last_sync }}
+          UPSTREAM_VERSION=${{ steps.detect.outputs.upstream_version }}
+          COMMIT_COUNT=${{ steps.detect.outputs.commit_count }}
+
+          # Build the prompt
+          cat > /tmp/prompt.json << 'PROMPT_END'
+          {
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 2048,
+            "messages": [
+              {
+                "role": "user",
+                "content": "You are analyzing upstream GSD (Get Shit Done) commits for an iOS fork called GSD:iOS.\n\nContext about our fork:\n- We adapt GSD for native iOS development (Swift, SwiftUI, SwiftData, MVVM)\n- Files that are platform-agnostic (workflow logic, phase management, config, tools) → KEEP as-is\n- Files with web-specific examples (React, npm, TypeScript, Next.js) → ADAPT for iOS patterns\n- Files only relevant to other runtimes (OpenCode-only, Gemini-only fixes) → EVALUATE (may still apply)\n- Documentation files → ADAPT if they contain web references\n- Version bumps, changelogs → KEEP\n\nClassify each commit below. For each, provide:\n1. classification: KEEP (apply directly), ADAPT (needs iOS changes), or SKIP (not relevant)\n2. effort: Trivial, Low, Medium, or High\n3. rationale: One sentence explaining why\n\nRespond ONLY with a valid JSON array, no markdown, no explanation outside the JSON:\n[\n  {\"hash\": \"abc1234\", \"message\": \"commit msg\", \"classification\": \"KEEP\", \"effort\": \"Trivial\", \"rationale\": \"Version bump only\"}\n]\n\nHere are the commits since LAST_SYNC_PLACEHOLDER (COMMIT_COUNT_PLACEHOLDER commits, upstream now at vUPSTREAM_VERSION_PLACEHOLDER):\n\nCOMMITS_PLACEHOLDER"
+              }
+            ]
+          }
+          PROMPT_END
+
+          # Replace placeholders with actual data
+          COMMITS_ESCAPED=$(echo "$COMMITS_JSON" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))" | sed 's/^"//;s/"$//')
+
+          python3 << EOF
+          import json, sys
+
+          with open('/tmp/prompt.json') as f:
+              data = json.load(f)
+
+          content = data['messages'][0]['content']
+          content = content.replace('LAST_SYNC_PLACEHOLDER', '${LAST_SYNC}')
+          content = content.replace('UPSTREAM_VERSION_PLACEHOLDER', '${UPSTREAM_VERSION}')
+          content = content.replace('COMMIT_COUNT_PLACEHOLDER', '${COMMIT_COUNT}')
+
+          with open('/tmp/commits.json') as f:
+              commits = f.read().strip()
+          content = content.replace('COMMITS_PLACEHOLDER', commits)
+
+          data['messages'][0]['content'] = content
+
+          with open('/tmp/request.json', 'w') as f:
+              json.dump(data, f)
+          EOF
+
+          # Call Claude API
+          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
+            -H "x-api-key: ${ANTHROPIC_API_KEY}" \
+            -H "content-type: application/json" \
+            -H "anthropic-version: 2023-06-01" \
+            -d @/tmp/request.json)
+
+          echo "$RESPONSE" > /tmp/claude_response.json
+
+          # Extract the text content
+          ANALYSIS=$(echo "$RESPONSE" | python3 -c "
+          import sys, json
+          resp = json.load(sys.stdin)
+          if 'content' in resp and len(resp['content']) > 0:
+              text = resp['content'][0]['text']
+              # Clean up: remove markdown fences if present
+              text = text.strip()
+              if text.startswith('\`\`\`'):
+                  text = text.split('\n', 1)[1]
+                  text = text.rsplit('\`\`\`', 1)[0]
+              print(text.strip())
+          else:
+              print('[]')
+              print(json.dumps(resp), file=sys.stderr)
+          ")
+
+          echo "$ANALYSIS" > /tmp/analysis.json
+          echo "Classification complete"
+          cat /tmp/analysis.json
+
+      - name: Build and create issue
+        if: steps.detect.outputs.has_new == 'true' && steps.existing.outputs.exists == 'false'
+        uses: actions/github-script@v7
+        env:
+          LAST_SYNC: ${{ steps.detect.outputs.last_sync }}
+          UPSTREAM_VERSION: ${{ steps.detect.outputs.upstream_version }}
+          COMMIT_COUNT: ${{ steps.detect.outputs.commit_count }}
+        with:
+          script: |
+            const fs = require('fs');
+
+            const lastSync = process.env.LAST_SYNC;
+            const upstreamVersion = process.env.UPSTREAM_VERSION;
+            const commitCount = process.env.COMMIT_COUNT;
+
+            // Load classification
+            let analysis = [];
+            try {
+              const raw = fs.readFileSync('/tmp/analysis.json', 'utf8').trim();
+              analysis = JSON.parse(raw);
+            } catch (e) {
+              console.error('Failed to parse analysis:', e.message);
+              // Fallback: load raw commits
+              const commits = JSON.parse(fs.readFileSync('/tmp/commits.json', 'utf8'));
+              analysis = commits.map(c => ({
+                hash: c.hash,
+                message: c.message,
+                classification: 'UNKNOWN',
+                effort: 'TBD',
+                rationale: 'Classification failed — manual review needed'
+              }));
+            }
+
+            // Count classifications
+            const counts = { KEEP: 0, ADAPT: 0, SKIP: 0, UNKNOWN: 0 };
+            analysis.forEach(c => { counts[c.classification] = (counts[c.classification] || 0) + 1; });
+
+            // Build table rows
+            const icon = { KEEP: '🟢', ADAPT: '🟡', SKIP: '🔴', UNKNOWN: '⚪' };
+            const rows = analysis.map(c =>
+              `| \`${c.hash}\` | ${c.message} | ${icon[c.classification] || '⚪'} **${c.classification}** | ${c.effort} | ${c.rationale} |`
+            ).join('\n');
+
+            // Build summary
+            const summaryParts = [];
+            if (counts.KEEP) summaryParts.push(`🟢 KEEP: ${counts.KEEP}`);
+            if (counts.ADAPT) summaryParts.push(`🟡 ADAPT: ${counts.ADAPT}`);
+            if (counts.SKIP) summaryParts.push(`🔴 SKIP: ${counts.SKIP}`);
+            if (counts.UNKNOWN) summaryParts.push(`⚪ UNKNOWN: ${counts.UNKNOWN}`);
+
+            // Effort estimate
+            const effortMap = { 'Trivial': 0, 'Low': 1, 'Medium': 2, 'High': 3 };
+            const maxEffort = analysis.reduce((max, c) => Math.max(max, effortMap[c.effort] || 0), 0);
+            const effortLabel = ['Trivial', 'Low', 'Medium', 'High'][maxEffort] || 'Unknown';
+
+            const body = `## Upstream Sync Report
+
+            **${commitCount} new commit(s)** from GSD upstream since ${lastSync}
+            **Upstream version:** v${upstreamVersion}
+            **Our version:** See \`.dev/STATUS.md\`
+
+            ---
+
+            ### Commit Analysis
+
+            | Commit | Message | Classification | Effort | Rationale |
+            |--------|---------|----------------|--------|-----------|
+            ${rows}
+
+            ---
+
+            ### Summary
+
+            ${summaryParts.join(' · ')}
+
+            **Overall effort estimate:** ${effortLabel}
+
+            ### Recommended Action
+
+            ${counts.ADAPT > 0 || counts.KEEP > 0
+              ? `Create a new spec for sync to v${upstreamVersion}. Review ADAPT commits for iOS-specific changes.`
+              : `No actionable commits found. Close this issue if confirmed.`
+            }
+
+            ---
+
+            > 🤖 Auto-generated by upstream sync monitor · Classified by Claude Haiku 4.5
+            > Review classifications before acting — accuracy is ~85-90%`.replace(/^            /gm, '');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `⬆️ Upstream Sync: GSD v${upstreamVersion} — ${commitCount} new commit(s) since ${lastSync}`,
+              body: body,
+              labels: ['upstream-sync', 'needs-triage']
+            });
+
+            console.log('Issue created successfully');
+
+      - name: Update existing issue
+        if: steps.detect.outputs.has_new == 'true' && steps.existing.outputs.exists == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = parseInt('${{ steps.existing.outputs.issue_number }}');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `⏰ Still ${process.env.COMMIT_COUNT || 'pending'} unsynced commits from upstream. Previous analysis is still valid.`
+            });
