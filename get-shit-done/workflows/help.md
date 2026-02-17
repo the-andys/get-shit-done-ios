@@ -312,6 +312,16 @@ Usage: `/gsd:set-profile budget`
 
 ### Utility Commands
 
+**`/gsd:cleanup`**
+Archive accumulated phase directories from completed milestones.
+
+- Identifies phases from completed milestones still in `.planning/phases/`
+- Shows dry-run summary before moving anything
+- Moves phase dirs to `.planning/milestones/v{X.Y}-phases/`
+- Use after multiple milestones to reduce `.planning/phases/` clutter
+
+Usage: `/gsd:cleanup`
+
 **`/gsd:help`**
 Show this command reference.
 
@@ -334,16 +344,6 @@ Join the GSD Discord community.
 
 Usage: `/gsd:join-discord`
 
-**`/gsd:cleanup`**
-Archive accumulated phase directories from completed milestones.
-
-- Identifies phases from completed milestones still in `.planning/phases/`
-- Shows dry-run summary before moving anything
-- Moves phase dirs to `.planning/milestones/v{X.Y}-phases/`
-- Use after multiple milestones to reduce `.planning/phases/` clutter
-
-Usage: `/gsd:cleanup`
-
 ## Files & Structure
 
 ```
@@ -357,6 +357,12 @@ Usage: `/gsd:cleanup`
 │   └── done/             # Completed todos
 ├── debug/                # Active debug sessions
 │   └── resolved/         # Archived resolved issues
+├── milestones/
+│   ├── v1.0-ROADMAP.md       # Archived roadmap snapshot
+│   ├── v1.0-REQUIREMENTS.md  # Archived requirements
+│   └── v1.0-phases/          # Archived phase dirs (via /gsd:cleanup or --archive-phases)
+│       ├── 01-foundation/
+│       └── 02-core-features/
 ├── codebase/             # Codebase map (brownfield projects)
 │   ├── STACK.md          # Languages, frameworks, dependencies
 │   ├── ARCHITECTURE.md   # Patterns, layers, data flow
@@ -365,12 +371,6 @@ Usage: `/gsd:cleanup`
 │   ├── TESTING.md        # Test setup, patterns
 │   ├── INTEGRATIONS.md   # External services, APIs
 │   └── CONCERNS.md       # Tech debt, known issues
-├── milestones/
-│   ├── v1.0-ROADMAP.md       # Archived roadmap snapshot
-│   ├── v1.0-REQUIREMENTS.md  # Archived requirements
-│   └── v1.0-phases/          # Archived phase dirs (via /gsd:cleanup or --archive-phases)
-│       ├── 01-foundation/
-│       └── 02-core-features/
 └── phases/
     ├── 01-foundation/
     │   ├── 01-01-PLAN.md

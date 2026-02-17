@@ -12,10 +12,10 @@ Read all files referenced by the invoking prompt's execution_context before star
 Detect whether GSD is installed locally or globally by checking both locations:
 
 ```bash
-# Paths templated at install time for runtime compatibility
 # Check local first (takes priority)
+# Paths templated at install time for runtime compatibility
 if [ -f ./.claude/get-shit-done/VERSION ]; then
-  cat "./.claude/get-shit-done/VERSION"
+  cat ./.claude/get-shit-done/VERSION
   echo "LOCAL"
 elif [ -f ~/.claude/get-shit-done/VERSION ]; then
   cat ~/.claude/get-shit-done/VERSION
@@ -168,6 +168,7 @@ rm -f ./.claude/cache/gsd-update-check.json
 ```bash
 rm -f ~/.claude/cache/gsd-update-check.json
 ```
+(Paths are templated at install time for runtime compatibility)
 </step>
 
 <step name="display_result">
