@@ -69,7 +69,9 @@ jobs:
           # Build commit data as JSON for Claude
           echo "[" > /tmp/commits.json
           FIRST=true
-          git log ${SYNC_COMMIT}..upstream/main --format="%H|||%s" | while IFS='|||' read -r hash msg; do
+          git log ${SYNC_COMMIT}..upstream/main --format="%H<SEP>%s" | while IFS= read -r line; do
+            hash=$(echo "$line" | sed 's/<SEP>.*//')
+            msg=$(echo "$line" | sed 's/^[^<]*<SEP>//')
             # Get changed files for this commit
             FILES=$(git diff-tree --no-commit-id --name-only -r "$hash" 2>/dev/null | tr '\n' ', ' | sed 's/,$//')
             if [ "$FIRST" = true ]; then
@@ -236,7 +238,10 @@ jobs:
 
             // Build table rows with safe field access
             const icon = { KEEP: '🟢', ADAPT: '🟡', SKIP: '🔴', UNKNOWN: '⚪' };
-            const safeField = (val, fallback = '—') => (val && String(val).trim()) || fallback;
+            const safeField = (val, fallback = '—') => {
+              const v = (val && String(val).trim()) || fallback;
+              return v.replace(/\|/g, '\\|');  // escape pipes for markdown tables
+            };
             const rows = analysis.map(c => {
               const cls = safeField(c.classification, 'UNKNOWN');
               const eff = safeField(c.effort, '—');
