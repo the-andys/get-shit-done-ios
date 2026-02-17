@@ -121,12 +121,13 @@ jobs:
           # Build the prompt
           cat > /tmp/prompt.json << 'PROMPT_END'
           {
-            "model": "claude-haiku-4-5-20251001",
-            "max_tokens": 2048,
+            "model": "claude-sonnet-4-5-20250929",
+            "max_tokens": 4096,
+            "system": "You are a JSON-only classifier. You MUST respond with a valid JSON array and nothing else. No markdown fences, no explanation, no preamble. Every object in the array MUST have exactly these 5 fields: hash, message, classification, effort, rationale.",
             "messages": [
               {
                 "role": "user",
-                "content": "You are analyzing upstream GSD (Get Shit Done) commits for an iOS fork called GSD:iOS.\n\nContext about our fork:\n- We adapt GSD for native iOS development (Swift, SwiftUI, SwiftData, MVVM)\n- Files that are platform-agnostic (workflow logic, phase management, config, tools) → KEEP as-is\n- Files with web-specific examples (React, npm, TypeScript, Next.js) → ADAPT for iOS patterns\n- Files only relevant to other runtimes (OpenCode-only, Gemini-only fixes) → EVALUATE (may still apply)\n- Documentation files → ADAPT if they contain web references\n- Version bumps, changelogs → KEEP\n\nClassify each commit below. For each, provide:\n1. classification: KEEP (apply directly), ADAPT (needs iOS changes), or SKIP (not relevant)\n2. effort: Trivial, Low, Medium, or High\n3. rationale: One sentence explaining why\n\nRespond ONLY with a valid JSON array, no markdown, no explanation outside the JSON:\n[\n  {\"hash\": \"abc1234\", \"message\": \"commit msg\", \"classification\": \"KEEP\", \"effort\": \"Trivial\", \"rationale\": \"Version bump only\"}\n]\n\nHere are the commits since LAST_SYNC_PLACEHOLDER (COMMIT_COUNT_PLACEHOLDER commits, upstream now at vUPSTREAM_VERSION_PLACEHOLDER):\n\nCOMMITS_PLACEHOLDER"
+                "content": "Classify these upstream GSD (Get Shit Done) commits for our iOS fork called GSD:iOS.\n\nFork context:\n- GSD:iOS adapts GSD for native iOS development (Swift, SwiftUI, SwiftData, MVVM)\n- Platform-agnostic files (workflow logic, phase management, config, tools) → KEEP\n- Files with web examples (React, npm, TypeScript, Next.js, src/ paths) → ADAPT\n- Runtime-specific fixes (OpenCode-only, Gemini-only) → SKIP\n- Documentation with web references → ADAPT\n- Version bumps and changelogs → KEEP (effort: Trivial)\n\nFor EACH commit, respond with exactly these fields:\n- hash: the short commit hash (string)\n- message: the commit message (string)\n- classification: exactly one of KEEP, ADAPT, or SKIP (string)\n- effort: exactly one of Trivial, Low, Medium, or High (string)\n- rationale: one sentence explaining your classification (string)\n\nExample response format:\n[{\"hash\":\"abc1234\",\"message\":\"fix: something\",\"classification\":\"KEEP\",\"effort\":\"Low\",\"rationale\":\"Generic bug fix applies to all platforms\"}]\n\nCommits since LAST_SYNC_PLACEHOLDER (COMMIT_COUNT_PLACEHOLDER commits, upstream now at vUPSTREAM_VERSION_PLACEHOLDER):\n\nCOMMITS_PLACEHOLDER"
               }
             ]
           }
@@ -219,15 +220,31 @@ jobs:
               }));
             }
 
-            // Count classifications
+            // Count classifications (normalize missing/invalid to UNKNOWN)
+            const validCls = new Set(['KEEP', 'ADAPT', 'SKIP']);
             const counts = { KEEP: 0, ADAPT: 0, SKIP: 0, UNKNOWN: 0 };
-            analysis.forEach(c => { counts[c.classification] = (counts[c.classification] || 0) + 1; });
+            analysis.forEach(c => {
+              const cls = (c.classification || '').trim().toUpperCase();
+              if (validCls.has(cls)) {
+                c.classification = cls;
+                counts[cls]++;
+              } else {
+                c.classification = 'UNKNOWN';
+                counts.UNKNOWN++;
+              }
+            });
 
-            // Build table rows
+            // Build table rows with safe field access
             const icon = { KEEP: '🟢', ADAPT: '🟡', SKIP: '🔴', UNKNOWN: '⚪' };
-            const rows = analysis.map(c =>
-              `| \`${c.hash}\` | ${c.message} | ${icon[c.classification] || '⚪'} **${c.classification}** | ${c.effort} | ${c.rationale} |`
-            ).join('\n');
+            const safeField = (val, fallback = '—') => (val && String(val).trim()) || fallback;
+            const rows = analysis.map(c => {
+              const cls = safeField(c.classification, 'UNKNOWN');
+              const eff = safeField(c.effort, '—');
+              const rat = safeField(c.rationale, 'No rationale provided');
+              const msg = safeField(c.message, '(no message)');
+              const hash = safeField(c.hash, '???????');
+              return `| \`${hash}\` | ${msg} | ${icon[cls] || '⚪'} **${cls}** | ${eff} | ${rat} |`;
+            }).join('\n');
 
             // Build summary
             const summaryParts = [];
@@ -272,8 +289,8 @@ jobs:
 
             ---
 
-            > 🤖 Auto-generated by upstream sync monitor · Classified by Claude Haiku 4.5
-            > Review classifications before acting — accuracy is ~85-90%`.replace(/^            /gm, '');
+            > 🤖 Auto-generated by upstream sync monitor · Classified by Claude Sonnet 4.5
+            > Review classifications before acting`.replace(/^            /gm, '');
 
             await github.rest.issues.create({
               owner: context.repo.owner,
