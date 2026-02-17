@@ -96,6 +96,7 @@ Display banner:
 PHASE_DESC=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs roadmap get-phase "${PHASE}" | jq -r '.section')
 # Use requirements_content from INIT (already loaded via --include requirements)
 REQUIREMENTS=$(echo "$INIT" | jq -r '.requirements_content // empty' | grep -A100 "## Requirements" | head -50)
+PHASE_REQ_IDS=$(echo "$INIT" | jq -r '.roadmap_content // empty' | grep -i "Requirements:" | head -1 | sed 's/.*Requirements:\*\*\s*//' | sed 's/[\[\]]//g' | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep -v '^$' | tr '\n' ',' | sed 's/,$//')
 STATE_SNAP=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs state-snapshot)
 # Extract decisions from state-snapshot JSON: jq '.decisions[] | "\(.phase): \(.summary) - \(.rationale)"'
 ```
@@ -119,6 +120,7 @@ IMPORTANT: If CONTEXT.md exists below, it contains user decisions from /gsd:disc
 
 <additional_context>
 **Phase description:** {phase_description}
+**Phase requirement IDs (MUST address):** {phase_req_ids}
 **Requirements:** {requirements}
 **Prior decisions:** {decisions}
 </additional_context>
@@ -185,6 +187,7 @@ Planner prompt:
 
 **Project State:** {state_content}
 **Roadmap:** {roadmap_content}
+**Phase requirement IDs (every ID MUST appear in a plan's `requirements` field):** {phase_req_ids}
 **Requirements:** {requirements_content}
 
 **Phase Context:**
@@ -255,6 +258,7 @@ Checker prompt:
 **Phase Goal:** {goal from ROADMAP}
 
 **Plans to verify:** {plans_content}
+**Phase requirement IDs (MUST ALL be covered):** {phase_req_ids}
 **Requirements:** {requirements_content}
 
 **Phase Context:**
@@ -339,7 +343,59 @@ Offer: 1) Force proceed, 2) Provide guidance and retry, 3) Abandon
 
 ## 13. Present Final Status
 
-Route to `<offer_next>`.
+Route to `<offer_next>` OR `auto_advance` depending on flags/config.
+
+## 14. Auto-Advance Check
+
+Check for auto-advance trigger:
+
+1. Parse `--auto` flag from $ARGUMENTS
+2. Read `workflow.auto_advance` from config:
+   ```bash
+   AUTO_CFG=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs config-get workflow.auto_advance 2>/dev/null || echo "false")
+   ```
+
+**If `--auto` flag present OR `AUTO_CFG` is true:**
+
+Display banner:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD ► AUTO-ADVANCING TO EXECUTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Plans ready. Spawning execute-phase...
+```
+
+Spawn execute-phase as Task:
+```
+Task(
+  prompt="Run /gsd:execute-phase ${PHASE} --auto",
+  subagent_type="general-purpose",
+  description="Execute Phase ${PHASE}"
+)
+```
+
+**Handle execute-phase return:**
+- **PHASE COMPLETE** → Display final summary:
+  ```
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   GSD ► PHASE ${PHASE} COMPLETE ✓
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Auto-advance pipeline finished.
+
+  Next: /gsd:discuss-phase ${NEXT_PHASE} --auto
+  ```
+- **GAPS FOUND / VERIFICATION FAILED** → Display result, stop chain:
+  ```
+  Auto-advance stopped: Execution needs review.
+
+  Review the output above and continue manually:
+  /gsd:execute-phase ${PHASE}
+  ```
+
+**If neither `--auto` nor config enabled:**
+Route to `<offer_next>` (existing behavior).
 
 </process>
 

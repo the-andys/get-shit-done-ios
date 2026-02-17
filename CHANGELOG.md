@@ -4,6 +4,26 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0] - 2026-02-17
+
+### Added
+- Auto-advance pipeline mode (`--auto` flag or `workflow.auto_advance` config) for unattended execution
+- Requirements tracking chain: `requirements` field in PLAN.md frontmatter, `requirements-completed` in SUMMARY.md
+- `gsd-tools.cjs requirements mark-complete` CLI command with bracket-format support
+- 3-source cross-reference for requirements verification (PLAN frontmatter × REQUIREMENTS.md × VERIFICATION.md)
+- Requirements Integration Map in integration checker output
+- Global defaults support (`~/.gsd/defaults.json`) in new-project workflow
+- ROADMAP.md and REQUIREMENTS.md auto-update in executor post-plan state management
+
+### Changed
+- Verifier Step 6 now uses rigorous 3-part requirements coverage check (6a, 6b, 6c)
+- Plan-checker Dimension 1 now verifies requirement IDs across plan frontmatter fields
+- Milestone audit uses 3-source cross-reference system (5a-5e) with FAIL gates
+- Requirements bracket format (`[REQ-01, REQ-02]`) now stripped automatically by parser
+
+### Skipped (upstream-only)
+- Gemini CLI shell variable escaping (`e449c5a`) — iOS fork does not target Gemini CLI
+
 ## [0.5.0] - 2026-02-17
 
 ### Changed

@@ -330,7 +330,7 @@ If user_setup exists: create `{phase}-USER-SETUP.md` using template `~/.claude/g
 <step name="create_summary">
 Create `{phase}-{plan}-SUMMARY.md` at `.planning/phases/XX-name/`. Use `~/.claude/get-shit-done/templates/summary.md`.
 
-**Frontmatter:** phase, plan, subsystem, tags | requires/provides/affects | tech-stack.added/patterns | key-files.created/modified | key-decisions | duration ($DURATION), completed ($PLAN_END_TIME date).
+**Frontmatter:** phase, plan, subsystem, tags | requires/provides/affects | tech-stack.added/patterns | key-files.created/modified | key-decisions | requirements-completed (**MUST** copy `requirements` array from PLAN.md frontmatter verbatim) | duration ($DURATION), completed ($PLAN_END_TIME date).
 
 Title: `# Phase [X] Plan [Y]: [Name] Summary`
 
@@ -394,11 +394,21 @@ node ~/.claude/get-shit-done/bin/gsd-tools.cjs roadmap update-plan-progress "${P
 Counts PLAN vs SUMMARY files on disk. Updates progress table row with correct count and status (`In Progress` or `Complete` with date).
 </step>
 
+<step name="update_requirements">
+Mark completed requirements from the PLAN.md frontmatter `requirements:` field:
+
+```bash
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs requirements mark-complete ${REQ_IDS}
+```
+
+Extract requirement IDs from the plan's frontmatter (e.g., `requirements: [AUTH-01, AUTH-02]`). If no requirements field, skip.
+</step>
+
 <step name="git_commit_metadata">
 Task code already committed per-task. Commit plan metadata:
 
 ```bash
-node ~/.claude/get-shit-done/bin/gsd-tools.cjs commit "docs({phase}-{plan}): complete [plan-name] plan" --files .planning/phases/XX-name/{phase}-{plan}-SUMMARY.md .planning/STATE.md .planning/ROADMAP.md
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs commit "docs({phase}-{plan}): complete [plan-name] plan" --files .planning/phases/XX-name/{phase}-{plan}-SUMMARY.md .planning/STATE.md .planning/ROADMAP.md .planning/REQUIREMENTS.md
 ```
 </step>
 
