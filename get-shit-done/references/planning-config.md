@@ -61,6 +61,8 @@ node ~/.claude/get-shit-done/bin/gsd-tools.cjs commit "docs: update state" --fil
 
 The CLI checks `commit_docs` config and gitignore status internally — no manual conditionals needed.
 
+4. **Branch merges:** When using `branching_strategy: phase` or `milestone`, the `complete-milestone` workflow automatically strips `.planning/` files from staging before merge commits when `commit_docs: false`.
+
 </commit_docs_behavior>
 
 <search_behavior>
