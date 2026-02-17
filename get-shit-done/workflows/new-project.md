@@ -14,7 +14,7 @@ Check if `--auto` flag is present in $ARGUMENTS.
 **If auto mode:**
 - Skip brownfield mapping offer (assume greenfield)
 - Skip deep questioning (extract context from provided document)
-- Config questions still required (Step 5)
+- Config: YOLO mode is implicit (skip that question), but ask depth/git/agents FIRST (Step 2a)
 - After config: run Steps 6-9 automatically with smart defaults:
   - Research: Always yes
   - Requirements: Include all table stakes + features from provided document
@@ -65,7 +65,7 @@ git init
 **If `needs_codebase_map` is true** (from init — existing code detected but no codebase map):
 
 Use AskUserQuestion:
-- header: "Existing Code"
+- header: "Codebase"
 - question: "I detected existing code in this directory. Would you like to map the codebase first?"
 - options:
   - "Map codebase first" — Run /gsd:map-codebase to understand existing architecture (Recommended)
@@ -79,9 +79,129 @@ Exit command.
 
 **If "Skip mapping" OR `needs_codebase_map` is false:** Continue to Step 3.
 
+## 2a. Auto Mode Config (auto mode only)
+
+**If auto mode:** Collect config settings upfront before processing the idea document.
+
+YOLO mode is implicit (auto = YOLO). Ask remaining config questions:
+
+**Round 1 — Core settings (3 questions, no Mode question):**
+
+```
+AskUserQuestion([
+  {
+    header: "Depth",
+    question: "How thorough should planning be?",
+    multiSelect: false,
+    options: [
+      { label: "Quick (Recommended)", description: "Ship fast (3-5 phases, 1-3 plans each)" },
+      { label: "Standard", description: "Balanced scope and speed (5-8 phases, 3-5 plans each)" },
+      { label: "Comprehensive", description: "Thorough coverage (8-12 phases, 5-10 plans each)" }
+    ]
+  },
+  {
+    header: "Execution",
+    question: "Run plans in parallel?",
+    multiSelect: false,
+    options: [
+      { label: "Parallel (Recommended)", description: "Independent plans run simultaneously" },
+      { label: "Sequential", description: "One plan at a time" }
+    ]
+  },
+  {
+    header: "Git Tracking",
+    question: "Commit planning docs to git?",
+    multiSelect: false,
+    options: [
+      { label: "Yes (Recommended)", description: "Planning docs tracked in version control" },
+      { label: "No", description: "Keep .planning/ local-only (add to .gitignore)" }
+    ]
+  }
+])
+```
+
+**Round 2 — Workflow agents (same as Step 5):**
+
+```
+AskUserQuestion([
+  {
+    header: "Research",
+    question: "Research before planning each phase? (adds tokens/time)",
+    multiSelect: false,
+    options: [
+      { label: "Yes (Recommended)", description: "Investigate domain, find patterns, surface gotchas" },
+      { label: "No", description: "Plan directly from requirements" }
+    ]
+  },
+  {
+    header: "Plan Check",
+    question: "Verify plans will achieve their goals? (adds tokens/time)",
+    multiSelect: false,
+    options: [
+      { label: "Yes (Recommended)", description: "Catch gaps before execution starts" },
+      { label: "No", description: "Execute plans without verification" }
+    ]
+  },
+  {
+    header: "Verifier",
+    question: "Verify work satisfies requirements after each phase? (adds tokens/time)",
+    multiSelect: false,
+    options: [
+      { label: "Yes (Recommended)", description: "Confirm deliverables match phase goals" },
+      { label: "No", description: "Trust execution, skip verification" }
+    ]
+  },
+  {
+    header: "AI Models",
+    question: "Which AI models for planning agents?",
+    multiSelect: false,
+    options: [
+      { label: "Balanced (Recommended)", description: "Sonnet for most agents — good quality/cost ratio" },
+      { label: "Quality", description: "Opus for research/roadmap — higher cost, deeper analysis" },
+      { label: "Budget", description: "Haiku where possible — fastest, lowest cost" }
+    ]
+  }
+])
+```
+
+Create `.planning/config.json` with mode set to "yolo":
+
+```json
+{
+  "mode": "yolo",
+  "depth": "[selected]",
+  "parallelization": true|false,
+  "commit_docs": true|false,
+  "model_profile": "quality|balanced|budget",
+  "workflow": {
+    "research": true|false,
+    "plan_check": true|false,
+    "verifier": true|false,
+    "auto_advance": true
+  }
+}
+```
+
+**If commit_docs = No:** Add `.planning/` to `.gitignore`.
+
+**Commit config.json:**
+
+```bash
+mkdir -p .planning
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs commit "chore: add project config" --files .planning/config.json
+```
+
+**Persist auto-advance to config (survives context compaction):**
+
+```bash
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs config-set workflow.auto_advance true
+```
+
+Proceed to Step 4 (skip Steps 3 and 5).
+
 ## 3. Deep Questioning
 
-**If auto mode:** Skip. Extract project context from provided document instead and proceed to Step 4.
+**If auto mode:** Skip (already handled in Step 2a). Extract project context from provided document instead and proceed to Step 4.
 
 **Display stage banner:**
 
@@ -223,6 +343,28 @@ node ~/.claude/get-shit-done/bin/gsd-tools.cjs commit "docs: initialize project"
 
 ## 5. Workflow Preferences
 
+**If auto mode:** Skip — config was collected in Step 2a. Proceed to Step 5.5.
+
+**Check for global defaults** at `~/.gsd/defaults.json`. If the file exists, offer to use saved defaults:
+
+```
+AskUserQuestion([
+  {
+    question: "Use your saved default settings? (from ~/.gsd/defaults.json)",
+    header: "Defaults",
+    multiSelect: false,
+    options: [
+      { label: "Yes (Recommended)", description: "Use saved defaults, skip settings questions" },
+      { label: "No", description: "Configure settings manually" }
+    ]
+  }
+])
+```
+
+If "Yes": read `~/.gsd/defaults.json`, use those values for config.json, and skip directly to **Commit config.json** below.
+
+If "No" or `~/.gsd/defaults.json` doesn't exist: proceed with the questions below.
+
 **Round 1 — Core workflow settings (4 questions):**
 
 ```
@@ -309,7 +451,7 @@ questions: [
     ]
   },
   {
-    header: "Model Profile",
+    header: "AI Models",
     question: "Which AI models for planning agents?",
     multiSelect: false,
     options: [
@@ -669,7 +811,7 @@ For each capability mentioned:
 
 For each category, use AskUserQuestion:
 
-- header: "[Category name]"
+- header: "[Category]" (max 12 chars)
 - question: "Which [category] features are in v1?"
 - multiSelect: true
 - options:
@@ -884,7 +1026,7 @@ node ~/.claude/get-shit-done/bin/gsd-tools.cjs commit "docs: create roadmap ([N]
 
 ## 9. Done
 
-Present completion with next steps:
+Present completion summary:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -902,7 +1044,21 @@ Present completion with next steps:
 | Roadmap        | `.planning/ROADMAP.md`      |
 
 **[N] phases** | **[X] requirements** | Ready to build ✓
+```
 
+**If auto mode:**
+
+```
+╔══════════════════════════════════════════╗
+║  AUTO-ADVANCING → DISCUSS PHASE 1        ║
+╚══════════════════════════════════════════╝
+```
+
+Exit skill and invoke SlashCommand("/gsd:discuss-phase 1 --auto")
+
+**If interactive mode:**
+
+```
 ───────────────────────────────────────────────────────────────
 
 ## ▶ Next Up
