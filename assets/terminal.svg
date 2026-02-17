@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 570">
   <defs>
     <style>
       .terminal-bg { fill: #1a1b26; }
@@ -14,12 +14,13 @@
       .green { fill: #9ece6a; }
       .dim { fill: #565f89; }
       .white { fill: #c0caf5; }
+      .orange { fill: #ff9e64; }
     </style>
   </defs>
 
   <!-- Window -->
-  <rect class="terminal-border" width="960" height="540" rx="12"/>
-  <rect class="terminal-bg" x="1" y="1" width="958" height="538" rx="11"/>
+  <rect class="terminal-border" width="960" height="570" rx="12"/>
+  <rect class="terminal-bg" x="1" y="1" width="958" height="568" rx="11"/>
 
   <!-- Title bar -->
   <rect class="title-bar" x="1" y="1" width="958" height="36" rx="11"/>
@@ -38,7 +39,7 @@
     <!-- Prompt line -->
     <text class="text prompt" font-size="15" y="0">~</text>
     <text class="text dim" font-size="15" x="16" y="0">$</text>
-    <text class="text command" font-size="15" x="36" y="0">npx get-shit-done-cc</text>
+    <text class="text command" font-size="15" x="36" y="0">node bin/install.js --claude --local</text>
 
     <!-- Banner -->
     <text class="text cyan" font-size="14" y="48" xml:space="preserve">   ██████╗ ███████╗██████╗</text>
@@ -48,21 +49,22 @@
     <text class="text cyan" font-size="14" y="128" xml:space="preserve">  ╚██████╔╝███████║██████╔╝</text>
     <text class="text cyan" font-size="14" y="148" xml:space="preserve">   ╚═════╝ ╚══════╝╚═════╝</text>
 
-    <!-- Title and subtitle -->
-    <text class="text white" font-size="15" y="188">  Get Shit Done <tspan class="dim">v1.0.1</tspan></text>
+    <!-- Title: GSD in cyan, :iOS in orange -->
+    <text class="text" font-size="15" y="188"><tspan class="cyan">  GSD</tspan><tspan class="orange">:iOS</tspan>  <tspan class="dim">v0.5.0</tspan></text>
     <text class="text white" font-size="15" y="212">  A meta-prompting, context engineering and spec-driven</text>
-    <text class="text white" font-size="15" y="232">  development system for Claude Code by TÂCHES.</text>
+    <text class="text white" font-size="15" y="232">  development system for native iOS apps with Claude Code,</text>
+    <text class="text white" font-size="15" y="252">  OpenCode, and Gemini by theandy___.</text>
 
     <!-- Install output -->
-    <text class="text" font-size="15" y="280"><tspan class="green">  ✓</tspan><tspan class="white"> Installed commands/gsd</tspan></text>
-    <text class="text" font-size="15" y="304"><tspan class="green">  ✓</tspan><tspan class="white"> Installed get-shit-done</tspan></text>
+    <text class="text" font-size="15" y="300"><tspan class="green">  ✓</tspan><tspan class="white"> Installed commands/gsd</tspan></text>
+    <text class="text" font-size="15" y="324"><tspan class="green">  ✓</tspan><tspan class="white"> Installed get-shit-done</tspan></text>
 
     <!-- Done message -->
-    <text class="text" font-size="15" y="352"><tspan class="green">  Done!</tspan><tspan class="white"> Run </tspan><tspan class="cyan">/gsd:help</tspan><tspan class="white"> to get started.</tspan></text>
+    <text class="text" font-size="15" y="372"><tspan class="green">  Done!</tspan><tspan class="white"> Run </tspan><tspan class="cyan">/gsd:help</tspan><tspan class="white"> to get started.</tspan></text>
 
     <!-- New prompt -->
-    <text class="text prompt" font-size="15" y="400">~</text>
-    <text class="text dim" font-size="15" x="16" y="400">$</text>
-    <text class="text white" font-size="15" x="36" y="400">▌</text>
+    <text class="text prompt" font-size="15" y="430">~</text>
+    <text class="text dim" font-size="15" x="16" y="430">$</text>
+    <text class="text white" font-size="15" x="36" y="430">▌</text>
   </g>
 </svg>

@@ -135,9 +135,10 @@ const banner = '\n' +
   '  ╚██████╔╝███████║██████╔╝\n' +
   '   ╚═════╝ ╚══════╝╚═════╝' + reset + '\n' +
   '\n' +
-  '  Get Shit Done ' + dim + 'v' + pkg.version + reset + '\n' +
+  '  GSD' + '\x1b[38;2;255;158;100m' + ':iOS' + reset + ' ' + dim + 'v' + pkg.version + reset + '\n' +
   '  A meta-prompting, context engineering and spec-driven\n' +
-  '  development system for Claude Code, OpenCode, and Gemini by TÂCHES.\n';
+  '  development system for native iOS apps with Claude Code,\n' +
+  '  OpenCode, and Gemini by theandy___.\n';
 
 // Parse --config-dir argument
 function parseConfigDirArg() {

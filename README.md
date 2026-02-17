@@ -29,6 +29,8 @@
 
 **Built on the GSD framework, trusted by engineers at Amazon, Google, Shopify, and Webflow.**
 
+![GSD:iOS Install](assets/terminal.svg)
+
 [Why This Fork Exists](#why-this-fork-exists) · [How It Works](#how-it-works) · [Commands](#commands) · [Why It Works](#why-it-works) · [User Guide](docs/USER-GUIDE.md)
 
 </div>
