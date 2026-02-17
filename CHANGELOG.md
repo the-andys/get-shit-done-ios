@@ -10,8 +10,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `/gsd:cleanup` command — archives phase directories from completed milestones
 - `/gsd:health` command — validates `.planning/` directory integrity with `--repair` flag
 - `docs/USER-GUIDE.md` — comprehensive usage guide
+- Scope boundary and fix attempt limit rules in executor agent (upstream cherry-pick)
+- Success Criteria from ROADMAP verification path in verifier agent (upstream cherry-pick)
+- Write tool enforcement rule in executor and verifier agents (upstream cherry-pick)
 
 ### Changed
+- `.cjs` rename completed in 41 content files (8 agents, 26 workflows, 5 references, 2 commands)
 - Synced all infrastructure with upstream GSD 1.20.0
 - Renamed `gsd-tools.js` → `gsd-tools.cjs` to prevent ESM module resolution conflicts
 - Updated `install.js` with CommonJS package.json injection and OpenCode improvements
