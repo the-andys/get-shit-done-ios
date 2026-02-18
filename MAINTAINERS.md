@@ -74,22 +74,23 @@ Checklist:
 
 ## npm Publish Setup (OIDC)
 
-No NPM_TOKEN secret needed. Uses Trusted Publisher.
+No NPM_TOKEN secret needed. Uses Trusted Publisher (OIDC).
 
-Setup (one-time):
+Already configured. For reference, the one-time setup was:
 
-1. Create npm account and package `get-shit-done-ios-cc`
-2. npmjs.com > package settings > Publishing > Trusted Publishers > Add
-3. Fill: Publisher=GitHub Actions, Owner=the-andys, Repository=get-shit-done-ios, Workflow=publish.yml
+1. Enable 2FA on npm account (`the-andys`)
+2. Publish package manually once to create it on npm registry
+3. npmjs.com > `get-shit-done-ios` > Settings > Trusted Publishers > GitHub Actions
+4. Fill: Owner=`the-andys`, Repository=`get-shit-done-ios`, Workflow=`publish.yml`, Environment=(blank)
 
-The `publish.yml` workflow handles the rest automatically on GitHub Release.
+The `publish.yml` workflow handles all subsequent publishes automatically on GitHub Release.
 
 ## Recovery Procedures
 
 Broken npm release (within 72h):
 
 ```bash
-npm unpublish get-shit-done-ios-cc@X.X.X
+npm unpublish get-shit-done-ios@X.X.X
 ```
 
 After 72h: publish fix as new patch version.
