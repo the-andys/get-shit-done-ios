@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 2000" width="2000" height="2000">
+  <defs>
+    <style>
+      .cyan { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Courier New', monospace; fill: #7dcfff; }
+      .orange { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Courier New', monospace; fill: #ff9e64; }
+    </style>
+  </defs>
+
+  <!-- GSD:iOS ASCII Logo - centered -->
+  <g transform="translate(1000, 1000)">
+    <text font-size="58" text-anchor="middle" y="-120" xml:space="preserve"><tspan class="cyan"> ██████╗ ███████╗██████╗ </tspan><tspan class="orange">   ██╗ ██████╗ ███████╗</tspan></text>
+    <text font-size="58" text-anchor="middle" y="-55" xml:space="preserve"><tspan class="cyan">██╔════╝ ██╔════╝██╔══██╗</tspan><tspan class="orange">██╗██║██╔═══██╗██╔════╝</tspan></text>
+    <text font-size="58" text-anchor="middle" y="10" xml:space="preserve"><tspan class="cyan">██║  ███╗███████╗██║  ██║</tspan><tspan class="orange">╚═╝██║██║   ██║███████╗</tspan></text>
+    <text font-size="58" text-anchor="middle" y="75" xml:space="preserve"><tspan class="cyan">██║   ██║╚════██║██║  ██║</tspan><tspan class="orange">██╗██║██║   ██║╚════██║</tspan></text>
+    <text font-size="58" text-anchor="middle" y="140" xml:space="preserve"><tspan class="cyan">╚██████╔╝███████║██████╔╝</tspan><tspan class="orange">╚═╝██║╚██████╔╝███████║</tspan></text>
+    <text font-size="58" text-anchor="middle" y="205" xml:space="preserve"><tspan class="cyan"> ╚═════╝ ╚══════╝╚═════╝ </tspan><tspan class="orange">   ╚═╝ ╚═════╝ ╚══════╝</tspan></text>
+  </g>
+</svg>
