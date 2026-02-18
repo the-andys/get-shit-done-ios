@@ -16,7 +16,7 @@ For vulnerabilities in the core GSD framework (orchestration, agents, workflows)
 For vulnerabilities specific to the iOS adaptations (Swift guidelines, iOS references, fork-specific changes):
 
 - **GitHub:** Open a private security advisory on this repository
-- **Email:** yourhfdev@users.noreply.github.com
+- **Email:** the-andys@users.noreply.github.com
 
 ### What to Include
 

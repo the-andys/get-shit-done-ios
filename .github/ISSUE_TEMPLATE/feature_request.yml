@@ -1,37 +1,49 @@
 ---
-name: Feature Request
-description: Suggest a new feature or improvement
+name: Feature Request / Enhancement
+description: Suggest an iOS-specific improvement to GSD:iOS
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a feature\! Please describe what you would like to see.
+        Is this iOS-specific? If the improvement applies to all GSD platforms,
+        consider opening it at [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done/issues).
+
   - type: textarea
     id: problem
     attributes:
       label: Problem or motivation
-      description: What problem does this solve? Why do you want this?
+      description: What iOS development problem does this solve?
     validations:
       required: true
+
+  - type: textarea
+    id: ios_context
+    attributes:
+      label: iOS context
+      description: Which Apple frameworks, patterns, or Xcode features are involved?
+      placeholder: "e.g., involves SwiftData migrations, WidgetKit, or StoreKit 2"
+    validations:
+      required: false
+
   - type: textarea
     id: solution
     attributes:
       label: Proposed solution
-      description: How do you think this should work?
+      description: How should this work?
     validations:
       required: true
+
   - type: textarea
     id: alternatives
     attributes:
       label: Alternatives considered
-      description: Have you considered other approaches?
     validations:
       required: false
+
   - type: textarea
     id: context
     attributes:
       label: Additional context
-      description: Any other information, screenshots, or examples
     validations:
       required: false

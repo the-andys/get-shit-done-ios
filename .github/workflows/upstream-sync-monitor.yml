@@ -26,8 +26,8 @@ jobs:
       - name: Detect new commits
         id: detect
         run: |
-          # Read our last synced version from .dev/STATUS.md
-          LAST_SYNC=$(grep -oP 'Upstream sync:\s*\K[\d.]+' .dev/STATUS.md || echo "1.20.0")
+          # Read our last synced version from .dev/UPSTREAM_VERSION
+          LAST_SYNC=$(cat .dev/UPSTREAM_VERSION 2>/dev/null || echo "1.20.0")
           echo "last_sync=v${LAST_SYNC}" >> $GITHUB_OUTPUT
           echo "Last synced version: v${LAST_SYNC}"
 
