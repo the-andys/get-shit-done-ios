@@ -4,6 +4,21 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] - 2026-02-18
+
+### Fixed
+- Installer banner no longer references OpenCode or Gemini — correctly attributed to Claude Code by TÂCHES, iOS adaptation by the-andys
+- `publish.yml` version check now properly skips the publish step when a version already exists on npm (was using `exit 0` which only exited the shell script, not the job step)
+- `engines.node` in `package.json` aligned to `>=18.0.0` (was `>=16.7.0`, conflicting with README and CI)
+
+### Changed
+- `MAINTAINERS.md` OIDC setup section updated to reflect actual setup process and correct package name
+- Release workflow updated: from v0.7.0 onwards, all releases use a `release/vX.X.X` branch and PR into main
+
+### Removed
+- `commands/gsd/new-project.md.bak` removed from repository and npm tarball (29KB of stale content)
+- `assets/terminal.svg` updated to match correct attribution and remove stale runtime references
+
 ## [0.6.0] - 2026-02-17
 
 ### Added

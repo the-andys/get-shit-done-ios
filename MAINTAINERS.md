@@ -30,19 +30,23 @@ Manual sync process:
 Standard release:
 
 ```bash
-# 1. Update version
+# 1. Create release branch
+git checkout -b release/vX.X.X
+
+# 2. Bump version
 npm version patch    # or minor, or major
 
-# 2. Update CHANGELOG.md with the release section
+# 3. Update CHANGELOG.md with the release section
 
-# 3. Commit
+# 4. Commit
 git add package.json CHANGELOG.md
 git commit -m "chore: release vX.X.X"
 
-# 4. Push with tag
-git push origin main --tags
+# 5. Push branch and open PR into main
+git push origin release/vX.X.X
 
-# GitHub Actions (publish.yml) publishes to npm automatically
+# 6. Merge PR into main (--no-ff)
+# GitHub Actions (publish.yml) publishes to npm automatically on merge
 ```
 
 Version cadence:
