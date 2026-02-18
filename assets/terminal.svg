@@ -52,8 +52,8 @@
     <!-- Title: GSD in cyan, :iOS in orange -->
     <text class="text" font-size="15" y="188"><tspan class="cyan">  GSD</tspan><tspan class="orange">:iOS</tspan>  <tspan class="dim">v0.6.0</tspan></text>
     <text class="text white" font-size="15" y="212">  A meta-prompting, context engineering and spec-driven</text>
-    <text class="text white" font-size="15" y="232">  development system for Claude Code, OpenCode and Gemini</text>
-    <text class="text white" font-size="15" y="252">  by TÂCHES. iOS adaptation by the-andys.</text>
+    <text class="text white" font-size="15" y="232">  development system for Claude Code by TÂCHES.</text>
+    <text class="text white" font-size="15" y="252">  iOS adaptation by the-andys.</text>
 
     <!-- Install output -->
     <text class="text" font-size="15" y="300"><tspan class="green">  ✓</tspan><tspan class="white"> Installed commands/gsd</tspan></text>
