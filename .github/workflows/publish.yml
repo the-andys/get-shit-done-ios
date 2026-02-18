@@ -34,13 +34,17 @@ jobs:
         run: npm test
 
       - name: Check version not already published
+        id: version_check
         run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
           PKG_NAME=$(node -p "require('./package.json').name")
           if npm view "${PKG_NAME}@${PKG_VERSION}" version 2>/dev/null; then
             echo "Version ${PKG_VERSION} already published. Skipping."
-            exit 0
+            echo "already_published=true" >> $GITHUB_OUTPUT
+          else
+            echo "already_published=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Publish
+        if: steps.version_check.outputs.already_published == 'false'
         run: npm publish --provenance --access public
