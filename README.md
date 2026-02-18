@@ -9,7 +9,13 @@
 **Solves context rot — the quality degradation that happens as Claude fills its context window.**
 
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.20.0-orange?style=for-the-badge)](https://github.com/glittercowboy/get-shit-done)
+[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.20.4-orange?style=for-the-badge)](https://github.com/glittercowboy/get-shit-done)
+
+```bash
+npx get-shit-done-ios@latest
+```
+
+**Requires macOS and Xcode.**
 
 <br>
 
@@ -69,46 +75,49 @@ iOS developers who want to describe their app idea and have it built correctly �
 
 ## Getting Started
 
-Clone the repository and install:
-
 ```bash
-git clone <FORK_REPO_URL>
-cd get-shit-done-ios
-node bin/install.js --claude --local
+npx get-shit-done-ios@latest
 ```
 
-This installs GSD to `./.claude/` in your iOS project. Verify with `/gsd:help` inside Claude Code.
+The installer prompts you to choose:
+1. **Location** — Global (all projects) or local (current iOS project only)
 
-> **Requires:** macOS (iOS development), Node.js 18+, Claude Code.
+Verify with `/gsd:help` inside Claude Code.
+
+> **Requires:** macOS, Xcode, Node.js 18+, Claude Code.
 
 ### Staying Updated
 
-Pull the latest changes and reinstall:
-
 ```bash
-cd get-shit-done-ios
-git pull
-node bin/install.js --claude --local
+npx get-shit-done-ios@latest
 ```
 
-Or for global installation (all projects):
-
-```bash
-node bin/install.js --claude --global
-```
+Or use `/gsd:update` inside Claude Code for changelog preview before updating.
 
 <details>
 <summary><strong>Non-Interactive Install (CI, Scripts)</strong></summary>
 
 ```bash
-# Claude Code — local (current project)
-node bin/install.js --claude --local
-
-# Claude Code — global (all projects)
-node bin/install.js --claude --global
+npx get-shit-done-ios --claude --local    # Install to ./.claude/ (current project)
+npx get-shit-done-ios --claude --global   # Install to ~/.claude/ (all projects)
 ```
 
 Use `--global` (`-g`) or `--local` (`-l`) to skip the location prompt.
+
+</details>
+
+<details>
+<summary><strong>Development Installation</strong></summary>
+
+Clone the repository and run the installer locally:
+
+```bash
+git clone https://github.com/the-andys/get-shit-done-ios.git
+cd get-shit-done-ios
+node bin/install.js --claude --local
+```
+
+Installs to `./.claude/` for testing modifications before contributing.
 
 </details>
 
@@ -172,6 +181,7 @@ When both are installed, you won't see duplicate commands — the local version 
 In practice: install whichever you use most as `--global`, and the other as `--local` in the relevant projects.
 
 ---
+
 
 ## How It Works
 
@@ -624,11 +634,11 @@ This prevents Claude from reading these files entirely, regardless of what comma
 
 **Commands not working as expected?**
 - Run `/gsd:help` to verify installation
-- Reinstall: `node bin/install.js --claude --local`
+- Reinstall: `npx get-shit-done-ios@latest`
 
 **Updating to the latest version?**
 ```bash
-cd get-shit-done-ios && git pull && node bin/install.js --claude --local
+npx get-shit-done-ios@latest
 ```
 
 **Xcode build fails after GSD changes?**
@@ -640,10 +650,10 @@ To remove GSD completely:
 
 ```bash
 # Local install (current project)
-node bin/install.js --claude --local --uninstall
+npx get-shit-done-ios --claude --local --uninstall
 
 # Global install
-node bin/install.js --claude --global --uninstall
+npx get-shit-done-ios --claude --global --uninstall
 ```
 
 This removes all GSD commands, agents, hooks, and settings while preserving your other configurations.
