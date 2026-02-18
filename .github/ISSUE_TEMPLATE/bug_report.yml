@@ -1,30 +1,39 @@
 ---
 name: Bug Report
-description: Report something that is not working correctly
+description: Report something not working correctly in GSD:iOS
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to report a bug. Please fill out the sections below.
+        Before reporting: is this a GSD:iOS issue (iOS-specific) or a GSD upstream issue?
+        iOS-specific → report here. Platform-agnostic → report at [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done/issues).
+
   - type: input
     id: version
     attributes:
-      label: GSD Version
-      description: "Run: npm list -g get-shit-done-cc"
-      placeholder: "e.g., 1.18.0"
+      label: GSD:iOS Version
+      description: "Run: npx get-shit-done-ios-cc --version or check package.json"
+      placeholder: "e.g., 0.6.0"
     validations:
       required: true
-  - type: dropdown
-    id: runtime
+
+  - type: input
+    id: xcode_version
     attributes:
-      label: Runtime
-      options:
-        - Claude Code
-        - Gemini CLI
-        - OpenCode
+      label: Xcode Version
+      placeholder: "e.g., 16.2"
     validations:
       required: true
+
+  - type: input
+    id: ios_target
+    attributes:
+      label: iOS Target
+      placeholder: "e.g., iOS 17.0"
+    validations:
+      required: false
+
   - type: textarea
     id: description
     attributes:
@@ -32,28 +41,38 @@ body:
       description: Describe what went wrong
     validations:
       required: true
+
   - type: textarea
     id: expected
     attributes:
       label: What did you expect?
-      description: Describe what you expected to happen
     validations:
       required: true
+
   - type: textarea
     id: reproduce
     attributes:
       label: Steps to reproduce
-      description: How can we reproduce this?
       placeholder: |
         1. Run /gsd:...
         2. ...
     validations:
       required: true
+
   - type: textarea
     id: logs
     attributes:
       label: Relevant logs or error messages
-      description: Paste any error output (will be formatted as code)
       render: shell
     validations:
       required: false
+
+  - type: dropdown
+    id: install_type
+    attributes:
+      label: Installation type
+      options:
+        - Local (--local)
+        - Global (--global)
+    validations:
+      required: true
