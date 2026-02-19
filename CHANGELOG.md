@@ -4,6 +4,14 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.1] - 2026-02-19
+
+### Fixed
+- Installer logo now correctly displays full GSD:iOS block-letter branding
+- Update check now queries `get-shit-done-ios` on npm instead of upstream package
+- Help documentation no longer references upstream `get-shit-done-cc` package name
+- Local installs now use absolute paths, fixing resolution on macOS external volumes
+
 ## [0.7.0] - 2026-02-18
 
 ### Fixed

@@ -127,15 +127,16 @@ function getGlobalDir(runtime, explicitDir = null) {
   return path.join(os.homedir(), '.claude');
 }
 
+const orange = '\x1b[38;2;255;158;100m';
 const banner = '\n' +
-  cyan + '   ██████╗ ███████╗██████╗\n' +
-  '  ██╔════╝ ██╔════╝██╔══██╗\n' +
-  '  ██║  ███╗███████╗██║  ██║\n' +
-  '  ██║   ██║╚════██║██║  ██║\n' +
-  '  ╚██████╔╝███████║██████╔╝\n' +
-  '   ╚═════╝ ╚══════╝╚═════╝' + reset + '\n' +
+  '  ' + cyan + ' ██████╗ ███████╗██████╗ ' + orange + '   ██╗ ██████╗ ███████╗' + reset + '\n' +
+  '  ' + cyan + '██╔════╝ ██╔════╝██╔══██╗' + orange + '██╗██║██╔═══██╗██╔════╝' + reset + '\n' +
+  '  ' + cyan + '██║  ███╗███████╗██║  ██║' + orange + '╚═╝██║██║   ██║███████╗' + reset + '\n' +
+  '  ' + cyan + '██║   ██║╚════██║██║  ██║' + orange + '██╗██║██║   ██║╚════██║' + reset + '\n' +
+  '  ' + cyan + '╚██████╔╝███████║██████╔╝' + orange + '╚═╝██║╚██████╔╝███████║' + reset + '\n' +
+  '  ' + cyan + ' ╚═════╝ ╚══════╝╚═════╝ ' + orange + '   ╚═╝ ╚═════╝ ╚══════╝' + reset + '\n' +
   '\n' +
-  '  GSD' + '\x1b[38;2;255;158;100m' + ':iOS' + reset + ' ' + dim + 'v' + pkg.version + reset + '\n' +
+  '  GSD' + orange + ':iOS' + reset + ' ' + dim + 'v' + pkg.version + reset + '\n' +
   '  A meta-prompting, context engineering and spec-driven\n' +
   '  development system for Claude Code by TÂCHES.\n' +
   '  iOS adaptation by the-andys.\n';
@@ -1334,11 +1335,8 @@ function install(isGlobal, runtime = 'claude') {
     : targetDir.replace(process.cwd(), '.');
 
   // Path prefix for file references in markdown content
-  // For global installs: use full path
-  // For local installs: use relative
-  const pathPrefix = isGlobal
-    ? `${targetDir.replace(/\\/g, '/')}/`
-    : `./${dirName}/`;
+  // Always use absolute paths — Claude Code does not resolve @./ relative to project CWD
+  const pathPrefix = `${targetDir.replace(/\\/g, '/')}/`;
 
   let runtimeLabel = 'Claude Code';
   if (isOpencode) runtimeLabel = 'OpenCode';
@@ -1502,12 +1500,9 @@ function install(isGlobal, runtime = 'claude') {
   // Gemini shares same hook system as Claude Code for now
   const settingsPath = path.join(targetDir, 'settings.json');
   const settings = cleanupOrphanedHooks(readSettings(settingsPath));
-  const statuslineCommand = isGlobal
-    ? buildHookCommand(targetDir, 'gsd-statusline.js')
-    : 'node ' + dirName + '/hooks/gsd-statusline.js';
-  const updateCheckCommand = isGlobal
-    ? buildHookCommand(targetDir, 'gsd-check-update.js')
-    : 'node ' + dirName + '/hooks/gsd-check-update.js';
+  // Always use absolute paths for hook commands — relative paths fail when CWD changes
+  const statuslineCommand = buildHookCommand(targetDir, 'gsd-statusline.js');
+  const updateCheckCommand = buildHookCommand(targetDir, 'gsd-check-update.js');
 
   // Enable experimental agents for Gemini CLI (required for custom sub-agents)
   if (isGemini) {
