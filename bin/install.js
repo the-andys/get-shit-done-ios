@@ -127,15 +127,16 @@ function getGlobalDir(runtime, explicitDir = null) {
   return path.join(os.homedir(), '.claude');
 }
 
+const orange = '\x1b[38;2;255;158;100m';
 const banner = '\n' +
-  cyan + '   ██████╗ ███████╗██████╗\n' +
-  '  ██╔════╝ ██╔════╝██╔══██╗\n' +
-  '  ██║  ███╗███████╗██║  ██║\n' +
-  '  ██║   ██║╚════██║██║  ██║\n' +
-  '  ╚██████╔╝███████║██████╔╝\n' +
-  '   ╚═════╝ ╚══════╝╚═════╝' + reset + '\n' +
+  '  ' + cyan + ' ██████╗ ███████╗██████╗ ' + orange + '   ██╗ ██████╗ ███████╗' + reset + '\n' +
+  '  ' + cyan + '██╔════╝ ██╔════╝██╔══██╗' + orange + '██╗██║██╔═══██╗██╔════╝' + reset + '\n' +
+  '  ' + cyan + '██║  ███╗███████╗██║  ██║' + orange + '╚═╝██║██║   ██║███████╗' + reset + '\n' +
+  '  ' + cyan + '██║   ██║╚════██║██║  ██║' + orange + '██╗██║██║   ██║╚════██║' + reset + '\n' +
+  '  ' + cyan + '╚██████╔╝███████║██████╔╝' + orange + '╚═╝██║╚██████╔╝███████║' + reset + '\n' +
+  '  ' + cyan + ' ╚═════╝ ╚══════╝╚═════╝ ' + orange + '   ╚═╝ ╚═════╝ ╚══════╝' + reset + '\n' +
   '\n' +
-  '  GSD' + '\x1b[38;2;255;158;100m' + ':iOS' + reset + ' ' + dim + 'v' + pkg.version + reset + '\n' +
+  '  GSD' + orange + ':iOS' + reset + ' ' + dim + 'v' + pkg.version + reset + '\n' +
   '  A meta-prompting, context engineering and spec-driven\n' +
   '  development system for Claude Code by TÂCHES.\n' +
   '  iOS adaptation by the-andys.\n';
