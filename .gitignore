@@ -19,5 +19,6 @@ animation/
 reports/
 RAILROAD_ARCHITECTURE.md
 
-# Development docs (local only)
-.dev/
+# Development docs (local only — only UPSTREAM_VERSION is tracked)
+.dev/*
+!.dev/UPSTREAM_VERSION
