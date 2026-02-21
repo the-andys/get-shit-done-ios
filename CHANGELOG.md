@@ -4,6 +4,25 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.0] - 2026-02-20
+
+### Changed (upstream sync v1.20.4 → v1.20.5)
+- Context-proxy orchestration: agents now consume `<files_to_read>` path blocks
+  instead of receiving inline content — reduces context bloat
+- All commands delegate file resolution to workflow layer (removed inline `@.planning/` refs)
+- Workflows migrated from `--include` flags + `*_content` vars to `*_path` references
+- Agents (executor, planner, phase-researcher, plan-checker) now discover and read
+  project-level `CLAUDE.md` and `.agents/skills/` at spawn time
+- `map-codebase` workflow now uses inline `Task()` syntax for agent spawning
+
+### Fixed (upstream sync v1.20.4 → v1.20.5)
+- `gsd:health --repair` now creates timestamped backup (`STATE.md.bak-*`) before
+  overwriting STATE.md — prevents accidental context loss
+
+### Skipped (upstream-only)
+- Codex CLI features and their reverts (`87c3873`, `db1d003`, `e820263`, `d55998b`) —
+  net zero change to codebase, Codex-specific only
+
 ## [0.7.1] - 2026-02-19
 
 ### Fixed
