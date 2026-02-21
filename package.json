@@ -1,6 +1,6 @@
 {
   "name": "get-shit-done-ios",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "A meta-prompting, context engineering and spec-driven development system for iOS development with Claude Code. iOS adaptation by the-andys, based on GSD by TÂCHES.",
   "bin": {
     "get-shit-done-ios": "bin/install.js"
