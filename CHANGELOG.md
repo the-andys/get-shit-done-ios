@@ -4,6 +4,23 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.9.0] - 2026-02-26
+
+Upstream sync: v1.20.5 → v1.20.6
+
+### Added
+- Nyquist validation layer — researcher, planner, plan-checker, settings, VALIDATION.md template
+- Context window monitor hook with agent-side WARNING/CRITICAL alerts
+- Option highlighting and gray area looping in discuss-phase
+- Universal phase number parsing with letter-suffix support (comparePhaseNum)
+
+### Changed
+- gsd-tools.cjs refactored into 11 domain modules under bin/lib/
+- Test files split into per-module files under tests/
+
+### Fixed
+- Auto-advance chain — Skills don't resolve inside Task subagents (discuss-phase Task spawn)
+
 ## [0.8.0] - 2026-02-20
 
 ### Changed (upstream sync v1.20.4 → v1.20.5)
