@@ -348,6 +348,37 @@ Verified patterns from official sources:
    - What's unclear: [the gap]
    - Recommendation: [how to handle]
 
+## Validation Architecture
+
+> Skip this section entirely if workflow.nyquist_validation is false in .planning/config.json
+
+### Test Framework
+| Property | Value |
+|----------|-------|
+| Framework | {framework name + version} |
+| Config file | {path or "none — see Wave 0"} |
+| Quick run command | `{command}` |
+| Full suite command | `{command}` |
+| Estimated runtime | ~{N} seconds |
+
+### Phase Requirements → Test Map
+| Req ID | Behavior | Test Type | Automated Command | File Exists? |
+|--------|----------|-----------|-------------------|-------------|
+| REQ-XX | {behavior description} | unit | `swift test --filter {TestModule}.{testName}` | ✅ yes / ❌ Wave 0 gap |
+
+### Nyquist Sampling Rate
+- **Minimum sample interval:** After every committed task → run: `{quick run command}`
+- **Full suite trigger:** Before merging final task of any plan wave
+- **Phase-complete gate:** Full suite green before `/gsd:verify-work` runs
+- **Estimated feedback latency per task:** ~{N} seconds
+
+### Wave 0 Gaps (must be created before implementation)
+- [ ] `{Tests/TestFile.swift}` — covers REQ-{XX}
+- [ ] `{Tests/Helpers/SharedFixtures.swift}` — shared fixtures for phase {N}
+- [ ] Framework config: Xcode test plan or Package.swift test targets — if no framework detected
+
+*(If no gaps: "None — existing test infrastructure covers all phase requirements")*
+
 ## Sources
 
 ### Primary (HIGH confidence)
@@ -387,6 +418,8 @@ INIT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init phase-op "${PHASE}")
 ```
 
 Extract from init JSON: `phase_dir`, `padded_phase`, `phase_number`, `commit_docs`.
+
+Also check Nyquist validation config — read `.planning/config.json` and check if `workflow.nyquist_validation` is `true`. If `true`, include the Validation Architecture section in RESEARCH.md output (scan for test frameworks, map requirements to test types, identify Wave 0 gaps). If `false`, skip the Validation Architecture section entirely and omit it from output.
 
 Then read CONTEXT.md if exists:
 ```bash
@@ -433,7 +466,33 @@ For each domain: Context7 first → Official docs → WebSearch → Cross-verify
 
 **Step 3b: Check for emerging APIs.** Before finalizing the Standard Stack section, actively search for new Apple frameworks and APIs released in the past 12 months relevant to this phase's domain. SwiftUI, SwiftData, and system frameworks evolve every WWDC — do not assume training data reflects the current state of any Apple API. Use Context7 and Apple Developer Documentation to verify current API availability. Flag iOS 18+ / iOS 26+ APIs that could simplify the phase implementation as conditional recommendations.
 
-## Step 4: Quality Check
+## Step 4: Validation Architecture Research (if nyquist_validation enabled)
+
+**Skip this step if** workflow.nyquist_validation is false in config.
+
+This step answers: "How will Claude's executor know, within seconds of committing each task, whether the output is correct?"
+
+### Detect Test Infrastructure
+Scan the codebase for test configuration:
+- Look for test config files: Xcode test plan (.xctestplan), Package.swift test targets
+- Look for test directories: Tests/, *Tests/
+- Look for test files: *Tests.swift, *Test.swift
+- Check for Swift Testing (`import Testing`) vs XCTest (`import XCTest`) usage
+
+### Map Requirements to Tests
+For each requirement in <phase_requirements>:
+- Identify the behavior to verify
+- Determine test type: unit / integration / contract / smoke / e2e / manual-only
+- Specify the automated command to run that test in < 30 seconds
+- Flag if only verifiable manually (justify why)
+
+### Identify Wave 0 Gaps
+List test files, fixtures, or utilities that must be created BEFORE implementation:
+- Missing test files for phase requirements
+- Missing test framework configuration
+- Missing shared fixtures or test utilities
+
+## Step 5: Quality Check
 
 - [ ] All domains investigated
 - [ ] Negative claims verified
@@ -441,7 +500,7 @@ For each domain: Context7 first → Official docs → WebSearch → Cross-verify
 - [ ] Confidence levels assigned honestly
 - [ ] "What might I have missed?" review
 
-## Step 5: Write RESEARCH.md
+## Step 6: Write RESEARCH.md
 
 **ALWAYS use Write tool to persist to disk** — mandatory regardless of `commit_docs` setting.
 
@@ -480,13 +539,13 @@ Write to: `$PHASE_DIR/$PADDED_PHASE-RESEARCH.md`
 
 ⚠️ `commit_docs` controls git only, NOT file writing. Always write first.
 
-## Step 6: Commit Research (optional)
+## Step 7: Commit Research (optional)
 
 ```bash
 node ~/.claude/get-shit-done/bin/gsd-tools.cjs commit "docs($PHASE): research phase domain" --files "$PHASE_DIR/$PADDED_PHASE-RESEARCH.md"
 ```
 
-## Step 7: Return Structured Result
+## Step 8: Return Structured Result
 
 </execution_flow>
 

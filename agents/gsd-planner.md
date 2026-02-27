@@ -157,9 +157,21 @@ Every task has four required fields:
 - Good: "Create SignInWithAppleViewModel conforming to ObservableObject. Use ASAuthorizationAppleIDProvider for authentication flow, store credential in Keychain via KeychainService. Persist user profile to SwiftData User model. Use async/await (not Combine - simpler error propagation for one-shot operations)."
 - Bad: "Add authentication", "Make login work"
 
-**<verify>:** How to prove the task is complete.
-- Good: `swift test` passes, `xcodebuild build -scheme App -destination 'platform=iOS Simulator,name=iPhone 16'` succeeds with zero warnings
-- Bad: "It works", "Looks good"
+**<verify>:** How to prove the task is complete. Supports structured format:
+
+```xml
+<verify>
+  <automated>swift test --filter TestModule.testBehavior</automated>
+  <manual>Optional: human-readable description of what to check</manual>
+  <sampling_rate>run after this task commits, before next task begins</sampling_rate>
+</verify>
+```
+
+- Good: Specific automated command that runs in < 60 seconds
+- Bad: "It works", "Looks good", manual-only verification
+- Simple format also accepted: `swift test` passes, `xcodebuild build -scheme App -destination 'platform=iOS Simulator,name=iPhone 16'` succeeds with zero warnings
+
+**Nyquist Rule:** Every `<verify>` must include an `<automated>` command. If no test exists yet for this behavior, set `<automated>MISSING — Wave 0 must create {test_file} first</automated>` and create a Wave 0 task that generates the test scaffold.
 
 **<done>:** Acceptance criteria - measurable state of completion.
 - Good: "Sign in with Apple flow completes, user profile is persisted to SwiftData, subsequent app launch shows authenticated state"
