@@ -1448,3 +1448,58 @@ final class CalculatorUITests: XCTestCase {
 ```
 
 </framework_setup>
+
+---
+
+## MCP Testing Tools
+
+When Xcode MCP tools are available, prefer them over `xcodebuild test` CLI commands for faster feedback and richer output.
+
+### Apple Xcode MCP (`xcode-tools`)
+
+| Tool | Purpose |
+|------|---------|
+| **`RunAllTests`** | Execute the full test suite for the active scheme |
+| **`RunSomeTests`** | Run specific test targets, suites, or individual test methods |
+| **`GetTestList`** | List available test targets and test methods without running them |
+
+Use `GetTestList` to discover available tests before running. Use `RunSomeTests` during development to run only the tests affected by your changes. Reserve `RunAllTests` for pre-commit verification.
+
+### XcodeBuildMCP (Extended)
+
+| Tool | Purpose |
+|------|---------|
+| **`test_sim`** | Run tests on a specific simulator with detailed output |
+| **`test_device`** | Run tests on a connected physical device |
+| **`list_sims`** | List available simulators with their state |
+| **`boot_sim`** | Boot a specific simulator before testing |
+| **`screenshot`** | Capture a screenshot from a running simulator after tests |
+
+### When to Use Which
+
+| Scenario | Tool |
+|----------|------|
+| Quick check after editing one test | `RunSomeTests` (Apple MCP) |
+| Run full suite before commit | `RunAllTests` (Apple MCP) |
+| Test on specific device/OS combo | `test_sim` or `test_device` (XcodeBuildMCP) |
+| Discover what tests exist | `GetTestList` (Apple MCP) |
+| Visual regression check | `screenshot` after test run (XcodeBuildMCP) |
+| No MCP available | `xcodebuild test` CLI fallback |
+
+### CLI Fallback
+
+When MCP tools are not available:
+
+```bash
+# Run all tests
+xcodebuild test -scheme <Scheme> -destination 'platform=iOS Simulator,name=iPhone 16'
+
+# Run specific test target
+xcodebuild test -scheme <Scheme> -only-testing:<TestTarget>
+
+# Run specific test method
+xcodebuild test -scheme <Scheme> -only-testing:<TestTarget>/<Suite>/<testMethod>
+
+# List simulators
+xcrun simctl list devices available
+```

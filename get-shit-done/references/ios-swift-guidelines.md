@@ -1530,3 +1530,31 @@ Run this checklist before declaring any task complete. Any unchecked item is a b
 - [ ] No `TODO` or `FIXME` left without a tracking issue
 
 </validation_checklist>
+
+---
+
+## Build & Test Tooling
+
+### MCP Tools (Preferred When Available)
+
+When Xcode MCP tools are available (server name: `xcode-tools`), prefer them over CLI commands:
+
+- **`BuildProject`** — Full project build. Use after all file-level validations pass.
+- **`XcodeRefreshCodeIssuesInFile`** — Re-validate a single file without building. Use after every file edit for fast feedback.
+- **`ExecuteSnippet`** — Run a Swift snippet in ephemeral context. Use to validate logic or confirm API availability.
+- **`DocumentationSearch`** — Search Apple developer documentation. Use before implementing unfamiliar APIs.
+- **`RunAllTests`** / **`RunSomeTests`** — Execute tests through Xcode. Prefer `RunSomeTests` for targeted test runs during development.
+
+Validation order: `XcodeRefreshCodeIssuesInFile` (cheapest) → `ExecuteSnippet` (medium) → `BuildProject` (most expensive).
+
+See `ios-mcp-tools.md` for the complete tool reference including simulator management and debugging tools.
+
+### CLI Fallback
+
+When MCP tools are not available, use standard CLI commands:
+
+- **Build:** `xcodebuild build -scheme <Scheme> -destination 'platform=iOS Simulator,name=iPhone 16'`
+- **Test all:** `xcodebuild test -scheme <Scheme> -destination 'platform=iOS Simulator,name=iPhone 16'`
+- **Test specific:** `xcodebuild test -scheme <Scheme> -only-testing:<Target>/<Suite>/<Test>`
+- **Type-check file:** `swiftc -typecheck <file>` (no project context — limited compared to MCP)
+- **Run snippet:** `swift -e '<code>'` or compile a temporary `.swift` file

@@ -263,6 +263,7 @@ Ask 4 questions per area before offering to continue or move on. Each answer oft
    - question: Specific decision for this area
    - options: 2-3 concrete choices (AskUserQuestion adds "Other" automatically), with the recommended choice highlighted and brief explanation why
    - Include "You decide" as an option when reasonable — captures Claude discretion
+   - After the user selects an option, prompt once: "Any additional context or rationale for this choice?" This is skippable — if the user says nothing or moves on, proceed. Do not ask more than once per decision. The goal is to capture reasoning that helps downstream agents, not to slow the flow.
 
 3. **After 4 questions, check:**
    - header: "[Area]" (max 12 chars)

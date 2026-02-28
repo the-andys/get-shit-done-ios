@@ -211,6 +211,7 @@ When executor returns a checkpoint AND `AUTO_CFG` is `"true"`:
    - `{user_response}`: What user provided
    - `{resume_instructions}`: Based on checkpoint type
 7. Continuation agent verifies previous commits, continues from resume point
+7a. **Summary data accuracy for checkpoint plans:** When the continuation agent creates or updates SUMMARY.md, it MUST reflect actual data from execution — not predicted or example values from the plan. Plans may contain placeholder data (sample API responses, mock user inputs). SUMMARY.md must report: actual files created, actual test results, actual user responses at checkpoints.
 8. Repeat until plan completes or user stops
 
 **Why fresh agent, not resume:** Resume relies on internal serialization that breaks with parallel tool calls. Fresh agents with explicit state are more reliable.
@@ -312,6 +313,21 @@ Read status:
 ```bash
 grep "^status:" "$PHASE_DIR"/*-VERIFICATION.md | cut -d: -f2 | tr -d ' '
 ```
+
+**Git tracking verification:**
+
+Before acting on the status, check for untracked planning files:
+
+```bash
+UNTRACKED=$(git status --porcelain .planning/ 2>/dev/null)
+if [ -n "$UNTRACKED" ]; then
+  echo "⚠️  Warning: Untracked files in .planning/"
+  echo "$UNTRACKED"
+  echo "These files are not committed and may be lost."
+fi
+```
+
+This is informational — it does NOT block verification. Untracked files may indicate incomplete commits from a previous execution.
 
 | Status | Action |
 |--------|--------|
