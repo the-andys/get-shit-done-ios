@@ -188,6 +188,9 @@ Bad boundaries:
 - Partial features (half of auth, navigation without screens)
 - Artificial splits to hit a number
 - Separating permissions from the features that need them
+- Putting tests in a separate phase from the feature they validate
+
+**Test co-location rule:** Tests for a feature MUST be in the same phase as the feature implementation. Never create a separate "Testing" phase — tests are part of delivering the capability, not a downstream activity. If Phase 2 implements authentication, Phase 2 also contains the authentication tests.
 
 **Step 4: Assign Requirements**
 Map every v1 requirement to exactly one phase.
