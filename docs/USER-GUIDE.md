@@ -30,7 +30,7 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
              │      FOR EACH PHASE:       │
              │                            │
              │  ┌────────────────────┐    │
-             │  │ /gsd:discuss-phase │    │  <- Lock in preferences
+             │  │ /gsd:discuss-phase │    │  <- Scout codebase + lock in preferences
              │  └──────────┬─────────┘    │
              │             │              │
              │  ┌──────────▼─────────┐    │
@@ -161,7 +161,7 @@ rapid prototyping phases where test infrastructure isn't the focus.
 |---------|---------|-------------|
 | `/gsd:new-project` | Full project init: questions, research, requirements, roadmap | Start of a new project |
 | `/gsd:new-project --auto @idea.md` | Automated init from document | Have a PRD or idea doc ready |
-| `/gsd:discuss-phase [N]` | Capture implementation decisions | Before planning, to shape how it gets built |
+| `/gsd:discuss-phase [N]` | Scout codebase, identify gray areas, capture implementation decisions | Before planning, to shape how it gets built |
 | `/gsd:plan-phase [N]` | Research + plan + verify | Before executing a phase |
 | `/gsd:execute-phase <N>` | Execute all plans in parallel waves | After planning is complete |
 | `/gsd:verify-work [N]` | Manual UAT with auto-diagnosis | After execution completes |
@@ -465,7 +465,7 @@ For reference, here is what GSD creates in your project:
     XX-phase-name/
       XX-YY-PLAN.md       # Atomic execution plans
       XX-YY-SUMMARY.md    # Execution outcomes and decisions
-      CONTEXT.md          # Your implementation preferences
+      CONTEXT.md          # Your implementation preferences (includes <code_context> with reusable assets and patterns)
       RESEARCH.md         # Ecosystem research findings
       VERIFICATION.md     # Post-execution verification results
 ```
