@@ -211,6 +211,7 @@ When executor returns a checkpoint AND `AUTO_CFG` is `"true"`:
    - `{user_response}`: What user provided
    - `{resume_instructions}`: Based on checkpoint type
 7. Continuation agent verifies previous commits, continues from resume point
+7a. **Summary data accuracy for checkpoint plans:** When the continuation agent creates or updates SUMMARY.md, it MUST reflect actual data from execution — not predicted or example values from the plan. Plans may contain placeholder data (sample API responses, mock user inputs). SUMMARY.md must report: actual files created, actual test results, actual user responses at checkpoints.
 8. Repeat until plan completes or user stops
 
 **Why fresh agent, not resume:** Resume relies on internal serialization that breaks with parallel tool calls. Fresh agents with explicit state are more reliable.
