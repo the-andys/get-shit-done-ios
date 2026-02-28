@@ -165,30 +165,73 @@ If "Continue and replan after": Continue to analyze_phase.
 If "View existing plans": Display plan files, then offer "Continue" / "Cancel".
 If "Cancel": Exit workflow.
 
-**If `has_plans` is false:** Continue to analyze_phase.
+**If `has_plans` is false:** Continue to scout_codebase.
+</step>
+
+<step name="scout_codebase">
+Lightweight scan of existing code to inform gray area identification and discussion. Uses ~10% context — acceptable for an interactive session.
+
+**Step 1: Check for existing codebase maps**
+```bash
+ls .planning/codebase/*.md 2>/dev/null
+```
+
+**If codebase maps exist:** Read the most relevant ones (CONVENTIONS.md, STRUCTURE.md, STACK.md based on phase type). Extract:
+- Reusable Views/ViewModels/Services
+- Established patterns (MVVM, data flow, persistence)
+- Integration points (where new code would connect)
+
+Skip to Step 3 below.
+
+**Step 2: If no codebase maps, do targeted grep**
+
+Extract key terms from the phase goal (e.g., "feed" to "post", "card", "list"; "auth" to "login", "session", "token").
+
+```bash
+grep -rl "{term1}\|{term2}" Sources/ --include="*.swift" 2>/dev/null | head -10
+ls Sources/Views/ 2>/dev/null
+ls Sources/ViewModels/ 2>/dev/null
+ls Sources/Services/ Sources/Utilities/ 2>/dev/null
+```
+
+Read the 3-5 most relevant files to understand existing patterns.
+
+**Step 3: Build internal codebase_context**
+
+From the scan, identify:
+- **Reusable assets** — existing Views, ViewModels, Services that could be used in this phase
+- **Established patterns** — how the codebase does state management (MVVM, @Observable), data persistence (SwiftData), navigation (NavigationStack)
+- **Integration points** — where new code would connect (navigation, tab bar, app entry)
+- **Creative options** — approaches the existing architecture enables or constrains
+
+Store as internal codebase_context for use in analyze_phase and present_gray_areas. This is NOT written to a file — used within this session only.
 </step>
 
 <step name="analyze_phase">
 Analyze the phase to identify gray areas worth discussing.
+
+**Use codebase_context from scout step to ground the analysis.**
 
 **Read the phase description from ROADMAP.md and determine:**
 
 1. **Domain boundary** — What capability is this phase delivering? State it clearly.
 
 2. **Gray areas by category** — For each relevant category (UI, UX, Behavior, Empty States, Content), identify 1-2 specific ambiguities that would change implementation.
+**Annotate with code context where relevant** (e.g., "You already have a CardView" or "No existing pattern for this").
 
 3. **Skip assessment** — If no meaningful gray areas exist (pure infrastructure, clear-cut implementation), the phase may not need discussion.
 
 **Output your analysis internally, then present to user.**
 
-Example analysis for "Post Feed" phase:
+Example analysis for "Post Feed" phase (with code context):
 ```
 Domain: Displaying posts from followed users
+Existing: CardView (Sources/Views/Components/CardView.swift), AsyncStream-based pagination, SwiftUI
 Gray areas:
-- UI: Layout style (cards vs timeline vs grid)
-- UI: Information density (full posts vs previews)
-- Behavior: Loading pattern (infinite scroll vs pagination)
-- Empty State: What shows when no posts exist
+- UI: Layout style (cards vs timeline vs grid) — CardView exists with shadow/rounded variants
+- UI: Information density (full posts vs previews) — no existing density patterns
+- Behavior: Loading pattern (infinite scroll vs pagination) — AsyncStream pagination available
+- Empty State: What shows when no posts exist — EmptyStateView exists in Components/
 - Content: What metadata displays (time, author, reactions count)
 ```
 </step>
@@ -215,12 +258,17 @@ We'll clarify HOW to implement this.
 
 **Do NOT include a "skip" or "you decide" option.** User ran this command to discuss — give them real choices.
 
+**Code context annotations:** When the scout found relevant existing code, annotate the gray area:
+
+  Layout style — Cards vs list vs timeline?
+  (You already have a CardView with shadow/rounded variants. Reusing it keeps the app consistent.)
+
 **Examples by domain:**
 
 For "Post Feed" (visual feature):
 ```
-☐ Layout style — Cards vs list vs timeline? Information density?
-☐ Loading behavior — Infinite scroll or pagination? Pull to refresh?
+☐ Layout style — Cards vs list vs timeline? (CardView exists with variants)
+☐ Loading behavior — Infinite scroll or pagination? (AsyncStream pagination available)
 ☐ Content ordering — Chronological, algorithmic, or user choice?
 ☐ Post metadata — What info per post? Timestamps, reactions, author?
 ```
@@ -263,6 +311,12 @@ Ask 4 questions per area before offering to continue or move on. Each answer oft
    - question: Specific decision for this area
    - options: 2-3 concrete choices (AskUserQuestion adds "Other" automatically), with the recommended choice highlighted and brief explanation why
    - Include "You decide" as an option when reasonable — captures Claude discretion
+   - **Annotate options with code context** when relevant:
+     "How should posts be displayed?"
+     - Cards (reuses existing CardView — consistent with other screens)
+     - List (simpler, would be a new pattern)
+     - Timeline (needs new TimelineView — none exists yet)
+   - **Context7 for library choices:** When a gray area involves library selection or API approach decisions, use mcp__context7__* tools to fetch current documentation. Only use Context7 when library-specific knowledge genuinely improves the options — not for every question.
    - After the user selects an option, prompt once: "Any additional context or rationale for this choice?" This is skippable — if the user says nothing or moves on, proceed. Do not ask more than once per decision. The goal is to capture reasoning that helps downstream agents, not to slow the flow.
 
 3. **After 4 questions, check:**
@@ -346,6 +400,20 @@ mkdir -p ".planning/phases/${padded_phase}-${phase_slug}"
 [Areas where user said "you decide" — note that Claude has flexibility here]
 
 </decisions>
+
+<code_context>
+## Existing Code Insights
+
+### Reusable Assets
+- [View/ViewModel/Service]: [How it could be used in this phase]
+
+### Established Patterns
+- [Pattern]: [How it constrains/enables this phase]
+
+### Integration Points
+- [Where new code connects to existing system]
+
+</code_context>
 
 <specifics>
 ## Specific Ideas
@@ -537,6 +605,9 @@ Route to `confirm_creation` step (existing behavior — show manual next steps).
 - Each selected area explored until user satisfied
 - Scope creep redirected to deferred ideas
 - CONTEXT.md captures actual decisions, not vague vision
+- Codebase scouted for reusable assets, patterns, and integration points
+- Gray areas identified with code context annotations where relevant
+- CONTEXT.md includes code_context section with reusable assets and patterns
 - Deferred ideas preserved for future phases
 - STATE.md updated with session info
 - User knows next steps
