@@ -359,23 +359,21 @@ Verified patterns from official sources:
 | Config file | {path or "none — see Wave 0"} |
 | Quick run command | `{command}` |
 | Full suite command | `{command}` |
-| Estimated runtime | ~{N} seconds |
 
 ### Phase Requirements → Test Map
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|-------------|
-| REQ-XX | {behavior description} | unit | `swift test --filter {TestModule}.{testName}` | ✅ yes / ❌ Wave 0 gap |
+| REQ-XX | {behavior} | unit | `swift test --filter {TestModule}.{testName}` | ✅ / ❌ Wave 0 |
 
-### Nyquist Sampling Rate
-- **Minimum sample interval:** After every committed task → run: `{quick run command}`
-- **Full suite trigger:** Before merging final task of any plan wave
-- **Phase-complete gate:** Full suite green before `/gsd:verify-work` runs
-- **Estimated feedback latency per task:** ~{N} seconds
+### Sampling Rate
+- **Per task commit:** `{quick run command}`
+- **Per wave merge:** `{full suite command}`
+- **Phase gate:** Full suite green before `/gsd:verify-work`
 
-### Wave 0 Gaps (must be created before implementation)
+### Wave 0 Gaps
 - [ ] `{Tests/TestFile.swift}` — covers REQ-{XX}
-- [ ] `{Tests/Helpers/SharedFixtures.swift}` — shared fixtures for phase {N}
-- [ ] Framework config: Xcode test plan or Package.swift test targets — if no framework detected
+- [ ] `{Tests/Helpers/SharedFixtures.swift}` — shared fixtures
+- [ ] Framework config: Xcode test plan or Package.swift test targets — if none detected
 
 *(If no gaps: "None — existing test infrastructure covers all phase requirements")*
 
@@ -419,7 +417,7 @@ INIT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init phase-op "${PHASE}")
 
 Extract from init JSON: `phase_dir`, `padded_phase`, `phase_number`, `commit_docs`.
 
-Also check Nyquist validation config — read `.planning/config.json` and check if `workflow.nyquist_validation` is `true`. If `true`, include the Validation Architecture section in RESEARCH.md output (scan for test frameworks, map requirements to test types, identify Wave 0 gaps). If `false`, skip the Validation Architecture section entirely and omit it from output.
+Also read `.planning/config.json` — if `workflow.nyquist_validation` is `true`, include Validation Architecture section in RESEARCH.md. If `false`, skip it.
 
 Then read CONTEXT.md if exists:
 ```bash
@@ -468,29 +466,16 @@ For each domain: Context7 first → Official docs → WebSearch → Cross-verify
 
 ## Step 4: Validation Architecture Research (if nyquist_validation enabled)
 
-**Skip this step if** workflow.nyquist_validation is false in config.
-
-This step answers: "How will Claude's executor know, within seconds of committing each task, whether the output is correct?"
+**Skip if** workflow.nyquist_validation is false.
 
 ### Detect Test Infrastructure
-Scan the codebase for test configuration:
-- Look for test config files: Xcode test plan (.xctestplan), Package.swift test targets
-- Look for test directories: Tests/, *Tests/
-- Look for test files: *Tests.swift, *Test.swift
-- Check for Swift Testing (`import Testing`) vs XCTest (`import XCTest`) usage
+Scan for: test config files (.xctestplan, Package.swift test targets), test directories (Tests/, *Tests/), test files (*Tests.swift, *Test.swift), Swift Testing (`import Testing`) vs XCTest (`import XCTest`) usage.
 
 ### Map Requirements to Tests
-For each requirement in <phase_requirements>:
-- Identify the behavior to verify
-- Determine test type: unit / integration / contract / smoke / e2e / manual-only
-- Specify the automated command to run that test in < 30 seconds
-- Flag if only verifiable manually (justify why)
+For each phase requirement: identify behavior, determine test type (unit/integration/smoke/e2e/manual-only), specify automated command runnable in < 30 seconds, flag manual-only with justification.
 
 ### Identify Wave 0 Gaps
-List test files, fixtures, or utilities that must be created BEFORE implementation:
-- Missing test files for phase requirements
-- Missing test framework configuration
-- Missing shared fixtures or test utilities
+List missing test files, framework config, or shared fixtures needed before implementation.
 
 ## Step 5: Quality Check
 

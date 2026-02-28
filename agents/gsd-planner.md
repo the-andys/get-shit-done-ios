@@ -157,21 +157,19 @@ Every task has four required fields:
 - Good: "Create SignInWithAppleViewModel conforming to ObservableObject. Use ASAuthorizationAppleIDProvider for authentication flow, store credential in Keychain via KeychainService. Persist user profile to SwiftData User model. Use async/await (not Combine - simpler error propagation for one-shot operations)."
 - Bad: "Add authentication", "Make login work"
 
-**<verify>:** How to prove the task is complete. Supports structured format:
+**<verify>:** How to prove the task is complete.
 
 ```xml
 <verify>
   <automated>swift test --filter TestModule.testBehavior</automated>
-  <manual>Optional: human-readable description of what to check</manual>
-  <sampling_rate>run after this task commits, before next task begins</sampling_rate>
 </verify>
 ```
 
 - Good: Specific automated command that runs in < 60 seconds
 - Bad: "It works", "Looks good", manual-only verification
-- Simple format also accepted: `swift test` passes, `xcodebuild build -scheme App -destination 'platform=iOS Simulator,name=iPhone 16'` succeeds with zero warnings
+- Simple format also accepted: `swift test` passes, `xcodebuild build -scheme App` succeeds
 
-**Nyquist Rule:** Every `<verify>` must include an `<automated>` command. If no test exists yet for this behavior, set `<automated>MISSING — Wave 0 must create {test_file} first</automated>` and create a Wave 0 task that generates the test scaffold.
+**Nyquist Rule:** Every `<verify>` must include an `<automated>` command. If no test exists yet, set `<automated>MISSING — Wave 0 must create {test_file} first</automated>` and create a Wave 0 task that generates the test scaffold.
 
 **<done>:** Acceptance criteria - measurable state of completion.
 - Good: "Sign in with Apple flow completes, user profile is persisted to SwiftData, subsequent app launch shows authenticated state"
@@ -227,6 +225,16 @@ Each task: **15-60 minutes** Claude execution time.
 **Too large signals:** Touches >3-5 files, multiple distinct chunks, action section >1 paragraph.
 
 **Combine signals:** One task sets up for the next, separate tasks touch same file, neither meaningful alone.
+
+## Interface-First Task Ordering
+
+When a plan creates new interfaces consumed by subsequent tasks:
+
+1. **First task: Define contracts** — Create type files, interfaces, exports
+2. **Middle tasks: Implement** — Build against the defined contracts
+3. **Last task: Wire** — Connect implementations to consumers
+
+This prevents the "scavenger hunt" anti-pattern where executors explore the codebase to understand contracts. They receive the contracts in the plan itself.
 
 ## Specificity Examples
 
@@ -477,6 +485,69 @@ After completion, create `.planning/phases/XX-name/{phase}-{plan}-SUMMARY.md`
 | `must_haves` | Yes | Goal-backward verification criteria |
 
 Wave numbers are pre-computed during planning. Execute-phase reads `wave` directly from frontmatter.
+
+## Interface Context for Executors
+
+**Key insight:** "The difference between handing a contractor blueprints versus telling them 'build me a house.'"
+
+When creating plans that depend on existing code or create new interfaces consumed by other plans:
+
+### For plans that USE existing code:
+After determining `files_modified`, extract the key protocols/types/exports from the codebase that executors will need:
+
+```bash
+# Extract type definitions, protocols, and public APIs from relevant files
+grep -n "protocol\|struct\|class\|enum\|func\|public" {relevant_source_files} 2>/dev/null | head -50
+```
+
+Embed these in the plan's `<context>` section as an `<interfaces>` block:
+
+```xml
+<interfaces>
+<!-- Key types and contracts the executor needs. Extracted from codebase. -->
+<!-- Executor should use these directly — no codebase exploration needed. -->
+
+From Sources/Models/User.swift:
+```swift
+public struct User: Identifiable, Codable {
+    let id: UUID
+    let email: String
+    let name: String
+    let createdAt: Date
+}
+```
+
+From Sources/Services/AuthService.swift:
+```swift
+func validateToken(_ token: String) async throws -> User?
+func createSession(for user: User) async throws -> SessionToken
+```
+</interfaces>
+```
+
+### For plans that CREATE new interfaces:
+If this plan creates types/protocols that later plans depend on, include a "Wave 0" skeleton step:
+
+```xml
+<task type="auto">
+  <name>Task 0: Write interface contracts</name>
+  <files>Sources/Protocols/NewFeatureProtocol.swift</files>
+  <action>Create protocol definitions that downstream plans will implement against. These are the contracts — implementation comes in later tasks.</action>
+  <verify>File exists with protocol definitions, no implementation</verify>
+  <done>Protocol file committed, types defined</done>
+</task>
+```
+
+### When to include interfaces:
+- Plan touches files that import from other modules → extract those module's exports
+- Plan creates a new API endpoint → extract the request/response types
+- Plan modifies a view → extract its view model protocol
+- Plan depends on a previous plan's output → extract the types from that plan's files_modified
+
+### When to skip:
+- Plan is self-contained (creates everything from scratch, no imports)
+- Plan is pure configuration (no code interfaces involved)
+- Level 0 discovery (all patterns already established)
 
 ## Context Section Rules
 
@@ -999,6 +1070,16 @@ For phases not selected, retain from digest:
 - `patterns`: Conventions to follow
 
 **From STATE.md:** Decisions → constrain approach. Pending todos → candidates.
+
+**From RETROSPECTIVE.md (if exists):**
+```bash
+cat .planning/RETROSPECTIVE.md 2>/dev/null | tail -100
+```
+
+Read the most recent milestone retrospective and cross-milestone trends. Extract:
+- **Patterns to follow** from "What Worked" and "Patterns Established"
+- **Patterns to avoid** from "What Was Inefficient" and "Key Lessons"
+- **Cost patterns** to inform model selection and agent strategy
 </step>
 
 <step name="gather_phase_context">
