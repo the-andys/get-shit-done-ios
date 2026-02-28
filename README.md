@@ -9,7 +9,7 @@
 **Solves context rot — the quality degradation that happens as Claude fills its context window.**
 
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.20.6-orange?style=for-the-badge)](https://github.com/glittercowboy/get-shit-done)
+[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.21.0-orange?style=for-the-badge)](https://github.com/glittercowboy/get-shit-done)
 
 ```bash
 npx get-shit-done-ios@latest

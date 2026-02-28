@@ -4,6 +4,41 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.0] - 2026-02-27
+
+Upstream sync: v1.20.6 → v1.21.0
+
+### Added
+- YAML frontmatter sync for STATE.md — machine-readable status tracking via state-json and state-sync commands
+- PRD express path for plan-phase (`--prd <file>` flag) — bypasses discuss-phase with locked decisions from PRD
+- `/gsd:add-tests` workflow — standardized post-phase test generation (iOS-adapted: Swift Testing, XCTest, XCUITest)
+- Human verification gate before resolving debug sessions — new `awaiting_human_verify` status and checkpoint
+- `<project_context>` block in gsd-verifier — discovers CLAUDE.md and project skills before verification
+- Interface Context for Executors section in planner — provides protocol/type contracts to executor agents
+- Interface-First Task Ordering guidance in planner
+- Living retrospective in complete-milestone workflow — RETROSPECTIVE.md updated per milestone with trends
+- RETROSPECTIVE.md reading in planner for cross-milestone learning
+- `phase_req_ids` propagated from init JSON in execute-phase and plan-phase workflows (removes fragile shell extraction)
+
+### Changed
+- Nyquist compression across agents: gsd-phase-researcher, gsd-plan-checker, gsd-planner — reduced verbose text while preserving iOS markers (XCUITest, swift test, .xctestplan references)
+- Nyquist compression in VALIDATION.md template
+- Update workflow version detection now validates install integrity with marker file checks and version regex
+- Update workflow npx commands now use `npx -y get-shit-done-ios@latest` for reliable execution
+- Installer onboarding: `/gsd:help` → `/gsd:new-project`, improved launch instructions, updated Discord link
+- `writeManifest()` and `reportLocalPatches()` now accept runtime parameter and execute before hooks config
+- Decision/blocker inputs use file-based text for shell-safe handling (preserves `$`, `*` in STATE.md)
+
+### Fixed
+- Multi-level decimal phase handling (e.g., 72.1.1) with proper regex escaping
+- Progress bar percent clamping to prevent RangeError crash
+- requirements-completed frontmatter mapping in summary-extract
+- STATE.md decision corruption with dollar sign handling
+- `--cwd` override support in state-snapshot command
+- Discord invite URL updated to vanity URL (discord.gg/gsd)
+- Stale version references in package-lock.json (0.7.0 → 0.10.0) and terminal.svg (v0.7.0 → v0.10.0)
+- Package name mismatch in package-lock.json
+
 ## [0.9.0] - 2026-02-26
 
 Upstream sync: v1.20.5 → v1.20.6
