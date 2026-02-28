@@ -1246,7 +1246,9 @@ function generateManifest(dir, baseDir) {
 /**
  * Write file manifest after installation for future modification detection
  */
-function writeManifest(configDir) {
+function writeManifest(configDir, runtime = 'claude') {
+  const isOpencode = runtime === 'opencode';
+  const isCodex = runtime === 'codex';
   const gsdDir = path.join(configDir, 'get-shit-done');
   const commandsDir = path.join(configDir, 'commands', 'gsd');
   const agentsDir = path.join(configDir, 'agents');
@@ -1318,7 +1320,7 @@ function saveLocalPatches(configDir) {
 /**
  * After install, report backed-up patches for user to reapply.
  */
-function reportLocalPatches(configDir) {
+function reportLocalPatches(configDir, runtime = 'claude') {
   const patchesDir = path.join(configDir, PATCHES_DIR_NAME);
   const metaPath = path.join(patchesDir, 'backup-meta.json');
   if (!fs.existsSync(metaPath)) return [];
@@ -1334,7 +1336,8 @@ function reportLocalPatches(configDir) {
     }
     console.log('');
     console.log('  Your modifications are saved in ' + cyan + PATCHES_DIR_NAME + '/' + reset);
-    console.log('  Run ' + cyan + '/gsd:reapply-patches' + reset + ' to merge them into the new version.');
+    const reapplyCmd = runtime === 'opencode' ? '/gsd-reapply-patches' : '/gsd:reapply-patches';
+    console.log('  Run ' + cyan + reapplyCmd + reset + ' to merge them into the new version.');
     console.log('  Or manually compare and merge the files.');
     console.log('');
   }
@@ -1538,6 +1541,13 @@ function install(isGlobal, runtime = 'claude') {
     }
   }
 
+  // Write file manifest for future modification detection
+  writeManifest(targetDir, runtime);
+  console.log(`  ${green}✓${reset} Wrote file manifest (${MANIFEST_NAME})`);
+
+  // Report any backed-up local patches
+  reportLocalPatches(targetDir, runtime);
+
   // Configure SessionStart hook for update checking (skip for opencode)
   if (!isOpencode) {
     if (!settings.hooks) {
@@ -1585,13 +1595,6 @@ function install(isGlobal, runtime = 'claude') {
     }
   }
 
-  // Write file manifest for future modification detection
-  writeManifest(targetDir);
-  console.log(`  ${green}✓${reset} Wrote file manifest (${MANIFEST_NAME})`);
-
-  // Report any backed-up local patches
-  reportLocalPatches(targetDir);
-
   return { settingsPath, settings, statuslineCommand, runtime };
 }
 
@@ -1621,11 +1624,11 @@ function finishInstall(settingsPath, settings, statuslineCommand, shouldInstallS
   if (runtime === 'opencode') program = 'OpenCode';
   if (runtime === 'gemini') program = 'Gemini';
 
-  const command = isOpencode ? '/gsd-help' : '/gsd:help';
+  const command = isOpencode ? '/gsd-new-project' : '/gsd:new-project';
   console.log(`
-  ${green}Done!${reset} Launch ${program} and run ${cyan}${command}${reset}.
+  ${green}Done!${reset} Open a blank directory in ${program} and run ${cyan}${command}${reset}.
 
-  ${cyan}Join the community:${reset} https://discord.gg/5JJgD5svVS
+  ${cyan}Join the community:${reset} https://discord.gg/gsd
 `);
 }
 
