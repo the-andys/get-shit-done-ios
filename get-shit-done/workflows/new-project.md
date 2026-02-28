@@ -341,6 +341,29 @@ mkdir -p .planning
 node ~/.claude/get-shit-done/bin/gsd-tools.cjs commit "docs: initialize project" --files .planning/PROJECT.md
 ```
 
+<step name="ios_scaffolding">
+**iOS project scaffolding (conditional):**
+
+If the project targets iOS (detected from PROJECT.md mentioning Swift, SwiftUI, iOS, Xcode, or Apple platforms):
+
+1. **Generate `.gitignore`** (if not already present):
+
+   Standard iOS/Xcode ignores: `*.xcuserstate`, `DerivedData/`, `build/`, `*.xcworkspace/xcuserdata/`, `*.pbxuser`, `*.mode1v3`, `*.mode2v3`, `*.perspectivev3`, `*.moved-aside`, `Pods/`, `.build/`, `Package.resolved`.
+
+2. **Generate `CLAUDE.md`** (if not already present):
+
+   Minimal iOS project instructions for Claude Code:
+   - Target stack (Swift, SwiftUI, iOS version from PROJECT.md)
+   - Convention reminders: `#Preview` macro, `String(localized:)`, async/await, Swift Testing
+   - Accessibility mandate: VoiceOver, Dynamic Type in every View
+
+**Do NOT generate:** `.xcodeproj`, `.xcworkspace`, Swift source files, or any Xcode-managed artifacts. The user creates the Xcode project.
+
+**Do NOT overwrite:** Existing `.gitignore` or `CLAUDE.md` files.
+
+If iOS is not detected, skip this step entirely.
+</step>
+
 ## 5. Workflow Preferences
 
 **If auto mode:** Skip — config was collected in Step 2a. Proceed to Step 5.5.
