@@ -4,6 +4,29 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.0] - 2026-02-27
+
+Upstream sync: v1.20.6 → v1.21.0
+
+### Added
+- PRD express path for plan-phase (`--prd <file>` flag) — bypasses discuss-phase with locked decisions from PRD
+- `/gsd:add-tests` workflow — standardized test generation for completed phases (iOS-adapted: Swift Testing, XCUITest, XCUITest)
+- Interface Context for Executors section in planner — provides protocol/type contracts to executor agents
+- Interface-First Task Ordering guidance in planner
+- RETROSPECTIVE.md reading in planner for cross-milestone learning
+- `phase_req_ids` propagated from init JSON in execute-phase and plan-phase workflows (removes fragile shell extraction)
+
+### Changed
+- Nyquist compression across agents: gsd-phase-researcher, gsd-plan-checker, gsd-planner — reduced verbose text while preserving iOS markers
+- Update workflow version detection now validates install integrity with marker file checks and version regex
+- Update workflow npx commands now use `npx -y get-shit-done-ios@latest` for reliable execution
+- Installer onboarding: `/gsd:help` → `/gsd:new-project`, improved launch instructions, updated Discord link
+- `writeManifest()` and `reportLocalPatches()` now accept runtime parameter and execute before hooks config
+
+### Fixed
+- Stale version references in package-lock.json (0.7.0 → 0.10.0) and terminal.svg
+- Package name mismatch in package-lock.json (get-shit-done-ios-cc → get-shit-done-ios)
+
 ## [0.9.0] - 2026-02-26
 
 Upstream sync: v1.20.5 → v1.20.6
