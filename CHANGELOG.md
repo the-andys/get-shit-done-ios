@@ -4,6 +4,21 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — Task 016 (accumulating for v0.11.0)
+
+### Added
+- Xcode MCP tools reference (`ios-mcp-tools.md`) — three-layer architecture: Apple xcode-tools (~20 tools), XcodeBuildMCP (~76 tools), CLI fallback
+- Build & Test Tooling section in `ios-swift-guidelines.md` — MCP-preferred with CLI fallback for every operation
+- MCP Testing Tools section in `ios-testing.md` — Apple vs XcodeBuildMCP decision table
+- Xcode MCP File Operations subsection in `ios-frameworks.md` — pbxproj automatic management via XcodeWrite/XcodeUpdate
+- iOS scaffolding step in `new-project.md` — generates `.gitignore` and `CLAUDE.md` when iOS stack detected (GAP-12)
+- Context prompt in `discuss-phase.md` — captures rationale per decision, skippable (GAP-05)
+
+### Fixed
+- Git status warning in `verify_phase_goal` — warns on untracked `.planning/` files, informational only (GAP-09)
+- Summary fidelity instruction in `checkpoint_handling` — SUMMARY.md must reflect actual execution data, not predicted values (GAP-08)
+- Test co-location constraint in `gsd-roadmapper.md` — tests must be in same phase as feature, never in separate Testing phase (GAP-10)
+
 ## [0.10.0] - 2026-02-27
 
 Upstream sync: v1.20.6 → v1.21.0
