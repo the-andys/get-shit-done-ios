@@ -313,6 +313,21 @@ Read status:
 grep "^status:" "$PHASE_DIR"/*-VERIFICATION.md | cut -d: -f2 | tr -d ' '
 ```
 
+**Git tracking verification:**
+
+Before acting on the status, check for untracked planning files:
+
+```bash
+UNTRACKED=$(git status --porcelain .planning/ 2>/dev/null)
+if [ -n "$UNTRACKED" ]; then
+  echo "⚠️  Warning: Untracked files in .planning/"
+  echo "$UNTRACKED"
+  echo "These files are not committed and may be lost."
+fi
+```
+
+This is informational — it does NOT block verification. Untracked files may indicate incomplete commits from a previous execution.
+
 | Status | Action |
 |--------|--------|
 | `passed` | → update_roadmap |
