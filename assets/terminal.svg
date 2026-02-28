@@ -50,7 +50,7 @@
     <text class="text cyan" font-size="14" y="148" xml:space="preserve"> ╚═════╝ ╚══════╝╚═════╝ </text><text class="text orange" font-size="14" x="212" y="148" xml:space="preserve">   ╚═╝ ╚═════╝ ╚══════╝</text>
 
     <!-- Title: GSD in cyan, :iOS in orange -->
-    <text class="text" font-size="15" y="188"><tspan class="cyan">  GSD</tspan><tspan class="orange">:iOS</tspan>  <tspan class="dim">v0.7.0</tspan></text>
+    <text class="text" font-size="15" y="188"><tspan class="cyan">  GSD</tspan><tspan class="orange">:iOS</tspan>  <tspan class="dim">v0.10.0</tspan></text>
     <text class="text white" font-size="15" y="212">  A meta-prompting, context engineering and spec-driven</text>
     <text class="text white" font-size="15" y="232">  development system for Claude Code by TÂCHES.</text>
     <text class="text white" font-size="15" y="252">  iOS adaptation by the-andys.</text>
