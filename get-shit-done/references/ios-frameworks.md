@@ -271,6 +271,22 @@ Security is a pillar of App Store Review. Apps with security flaws get rejected.
 
 **Use Accessibility Inspector** to verify every screen — VoiceOver support is not optional.
 
+### Xcode MCP File Operations
+
+When the `xcode-tools` MCP server is available, prefer Xcode MCP file operations over direct file manipulation for project-aware file management:
+
+| Tool | Purpose |
+|------|---------|
+| **`XcodeWrite`** | Create or overwrite files — Xcode adds them to the project and manages `pbxproj` automatically |
+| **`XcodeUpdate`** | Apply targeted edits to existing files |
+| **`XcodeRead`** | Read file contents from the project |
+| **`XcodeGlob`** / **`XcodeGrep`** / **`XcodeLS`** | Find and search files within the project |
+| **`XcodeMakeDir`** / **`XcodeRM`** / **`XcodeMV`** | Directory and file management with automatic project reference updates |
+
+**Why prefer MCP file operations:** When `XcodeWrite` or `XcodeRM` creates or removes Swift files, Xcode handles all `pbxproj` modifications automatically — target membership, build phases, and group hierarchy. This eliminates manual `pbxproj` editing, which is the primary source of project file corruption and merge conflicts.
+
+**Without MCP:** Use standard `Read`, `Write`, `Edit`, `Glob`, `Grep` tools. Creating new Swift files requires manual addition to the Xcode project via `xcodebuild` or by opening Xcode to add files to targets.
+
 ---
 
 ## iOS 26+ Features (Conditional)
