@@ -69,6 +69,7 @@ function loadConfig(cwd) {
     research: true,
     plan_checker: true,
     verifier: true,
+    nyquist_validation: false,
     parallelization: true,
     brave_search: false,
   };
@@ -104,6 +105,8 @@ function loadConfig(cwd) {
       verifier: get('verifier', { section: 'workflow', field: 'verifier' }) ?? defaults.verifier,
       parallelization,
       brave_search: get('brave_search') ?? defaults.brave_search,
+      nyquist_validation: get('nyquist_validation', { section: 'workflow', field: 'nyquist_validation' }) ?? defaults.nyquist_validation,
+      model_overrides: parsed.model_overrides || null,
     };
   } catch {
     return defaults;
@@ -378,11 +381,21 @@ function generateSlugInternal(text) {
 function getMilestoneInfo(cwd) {
   try {
     const roadmap = fs.readFileSync(path.join(cwd, '.planning', 'ROADMAP.md'), 'utf-8');
-    const versionMatch = roadmap.match(/v(\d+\.\d+)/);
-    const nameMatch = roadmap.match(/## .*v\d+\.\d+[:\s]+([^\n(]+)/);
+    // Strip <details>...</details> blocks so shipped milestones don't interfere
+    const cleaned = roadmap.replace(/<details>[\s\S]*?<\/details>/gi, '');
+    // Extract version and name from the same ## heading for consistency
+    const headingMatch = cleaned.match(/## .*v(\d+\.\d+)[:\s]+([^\n(]+)/);
+    if (headingMatch) {
+      return {
+        version: 'v' + headingMatch[1],
+        name: headingMatch[2].trim(),
+      };
+    }
+    // Fallback: try bare version match
+    const versionMatch = cleaned.match(/v(\d+\.\d+)/);
     return {
       version: versionMatch ? versionMatch[0] : 'v1.0',
-      name: nameMatch ? nameMatch[1].trim() : 'milestone',
+      name: 'milestone',
     };
   } catch {
     return { version: 'v1.0', name: 'milestone' };
