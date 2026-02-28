@@ -4,7 +4,9 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — Task 016 (accumulating for v0.11.0)
+## [0.11.0] - 2026-02-28
+
+Upstream sync: v1.21.0 -> v1.22.0
 
 ### Added
 - Xcode MCP tools reference (`ios-mcp-tools.md`) — three-layer architecture: Apple xcode-tools (~20 tools), XcodeBuildMCP (~76 tools), CLI fallback
@@ -13,22 +15,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Xcode MCP File Operations subsection in `ios-frameworks.md` — pbxproj automatic management via XcodeWrite/XcodeUpdate
 - iOS scaffolding step in `new-project.md` — generates `.gitignore` and `CLAUDE.md` when iOS stack detected (GAP-12)
 - Context prompt in `discuss-phase.md` — captures rationale per decision, skippable (GAP-05)
-
-### Fixed
-- Git status warning in `verify_phase_goal` — warns on untracked `.planning/` files, informational only (GAP-09)
-- Summary fidelity instruction in `checkpoint_handling` — SUMMARY.md must reflect actual execution data, not predicted values (GAP-08)
-- Test co-location constraint in `gsd-roadmapper.md` — tests must be in same phase as feature, never in separate Testing phase (GAP-10)
-
-### Task 017 — Upstream sync v1.21.0 to v1.22.0 (accumulating for v0.11.0)
-
-#### Added
 - Code-aware discuss phase with codebase scouting — scout step identifies reusable Views/ViewModels/Services before gray area analysis; iOS-adapted examples (Swift, SwiftData, MVVM, NavigationStack)
 - code_context section in CONTEXT.md template — captures reusable assets, established patterns, and integration points
 - Analysis paralysis guard in gsd-executor — stops infinite read loops after 5+ consecutive reads without action
 - Exhaustive cross-check in gsd-plan-checker — verifies PROJECT.md requirements not silently dropped from phases
 - Task-level TDD guidance in gsd-planner — tdd="true" + behavior block pattern (iOS-adapted: swift test --filter)
 
-#### Fixed
+### Fixed
+- Git status warning in `verify_phase_goal` — warns on untracked `.planning/` files, informational only (GAP-09)
+- Summary fidelity instruction in `checkpoint_handling` — SUMMARY.md must reflect actual execution data, not predicted values (GAP-08)
+- Test co-location constraint in `gsd-roadmapper.md` — tests must be in same phase as feature, never in separate Testing phase (GAP-10)
 - $HOME instead of ~ in all agent/workflow paths — prevents subagent MODULE_NOT_FOUND on path rewrites (affects external volume users)
 - Dual .claude/skills/ + .agents/skills/ discovery — project skills no longer silently ignored in Claude Code
 - nyquist_validation missing from loadConfig() return — plan-phase now correctly detects nyquist validation config
