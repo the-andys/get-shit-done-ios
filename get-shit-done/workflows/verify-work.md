@@ -25,6 +25,7 @@ If $ARGUMENTS contains a phase number, load context:
 
 ```bash
 INIT=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" init verify-work "${PHASE_ARG}")
+if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
 Parse JSON for: `planner_model`, `checker_model`, `commit_docs`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `has_verification`.
@@ -108,6 +109,19 @@ Examples:
   → Expected: "Clicking Reply opens inline composer below comment. Submitting shows reply nested under parent with visual indentation."
 
 Skip internal/non-observable items (refactors, type changes, etc.).
+
+**Cold-start smoke test injection:**
+
+After extracting tests from SUMMARYs, scan the SUMMARY files for modified/created file paths. If ANY path matches these patterns:
+
+`App.swift`, `*App.swift`, `AppDelegate.swift`, `SceneDelegate.swift`, `*.xcdatamodeld`, `ModelContainer*`, `@ModelActor*`, `Persistence.swift`, `*-Info.plist`, `*.entitlements`, `ContentView.swift`
+
+Then **prepend** this test to the test list:
+
+- name: "Cold Start Smoke Test"
+- expected: "Delete the app from Simulator (or use a fresh Simulator). Build and run from Xcode. App launches without crashes, any SwiftData/CoreData migration completes, initial data loads, and the primary screen renders with live content (not placeholder or empty state that should have data)."
+
+This catches bugs that only manifest on fresh install — SwiftData schema mismatches, missing default data, entitlement issues, broken ModelContainer setup — which pass against existing app state but crash on first launch.
 </step>
 
 <step name="create_uat_file">
