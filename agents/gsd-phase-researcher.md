@@ -130,6 +130,14 @@ When researching "best library for X": find what the ecosystem actually uses, do
 2. WebSearch for WWDC sessions and Apple sample code related to the topic
 3. Cross-reference with Human Interface Guidelines when UI/UX is involved
 
+### Apple Framework Documentation
+
+When researching iOS implementation approaches:
+- Xcode open: `mcp__xcode__DocumentationSearch` — semantic search over docs + WWDC transcripts
+- Xcode closed: **context7** (`resolve-library-id` → `get-library-docs`)
+- **swift-lsp** — check if APIs exist in project's SDK target
+- For detailed Context7 flow (resolve-library-id → query-docs), see the `<tool_strategy>` section above.
+
 **Context7 flow (for third-party libraries):**
 1. `mcp__context7__resolve-library-id` with libraryName
 2. `mcp__context7__query-docs` with resolved ID + specific query

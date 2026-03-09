@@ -480,6 +480,28 @@ signposter.endInterval("DatabaseQuery", state)
 - Zombie Objects — Detect messages sent to deallocated objects
 - Malloc Stack Logging — Track allocation origins
 
+### iOS Debugging Tools
+
+**Diagnostics (cheapest first):**
+- `mcp__xcode__XcodeRefreshCodeIssuesInFile` — Fast per-file compiler diagnostics (Xcode open)
+- `swift-lsp` — Type checking, find references, go-to-definition
+- `mcp__XcodeBuildMCP__build_sim` — Full build to reproduce compilation errors
+
+**Runtime debugging:**
+- `mcp__XcodeBuildMCP__launch_app_logs_sim` — Launch app with log capture
+- `mcp__XcodeBuildMCP__start_sim_log_cap` + `stop_sim_log_cap` — Runtime logs
+- `mcp__xcode__ExecuteSnippet` — Run Swift code in project context (Xcode open)
+
+**UI debugging:**
+- `mcp__XcodeBuildMCP__describe_ui` — Inspect live UI hierarchy
+- `mcp__XcodeBuildMCP__screenshot` — Capture visual state at moment of bug
+- `mcp__xcode__RenderPreview` — Check SwiftUI preview for rendering issues (Xcode open)
+
+**Code understanding:**
+- `swift-lsp` find references — Trace all usages of a type/function
+- `context7` — Latest API documentation for debugging API misuse
+- `mcp__xcode__DocumentationSearch` — Apple docs + WWDC transcripts (Xcode open)
+
 ## Comment Out Everything
 
 **When:** Many possible interactions, unclear which code causes issue.

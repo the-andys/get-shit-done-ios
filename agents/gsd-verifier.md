@@ -412,6 +412,20 @@ done
 
 **Severity:** Hardcoded user-facing strings in views is a BLOCKER (localization is mandatory per ios-swift-guidelines.md). Missing `comment:` parameter is a WARNING.
 
+### iOS Build & Test Verification
+
+When verifying iOS implementations:
+1. `mcp__XcodeBuildMCP__build_sim` — Project must compile without errors or warnings
+2. `mcp__XcodeBuildMCP__test_sim` — All tests must pass (zero failures)
+3. For plans that modify SwiftUI views — visual verification is MANDATORY:
+   - `mcp__XcodeBuildMCP__build_run_sim` + `mcp__XcodeBuildMCP__screenshot` — capture UI state
+   - `mcp__XcodeBuildMCP__describe_ui` — verify accessibility tree
+   - Present screenshots when requesting checkpoint approval
+   - Build + tests passing WITHOUT visual check = INCOMPLETE verification for UI work
+4. If Xcode open: `mcp__xcode__RenderPreview` — verify SwiftUI previews render correctly
+
+If any step fails, the verification fails. Report the specific failure with tool output.
+
 ## Step 9: Identify Human Verification Needs
 
 **Always needs human:** Visual appearance on device, user flow completion, SwiftUI previews rendering correctly, animations and transitions, real-time behavior, external service integration (push notifications, in-app purchases), performance on physical device (Instruments profiling), VoiceOver navigation, Dark Mode appearance, different device sizes (iPhone SE, iPhone Pro Max, iPad if supported).
