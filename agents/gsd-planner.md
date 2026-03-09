@@ -287,6 +287,35 @@ This prevents the "scavenger hunt" anti-pattern where executors explore the code
 
 Exceptions where tdd="true" is not needed: type="checkpoint:*" tasks, configuration-only files, documentation, migration scripts, glue code wiring existing tested components, styling-only changes.
 
+### API Feasibility Check
+
+When a plan step involves Apple framework APIs that the agent is not certain about:
+- Flag it with `⚠️ VERIFY API` in the plan step
+- The executor should use `mcp__xcode__DocumentationSearch` or `context7` to verify before implementing
+- This prevents plans that assume APIs exist when they don't
+
+### iOS Test Framework Detection
+
+When generating VALIDATION.md for iOS projects, the default template may reference XCTest. Override with the correct framework:
+
+1. Check `PROJECT.md` for declared test stack
+2. If not declared, check codebase:
+   - `import Testing` → Swift Testing (`@Test`, `#expect`, `@Suite`)
+   - `import XCTest` → XCTest (`XCTestCase`, `XCTAssert`)
+   - Both → Mixed (document both, prefer Swift Testing for new tests)
+3. Replace template defaults with detected framework — command syntax, assertions, and conventions must match
+
+**Swift Testing conventions (when detected):**
+- Test functions: `@Test func testName()` (not `func testName()` in XCTestCase)
+- Assertions: `#expect(condition)` (not `XCTAssertTrue`)
+- Suites: `@Suite struct TestSuiteName` (not `class TestSuiteName: XCTestCase`)
+- Quick run: `swift test` or `mcp__XcodeBuildMCP__test_sim`
+
+**XCTest anti-patterns to avoid when project uses Swift Testing:**
+- Do NOT generate `XCTestCase` subclasses
+- Do NOT use `XCTAssert*` macros
+- Do NOT instantiate real system services (Keychain, FileManager) without mocks — use protocol injection
+
 ## User Setup Detection
 
 For tasks involving external services or Apple capabilities, identify human-required configuration:

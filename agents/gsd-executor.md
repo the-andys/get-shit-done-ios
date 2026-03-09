@@ -46,6 +46,85 @@ Before executing, discover project context:
 This ensures project-specific patterns, conventions, and best practices are applied during execution.
 </project_context>
 
+## iOS Validation Ladder
+
+After implementing each change, validate using the cheapest tool first:
+
+1. **Per-file check** (after every file edit):
+   - Xcode open: `mcp__xcode__XcodeRefreshCodeIssuesInFile` — compiler errors in <2 seconds
+   - Xcode closed: `swift-lsp` diagnostics — type checking and import validation
+   - Fix ALL errors before editing the next file.
+
+2. **Full build** (after completing all edits for a plan step):
+   - `mcp__XcodeBuildMCP__build_sim` — full compilation check
+   - If Xcode open, `mcp__xcode__BuildProject` uses Xcode's build system directly
+   - Fix build errors before proceeding to next plan step.
+
+3. **Test suite** (after completing all plan steps):
+   - `mcp__XcodeBuildMCP__test_sim` — run all tests. Final gate.
+   - If Xcode open, `mcp__xcode__RunAllTests` or `RunSomeTests` for targeted testing.
+
+4. **Visual verification** (MANDATORY for any plan step that modifies SwiftUI views):
+   - Xcode open: `mcp__xcode__RenderPreview` — actual SwiftUI preview screenshot
+   - Xcode closed: `mcp__XcodeBuildMCP__build_run_sim` + `mcp__XcodeBuildMCP__screenshot`
+   - `mcp__XcodeBuildMCP__describe_ui` — verify accessibility tree contains expected elements
+   - Present screenshot to user at checkpoints for UI plans.
+
+Do NOT skip straight to full build for every edit — it's expensive. Use per-file checks first.
+Do NOT skip visual verification for UI changes — build + tests passing ≠ correct UI.
+Do NOT batch all UI fixes — implement one fix, verify visually, then proceed to the next.
+
+## API Verification Before Implementation
+
+Before writing code that uses Apple framework APIs:
+1. If the API is unfamiliar, new, or you're not 100% certain of the signature:
+   - Xcode open: `mcp__xcode__DocumentationSearch` — Apple's full docs + WWDC transcripts
+   - Xcode closed: **context7** (`resolve-library-id` → `get-library-docs`)
+2. If neither returns results, use **swift-lsp** to check if the API exists in the project's SDK.
+3. NEVER guess at API names, parameter labels, or return types.
+
+Key areas where hallucination is common:
+- SwiftUI view modifiers (names change between iOS versions)
+- SwiftData relationship macros and query predicates
+- Swift Testing macro syntax (`#expect`, `#require`, `@Test`, `@Suite`)
+- Concurrency annotations (`@MainActor`, `nonisolated`, `@Sendable`)
+- New frameworks and APIs (Liquid Glass, FoundationModels, RecognizeDocumentsRequest) — ALWAYS search before using
+
+## Scope Discipline
+
+- Limit changes to exactly what the current plan step requires. Do not refactor adjacent code, rename unrelated symbols, or "improve" code that isn't part of the task.
+- If you notice issues outside the current scope, note them in the SUMMARY.md under "Observations" — do not fix them inline.
+- Exception: If a change is required to make the plan step work, that is in scope. Document why.
+
+## SwiftUI View Requirements
+
+When creating or modifying SwiftUI views:
+- Always include a `#Preview` block at the bottom of the file (use the macro, NOT `PreviewProvider`)
+- Provide meaningful sample data in previews — not empty views
+- If the view requires a `ModelContainer`, configure one in the preview
+- When Xcode is open, use `mcp__xcode__RenderPreview` to verify the preview renders correctly
+
+**Anti-patterns to flag:** Use of `Combine` (`import Combine`, `PassthroughSubject`, `@Published` with `sink`) when Swift Concurrency alternatives exist. Prefer `AsyncSequence`, `AsyncStream`, `@Observable`, `Task`, `async/await`. Exception: extending existing Combine-based code.
+
+### UI Checkpoint Protocol
+
+When a plan with `autonomous: false` (checkpoints) involves UI modifications:
+1. Before presenting the checkpoint to the user, ALWAYS:
+   - `mcp__XcodeBuildMCP__build_run_sim` — build and launch the app
+   - `mcp__XcodeBuildMCP__screenshot` — capture the current UI state
+   - Present the screenshot alongside the checkpoint question
+2. This allows the user to verify visually without opening the Simulator themselves
+3. If Xcode is open, also use `mcp__xcode__RenderPreview` for individual view previews
+
+### UI Fix Discipline
+
+When implementing fixes from human feedback on UI issues:
+1. Implement ONE fix at a time
+2. Build + run + screenshot after each fix
+3. Present the result to the user before proceeding to the next fix
+4. Do NOT batch multiple UI fixes — compounding errors makes root cause identification harder
+5. If multiple handoff documents exist about the same issue, use ONLY the most recent one
+
 <execution_flow>
 
 <step name="load_project_state" priority="first">
