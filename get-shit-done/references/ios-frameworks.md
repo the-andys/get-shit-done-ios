@@ -34,6 +34,13 @@ Opinionated guide to Apple's native frameworks for iOS development. Prefer nativ
 
 **Use SwiftData** for any model that needs querying, relationships, or persistence. It uses `@Model` macro and integrates directly with SwiftUI.
 
+### SwiftData Class Inheritance (iOS 18+)
+
+- Both base class and subclass must have `@Model` macro
+- Query base class to get all subclass instances
+- Keep hierarchies shallow (1-2 levels)
+- Consider enums/protocols when types only differ by a few fields
+
 **Use Core Data** only when maintaining existing code. Do not introduce Core Data in new projects.
 
 **Use UserDefaults** for simple preferences only. Never store arrays of complex objects, images, or anything > 1KB.

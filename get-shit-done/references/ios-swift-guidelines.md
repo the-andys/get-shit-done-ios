@@ -1477,6 +1477,15 @@ func search(query: String) async throws -> [Result] {
 
 </concurrency_patterns>
 
+### Swift 6.2 — Approachable Concurrency (Xcode 26+)
+
+Swift 6.2 changes the default concurrency behavior:
+
+1. **Default actor isolation** — Code stays on the calling actor by default.
+2. **`nonisolated` no longer offloads** — Inherits the caller's isolation.
+3. **Practical impact:** Code that was previously a data-race error "just works" in 6.2.
+4. **Migration:** iOS 26+ → lean into 6.2 defaults. iOS 18+ → continue explicit isolation.
+
 <validation_checklist>
 
 ## Validation Checklist
