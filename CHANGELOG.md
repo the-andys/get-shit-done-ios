@@ -4,6 +4,49 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.0] - 2026-03-09 — Initial Release of GSD:iOS
+
+Full upstream parity with GSD v1.22.4. Multi-runtime support. iOS platform adaptation validated.
+
+### Added
+- `--discuss` flag for `/gsd:quick` — pre-planning context gathering before task execution
+- `/gsd:validate-phase` command and workflow — retroactive Nyquist validation for completed phases
+- `gsd-nyquist-auditor` agent — fills validation gaps by generating tests (iOS-adapted: Swift Testing, XCTest, XCUITest)
+- Cold-start smoke test in verify-work workflow (iOS-adapted: App.swift, xcdatamodeld, ModelContainer, entitlements)
+- `getMilestonePhaseFilter` in state.cjs — scopes stats to current milestone
+- `toPosixPath` helper in core.cjs — cross-platform path normalization
+- In-progress milestone marker support in ROADMAP.md parsing
+- `depth` → `granularity` config auto-migration (coarse/standard/fine) with backward compatibility
+- `@file:` protocol resolution for large init payloads across 32 workflow/agent files
+- Skills and hooks frontmatter blocks across all 12 agent definitions
+- Multi-runtime support: OpenCode config paths, Gemini AfterTool hooks, Codex installer fixes
+- CLAUDE_CONFIG_DIR environment variable support in all hooks
+- Stdin timeout guard (3s) in all hooks — prevents hang on Windows/Git Bash
+- `detectConfigDir()` in gsd-check-update.js — probes .config/opencode, .opencode, .gemini, .claude
+- VALIDATION.md existence gate (Check 8e) in gsd-plan-checker
+- Gap closure wave computation with dependency analysis in gsd-planner
+- Write tool enforcement across 6 agent definitions (no heredoc/cat EOF)
+
+### Changed
+- Nyquist validation now defaults to `true` (was `false`) — absent key = enabled
+- State parsing supports both `**Bold:**` and `Plain:` field formats (10 locations in state.cjs)
+- Context monitor hook messages are advisory, not blocking
+- Discuss-phase loads prior context (PROJECT.md, REQUIREMENTS.md, STATE.md) before gray area identification
+- Context window scaling uses 16.5% autocompact buffer model (was 80% fixed limit)
+- Upstream Sync Monitor upgraded from Claude Sonnet 4.5 to Claude Sonnet 4.6
+- `isGitIgnored` uses `--no-index` for tracked files in .gitignore
+- Package metadata: multi-runtime keywords (opencode, gemini-cli, codex-cli), node >=16.7.0
+
+### Fixed
+- `getMilestoneInfo` prefers in-progress milestone over first found
+- Phase-complete scans ROADMAP.md as fallback for next-phase detection
+- Auto-advance config (`_auto_chain_active`) no longer persists across sessions
+- Multi-word commit messages preserved in CLI router
+- AskUserQuestion freeform answer loop break in verify-work
+- Wave numbers computed for gap closure plans in gsd-planner
+- Uninstall now removes hooks from both PostToolUse and AfterTool events (Gemini support)
+- Install uses runtime-aware `postToolEvent` variable instead of hardcoded PostToolUse
+
 ## [0.11.0] - 2026-02-28
 
 Upstream sync: v1.21.0 -> v1.22.0

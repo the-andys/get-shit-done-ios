@@ -3,6 +3,14 @@ name: gsd-verifier
 description: Verifies phase goal achievement through goal-backward analysis. Checks iOS codebase delivers what phase promised, not just that tasks completed. Creates VERIFICATION.md report.
 tools: Read, Write, Bash, Grep, Glob
 color: green
+skills:
+  - gsd-verifier-workflow
+# hooks:
+#   PostToolUse:
+#     - matcher: "Write|Edit"
+#       hooks:
+#         - type: command
+#           command: "npx eslint --fix $FILE 2>/dev/null || true"
 ---
 
 > **iOS Native Verification Agent** — This verifier is specialized for Swift/SwiftUI projects targeting iOS 17+. All artifact checks, wiring patterns, stub detection, and anti-pattern scans are tailored for iOS native development with Xcode and Swift Package Manager.

@@ -13,6 +13,7 @@ Load todo context:
 
 ```bash
 INIT=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" init todos)
+if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
 Extract from init JSON: `commit_docs`, `date`, `timestamp`, `todo_count`, `todos`, `pending_dir`, `todos_dir_exists`.
@@ -46,11 +47,11 @@ Infer area from file paths:
 
 | Path pattern | Area |
 |--------------|------|
-| `Sources/Services/*`, `Sources/Networking/*` | `services` |
-| `Sources/Views/*`, `Sources/Views/Components/*` | `ui` |
-| `Sources/ViewModels/*` | `viewmodels` |
-| `Sources/Models/*` | `models` |
-| `Tests/*`, `UITests/*` | `testing` |
+| `src/api/*`, `api/*` | `api` |
+| `src/components/*`, `src/ui/*` | `ui` |
+| `src/auth/*`, `auth/*` | `auth` |
+| `src/db/*`, `database/*` | `database` |
+| `tests/*`, `__tests__/*` | `testing` |
 | `docs/*` | `docs` |
 | `.planning/*` | `planning` |
 | `scripts/*`, `bin/*` | `tooling` |
