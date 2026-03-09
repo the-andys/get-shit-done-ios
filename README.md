@@ -9,7 +9,7 @@
 **Solves context rot — the quality degradation that happens as Claude fills its context window.**
 
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.22.0-orange?style=for-the-badge)](https://github.com/glittercowboy/get-shit-done)
+[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.22.4-orange?style=for-the-badge)](https://github.com/glittercowboy/get-shit-done)
 
 ```bash
 npx get-shit-done-ios@latest
@@ -515,7 +515,7 @@ You're never locked in. The system adapts.
 | `/gsd:add-todo [desc]` | Capture idea for later |
 | `/gsd:check-todos` | List pending todos |
 | `/gsd:debug [desc]` | Systematic debugging with persistent state |
-| `/gsd:quick [--full]` | Execute ad-hoc task with GSD guarantees (`--full` adds plan-checking and verification) |
+| `/gsd:quick [--discuss] [--full]` | Execute ad-hoc task with GSD guarantees (`--discuss` for pre-planning context, `--full` adds plan-checking and verification) |
 | `/gsd:health [--repair]` | Validate `.planning/` directory integrity, auto-repair with `--repair` |
 
 <sup>¹ Contributed by reddit user OracleGreyBeard</sup>
@@ -531,7 +531,7 @@ GSD stores project settings in `.planning/config.json`. Configure during `/gsd:n
 | Setting | Options | Default | What it controls |
 |---------|---------|---------|------------------|
 | `mode` | `yolo`, `interactive` | `interactive` | Auto-approve vs confirm at each step |
-| `depth` | `quick`, `standard`, `comprehensive` | `standard` | Planning thoroughness (phases × plans) |
+| `granularity` | `coarse`, `standard`, `fine` | `standard` | Planning thoroughness (phases × plans) |
 
 ### Model Profiles
 
