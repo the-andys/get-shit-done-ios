@@ -4,6 +4,24 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0] - 2026-03-09
+
+### Added
+- iOS Validation Ladder in executor — 4-step cheapest-first validation with MCP tools
+- API Verification Before Implementation — DocumentationSearch/context7 before coding unfamiliar APIs
+- iOS Build & Test Verification in verifier — visual verification gate for UI work
+- iOS Debugging Tools in debugger — MCP-based diagnostics, runtime, and UI debugging
+- iOS Test Framework Detection in planner — Swift Testing vs XCTest auto-detection (Issue #8 mitigation)
+- API Feasibility Check in planner — `⚠️ VERIFY API` flag for uncertain APIs
+- Apple Framework Documentation in researcher — MCP + context7 + swift-lsp lookup
+- Swift 6.2 Approachable Concurrency reference (Xcode 26+)
+- SwiftData Class Inheritance reference (iOS 18+)
+- UI Checkpoint Protocol — screenshots before checkpoint presentation
+- UI Fix Discipline — one fix at a time with visual verification
+- SwiftUI View Requirements — #Preview macro enforcement, sample data
+- Scope Discipline — limit changes to plan step scope
+- Combine avoidance anti-pattern flagging
+
 ## [1.0.0] - 2026-03-09 — Initial Release of GSD:iOS
 
 Full upstream parity with GSD v1.22.4. Multi-runtime support. iOS platform adaptation validated.
