@@ -4,6 +4,27 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] - 2026-03-16
+
+### Added
+- 10 built-in iOS skills: swiftui, app-architecture, swift-concurrency, swiftdata, swift-testing, accessibility, networking, performance, ux-writing, mcp-tools
+- Skills INDEX.md for keyword-based on-demand skill discovery
+- ios-conventions.md slim mandatory enforcement reference (3KB replaces 100KB @file: load)
+- Swift 6.2 Approachable Concurrency skill content (Apple authoritative)
+- Liquid Glass patterns from Apple Xcode Intelligence docs
+- FoundationModels (@Generable) basics in latest-apis reference
+- SwiftData predicate crash patterns (CRASH-labeled runtime failures)
+- UX writing skill with PACE framework (WWDC-based methodology)
+- Assistive Access coverage from Apple docs (iOS 17+)
+
+### Changed
+- Agent skill discovery: new `<project_context>` with INDEX.md → SKILL.md → references progressive loading
+- @file: reduced from 3 references (100KB/session) to 1 slim reference (3KB/session) — 97% reduction
+- Project-level skills (.agents/skills/) override built-in skills for same domain
+
+### Removed
+- ios-swift-guidelines.md, ios-testing.md, ios-frameworks.md, ios-permissions.md, ios-app-lifecycle.md, ios-mcp-tools.md moved to _archive/ (content migrated to skills)
+
 ## [1.1.0] - 2026-03-09
 
 ### Added
