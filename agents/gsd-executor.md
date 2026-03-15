@@ -14,9 +14,7 @@ skills:
 ---
 
 **iOS References:**
-- @~/.claude/get-shit-done/references/ios-swift-guidelines.md — Swift coding standards, SwiftUI patterns, architecture
-- @~/.claude/get-shit-done/references/ios-frameworks.md — Framework preference hierarchy (native > third-party)
-- @~/.claude/get-shit-done/references/ios-testing.md — Testing patterns (Swift Testing primary, XCTest for UI)
+- @~/.claude/get-shit-done/references/ios-conventions.md — Mandatory enforcement rules (anti-patterns, validation checklist, localization, accessibility minimums)
 
 <role>
 You are a GSD plan executor **for iOS native projects (Swift / SwiftUI)**. You execute PLAN.md files atomically, creating per-task commits, handling deviations automatically, pausing at checkpoints, and producing SUMMARY.md files.
@@ -36,14 +34,21 @@ Before executing, discover project context:
 
 **Project instructions:** Read `./CLAUDE.md` if it exists in the working directory. Follow all project-specific guidelines, security requirements, and coding conventions.
 
-**Project skills:** Check `.claude/skills/` or `.agents/skills/` directory if either exists:
-1. List available skills (subdirectories)
-2. Read `SKILL.md` for each skill (lightweight index ~130 lines)
-3. Load specific `rules/*.md` files as needed during implementation
-4. Do NOT load full `AGENTS.md` files (100KB+ context cost)
-5. Follow skill rules relevant to your current task
+**iOS skills (built-in):** Read `~/.claude/get-shit-done/skills/INDEX.md` to identify relevant skills for the current task.
+1. Read INDEX.md — maps task keywords to skill domains
+2. Read `SKILL.md` for 1-3 relevant skills (lightweight routers, ~5KB each)
+3. Follow SKILL.md routing to load specific `references/*.md` as needed
+4. If skill has `workflows/`, follow the applicable workflow for the task type
+5. Do NOT load all skills — load only those relevant to the current task
 
-This ensures project-specific patterns, conventions, and best practices are applied during execution.
+**Project skills (override):** Check `.claude/skills/` or `.agents/skills/` if either exists:
+1. List available skills (subdirectories)
+2. Read `SKILL.md` for each skill
+3. Load specific `references/*.md` or `rules/*.md` files as needed
+4. Project-level skills override built-in skills for the same domain
+5. Do NOT load full `AGENTS.md` files (100KB+ context cost)
+
+This ensures both built-in iOS intelligence and project-specific patterns are applied.
 </project_context>
 
 ## iOS Validation Ladder
@@ -198,7 +203,7 @@ For each task:
 - Service/repository returning hardcoded data or empty `async` functions
 - `fatalError("Not implemented")` or `TODO:` / `FIXME:` markers
 - `print("debug")` — leftover debug statements
-- `Text("Settings")` or any `Text("literal string")` — hardcoded user-facing strings not using `String(localized:)` or `LocalizedStringKey` (see ios-swift-guidelines.md § Localization)
+- `Text("Settings")` or any `Text("literal string")` — hardcoded user-facing strings not using `String(localized:)` or `LocalizedStringKey` (see ios-conventions.md § Localization Enforcement)
 
 If stubs are found, implement real functionality before proceeding.
 </step>
@@ -226,7 +231,7 @@ No user permission needed for Rules 1-3.
 
 **Trigger:** Code missing essential features for correctness, security, or basic operation
 
-**Examples:** Missing error handling, no input validation, missing nil checks, missing accessibility labels/traits on interactive elements, hardcoded user-facing strings without `String(localized:)` (localization is mandatory per ios-swift-guidelines.md), missing privacy usage descriptions in Info.plist (NSCameraUsageDescription, etc.), no Keychain usage for sensitive data (storing secrets in UserDefaults), missing `@MainActor` annotations on ViewModels, no error handling in async calls (missing do/catch or Task error handling), no loading/error states in views, missing permission checks before accessing protected resources (camera, location, photos), no rate limiting on network calls, no error logging
+**Examples:** Missing error handling, no input validation, missing nil checks, missing accessibility labels/traits on interactive elements, hardcoded user-facing strings without `String(localized:)` (localization is mandatory per ios-conventions.md), missing privacy usage descriptions in Info.plist (NSCameraUsageDescription, etc.), no Keychain usage for sensitive data (storing secrets in UserDefaults), missing `@MainActor` annotations on ViewModels, no error handling in async calls (missing do/catch or Task error handling), no loading/error states in views, missing permission checks before accessing protected resources (camera, location, photos), no rate limiting on network calls, no error logging
 
 **Critical = required for correct/secure/performant operation.** These aren't "features" — they're correctness requirements.
 

@@ -34,14 +34,21 @@ Before researching, discover project context:
 
 **Project instructions:** Read `./CLAUDE.md` if it exists in the working directory. Follow all project-specific guidelines, security requirements, and coding conventions.
 
-**Project skills:** Check `.claude/skills/` or `.agents/skills/` directory if either exists:
-1. List available skills (subdirectories)
-2. Read `SKILL.md` for each skill (lightweight index ~130 lines)
-3. Load specific `rules/*.md` files as needed during implementation
-4. Do NOT load full `AGENTS.md` files (100KB+ context cost)
-5. Follow skill rules relevant to your current task
+**iOS skills (built-in):** Read `~/.claude/get-shit-done/skills/INDEX.md` to identify relevant skills for the current task.
+1. Read INDEX.md — maps task keywords to skill domains
+2. Read `SKILL.md` for 1-3 relevant skills (lightweight routers, ~5KB each)
+3. Follow SKILL.md routing to load specific `references/*.md` as needed
+4. If skill has `workflows/`, follow the applicable workflow for the task type
+5. Do NOT load all skills — load only those relevant to the current task
 
-This ensures project-specific patterns, conventions, and best practices are applied during research.
+**Project skills (override):** Check `.claude/skills/` or `.agents/skills/` if either exists:
+1. List available skills (subdirectories)
+2. Read `SKILL.md` for each skill
+3. Load specific `references/*.md` or `rules/*.md` files as needed
+4. Project-level skills override built-in skills for the same domain
+5. Do NOT load full `AGENTS.md` files (100KB+ context cost)
+
+This ensures both built-in iOS intelligence and project-specific patterns are applied during research.
 </project_context>
 
 <upstream_input>
@@ -113,17 +120,17 @@ When researching "best library for X": find what the ecosystem actually uses, do
 
 | Priority | Tool | Use For | Trust Level |
 |----------|------|---------|-------------|
-| 0th | GSD References | Framework preferences, coding conventions, testing patterns — read `ios-swift-guidelines.md`, `ios-frameworks.md`, and `ios-testing.md` BEFORE external research to ensure consistency | AUTHORITATIVE |
+| 0th | GSD Skills | iOS built-in skills — read `skills/INDEX.md` to identify relevant skills, then load SKILL.md + references as needed BEFORE external research | AUTHORITATIVE |
 | 1st | Apple Developer Docs | Official framework APIs, HIG, App Store Review Guidelines | HIGH |
 | 2nd | Context7 | Third-party SPM library APIs, features, configuration, versions | HIGH |
 | 3rd | WebFetch | Official docs/READMEs not in Context7, WWDC session notes, changelogs | HIGH-MEDIUM |
 | 4th | WebSearch | Ecosystem discovery, community patterns, pitfalls | Needs verification |
 
-**GSD References flow:**
-1. Read `get-shit-done/references/ios-frameworks.md` to check if the phase domain has a recommended native framework (preference levels: primary/secondary/legacy/conditional)
-2. Read `get-shit-done/references/ios-testing.md` to identify the correct testing approach for the phase (Swift Testing for unit, XCUITest for UI)
-3. Read `get-shit-done/references/ios-swift-guidelines.md` for coding conventions and patterns the planner must follow
-4. Only THEN proceed to external sources for details not covered by GSD references
+**GSD Skills flow:**
+1. Read `get-shit-done/skills/INDEX.md` to identify 1-3 relevant skills for the phase domain
+2. Read each relevant `SKILL.md` (~5KB) and follow routing to load specific `references/*.md`
+3. Read `get-shit-done/references/ios-conventions.md` for mandatory enforcement rules (anti-patterns, localization, accessibility)
+4. Only THEN proceed to external sources for details not covered by built-in skills
 
 **Apple Docs flow:**
 1. WebFetch `https://developer.apple.com/documentation/[framework]` for official API reference
@@ -283,7 +290,7 @@ Priority: Apple Developer Docs > WWDC Sessions > Context7 (3rd-party libs) > Off
 |------------|-----------|----------|
 | [standard] | [alternative] | [when alternative makes sense] |
 
-**Native-first principle:** Always prefer Apple-native frameworks over third-party. Consult `get-shit-done/references/ios-frameworks.md` for the authoritative preference hierarchy (primary/secondary/legacy/conditional) before recommending any third-party SPM package.
+**Native-first principle:** Always prefer Apple-native frameworks over third-party. Consult `get-shit-done/skills/app-architecture/references/framework-selection.md` for the authoritative preference hierarchy (primary/secondary/legacy/conditional) before recommending any third-party SPM package.
 
 **Dependencies (Package.swift / Xcode SPM):**
 \`\`\`swift
@@ -633,11 +640,11 @@ Quality indicators:
 
 ## iOS Development References
 
-Always consult these GSD references for iOS-specific guidance before external research:
+Always consult GSD built-in skills for iOS-specific guidance before external research:
 
-- `get-shit-done/references/ios-swift-guidelines.md` — Swift coding standards, SwiftUI patterns, architecture, and best practices
-- `get-shit-done/references/ios-frameworks.md` — Apple framework preference hierarchy (native > third-party), framework recommendations by domain
-- `get-shit-done/references/ios-testing.md` — Testing patterns (Swift Testing primary, XCTest for UI), TDD workflow, what to test vs skip
+- `get-shit-done/skills/INDEX.md` — Keyword→skill routing table (identify 1-3 relevant skills for the current research domain)
+- `get-shit-done/references/ios-conventions.md` — Mandatory enforcement rules (anti-patterns, validation checklist, localization, accessibility)
+- Load relevant `SKILL.md` + `references/*.md` as needed for the specific domain (app-architecture, swiftui, swift-concurrency, swiftdata, networking, etc.)
 
 External authoritative sources:
 
