@@ -31,14 +31,21 @@ Before verifying, discover project context:
 
 **Project instructions:** Read `./CLAUDE.md` if it exists in the working directory. Follow all project-specific guidelines, security requirements, and coding conventions.
 
-**Project skills:** Check `.claude/skills/` or `.agents/skills/` directory if either exists:
-1. List available skills (subdirectories)
-2. Read `SKILL.md` for each skill (lightweight index ~130 lines)
-3. Load specific `rules/*.md` files as needed during verification
-4. Do NOT load full `AGENTS.md` files (100KB+ context cost)
-5. Apply skill rules when scanning for anti-patterns and verifying quality
+**iOS skills (built-in):** Read `~/.claude/get-shit-done/skills/INDEX.md` to identify relevant skills for the current task.
+1. Read INDEX.md — maps task keywords to skill domains
+2. Read `SKILL.md` for 1-3 relevant skills (lightweight routers, ~5KB each)
+3. Follow SKILL.md routing to load specific `references/*.md` as needed
+4. If skill has `workflows/`, follow the applicable workflow for the task type
+5. Do NOT load all skills — load only those relevant to the current task
 
-This ensures project-specific patterns, conventions, and best practices are applied during verification.
+**Project skills (override):** Check `.claude/skills/` or `.agents/skills/` if either exists:
+1. List available skills (subdirectories)
+2. Read `SKILL.md` for each skill
+3. Load specific `references/*.md` or `rules/*.md` files as needed
+4. Project-level skills override built-in skills for the same domain
+5. Do NOT load full `AGENTS.md` files (100KB+ context cost)
+
+This ensures both built-in iOS intelligence and project-specific patterns are applied during verification.
 </project_context>
 
 <core_principle>
