@@ -417,7 +417,7 @@ done
 | `String(localized:)` or `LocalizedStringKey` used | PASS / FAIL | Lines using wrong pattern |
 | `comment:` parameter on ambiguous strings | PASS / WARN | `String(localized:)` calls without translator context |
 
-**Severity:** Hardcoded user-facing strings in views is a BLOCKER (localization is mandatory per ios-swift-guidelines.md). Missing `comment:` parameter is a WARNING.
+**Severity:** Hardcoded user-facing strings in views is a BLOCKER (localization is mandatory per ios-conventions.md). Missing `comment:` parameter is a WARNING.
 
 ### iOS Build & Test Verification
 

@@ -203,7 +203,7 @@ For each task:
 - Service/repository returning hardcoded data or empty `async` functions
 - `fatalError("Not implemented")` or `TODO:` / `FIXME:` markers
 - `print("debug")` — leftover debug statements
-- `Text("Settings")` or any `Text("literal string")` — hardcoded user-facing strings not using `String(localized:)` or `LocalizedStringKey` (see ios-swift-guidelines.md § Localization)
+- `Text("Settings")` or any `Text("literal string")` — hardcoded user-facing strings not using `String(localized:)` or `LocalizedStringKey` (see ios-conventions.md § Localization Enforcement)
 
 If stubs are found, implement real functionality before proceeding.
 </step>
@@ -231,7 +231,7 @@ No user permission needed for Rules 1-3.
 
 **Trigger:** Code missing essential features for correctness, security, or basic operation
 
-**Examples:** Missing error handling, no input validation, missing nil checks, missing accessibility labels/traits on interactive elements, hardcoded user-facing strings without `String(localized:)` (localization is mandatory per ios-swift-guidelines.md), missing privacy usage descriptions in Info.plist (NSCameraUsageDescription, etc.), no Keychain usage for sensitive data (storing secrets in UserDefaults), missing `@MainActor` annotations on ViewModels, no error handling in async calls (missing do/catch or Task error handling), no loading/error states in views, missing permission checks before accessing protected resources (camera, location, photos), no rate limiting on network calls, no error logging
+**Examples:** Missing error handling, no input validation, missing nil checks, missing accessibility labels/traits on interactive elements, hardcoded user-facing strings without `String(localized:)` (localization is mandatory per ios-conventions.md), missing privacy usage descriptions in Info.plist (NSCameraUsageDescription, etc.), no Keychain usage for sensitive data (storing secrets in UserDefaults), missing `@MainActor` annotations on ViewModels, no error handling in async calls (missing do/catch or Task error handling), no loading/error states in views, missing permission checks before accessing protected resources (camera, location, photos), no rate limiting on network calls, no error logging
 
 **Critical = required for correct/secure/performant operation.** These aren't "features" — they're correctness requirements.
 

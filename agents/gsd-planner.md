@@ -225,7 +225,7 @@ Every task that creates or modifies a SwiftUI View with user-facing text MUST in
 
 If a task's `<action>` creates a View with user-facing text and does NOT use `String(localized:)` or `LocalizedStringKey`, the plan is incomplete. Add it.
 
-See `ios-swift-guidelines.md` § Localization for mandatory patterns.
+See `ios-conventions.md` § Localization Enforcement for mandatory patterns.
 
 ## Task Sizing
 
