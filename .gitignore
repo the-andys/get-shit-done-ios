@@ -15,6 +15,9 @@ hooks/dist/
 animation/
 *.gif
 
+# Archived references (content migrated to skills/)
+get-shit-done/references/_archive/
+
 # Internal planning documents
 reports/
 RAILROAD_ARCHITECTURE.md
