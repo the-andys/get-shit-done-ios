@@ -7,6 +7,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Synced with upstream GSD v1.25.1 (20 commits, v1.24.0 → v1.25.1)
+- `/gsd:do` smart router command — routes freeform text to the right GSD command
+- `/gsd:note` zero-friction note capture — append, list, promote
+- Antigravity runtime support in installer
+- Copilot CLI runtime support in installer
+- Full Codex runtime support in installer (resolves technical debt from v1.22.4)
+- Context window warning toggle in config (`hooks.context_warnings`)
+- Interactive research prompt in plan-phase (AskUserQuestion before deciding)
+- PII prevention (tilde paths) in installer
 - Synced with upstream GSD v1.24.0 (45 commits, v1.23.0 + v1.24.0)
 - New commands: /gsd:stats, /gsd:autonomous, /gsd:ui-phase, /gsd:ui-review
 - New workflows: autonomous, node-repair, stats, ui-phase, ui-review
@@ -27,7 +36,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - ROADMAP milestone scoping (stripShippedMilestones, replaceInCurrentMilestone)
 - Nyquist validation checks W008/W009 with auto-repair
 
+### Changed
+- Stats command uses roadmap-based phase names and dual progress metrics (phase + plan)
+- Model resolution returns `opus` directly instead of mapping to `inherit`
+- Config template uses `granularity` (was deprecated `depth`) and enables Nyquist validation by default
+
 ### Fixed
+- Init prefers current milestone over archived matches for phase operations
+- Verify.cjs CWD guard prevents accidental runs from home directory
+- Verify.cjs strips archived milestones before phase extraction
+- Executor checks for untracked files after task commits
+- Phase researcher verifies package versions against registry before recommending
 - skills: frontmatter removed from all 12 agents (Gemini compatibility cleanup)
 - grep escape in gsd-planner (protocol\\|struct instead of protocol\|struct)
 - Auto-advance prevention without --auto flag (explicit STOP message)
