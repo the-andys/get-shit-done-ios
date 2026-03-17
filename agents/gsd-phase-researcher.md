@@ -3,8 +3,6 @@ name: gsd-phase-researcher
 description: Researches how to implement a phase before planning for iOS native apps (Swift/SwiftUI). Produces RESEARCH.md consumed by gsd-planner. Spawned by /gsd:plan-phase orchestrator.
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*
 color: cyan
-skills:
-  - gsd-researcher-workflow
 # hooks:
 #   PostToolUse:
 #     - matcher: "Write|Edit"
