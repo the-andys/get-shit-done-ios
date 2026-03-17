@@ -4,6 +4,44 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- Synced with upstream GSD v1.24.0 (45 commits, v1.23.0 + v1.24.0)
+- New commands: /gsd:stats, /gsd:autonomous, /gsd:ui-phase, /gsd:ui-review
+- New workflows: autonomous, node-repair, stats, ui-phase, ui-review
+- iOS-adapted UI agents: gsd-ui-auditor, gsd-ui-checker, gsd-ui-researcher (SwiftUI-native, zero web references)
+- Persistent debug knowledge base (gsd-debugger) for cross-session pattern matching
+- read_first + acceptance_criteria enforcement in plan task template
+- Node repair operator for autonomous task failure recovery (RETRY/DECOMPOSE/PRUNE/ESCALATE)
+- canonical_refs mandatory section in CONTEXT.md template
+- Timestamp-based YYMMDD-xxx IDs for quick tasks (collision-resistant)
+- --research flag for /gsd:quick (composable with --discuss)
+- Programmatic /gsd:set-profile via gsd-tools.cjs + model-profiles.cjs
+- Model profile `inherit` option (use session model for all agents)
+- UI-SPEC.md template for design contracts
+- New lib: model-profiles.cjs (extracted from core.cjs)
+- New lib function: cmdStats for project statistics
+- New lib function: cmdConfigSetModelProfile for programmatic profile management
+- execSync → spawnSync migration in core.cjs (security: no shell injection)
+- ROADMAP milestone scoping (stripShippedMilestones, replaceInCurrentMilestone)
+- Nyquist validation checks W008/W009 with auto-repair
+
+### Fixed
+- skills: frontmatter removed from all 12 agents (Gemini compatibility cleanup)
+- grep escape in gsd-planner (protocol\\|struct instead of protocol\|struct)
+- Auto-advance prevention without --auto flag (explicit STOP message)
+- ROADMAP.md searches scoped to current milestone (prevents cross-milestone collisions)
+- Empty response validation in discuss-phase
+- Decimal phase number padding
+- Requirements traceability improvements (tracks "In Progress" status)
+- commit-docs → commit fix in validate-phase workflow
+- Goal pattern tolerance in roadmap.cjs (accepts both **Goal:** and **Goal**:)
+- Multi-word commit message parsing in gsd-tools.cjs
+
+### Removed
+- workflows/set-profile.md (replaced by programmatic implementation in config.cjs)
+
 ## [1.2.0] - 2026-03-16
 
 ### Added

@@ -159,7 +159,8 @@ AskUserQuestion([
     options: [
       { label: "Balanced (Recommended)", description: "Sonnet for most agents — good quality/cost ratio" },
       { label: "Quality", description: "Opus for research/roadmap — higher cost, deeper analysis" },
-      { label: "Budget", description: "Haiku where possible — fastest, lowest cost" }
+      { label: "Budget", description: "Haiku where possible — fastest, lowest cost" },
+      { label: "Inherit", description: "Use the current session model for all agents (OpenCode /model)" }
     ]
   }
 ])
@@ -173,7 +174,7 @@ Create `.planning/config.json` with mode set to "yolo":
   "granularity": "[selected]",
   "parallelization": true|false,
   "commit_docs": true|false,
-  "model_profile": "quality|balanced|budget",
+  "model_profile": "quality|balanced|budget|inherit",
   "workflow": {
     "research": true|false,
     "plan_check": true|false,
@@ -482,7 +483,8 @@ questions: [
     options: [
       { label: "Balanced (Recommended)", description: "Sonnet for most agents — good quality/cost ratio" },
       { label: "Quality", description: "Opus for research/roadmap — higher cost, deeper analysis" },
-      { label: "Budget", description: "Haiku where possible — fastest, lowest cost" }
+      { label: "Budget", description: "Haiku where possible — fastest, lowest cost" },
+      { label: "Inherit", description: "Use the current session model for all agents (OpenCode /model)" }
     ]
   }
 ]
@@ -496,7 +498,7 @@ Create `.planning/config.json` with all settings:
   "granularity": "coarse|standard|fine",
   "parallelization": true|false,
   "commit_docs": true|false,
-  "model_profile": "quality|balanced|budget",
+  "model_profile": "quality|balanced|budget|inherit",
   "workflow": {
     "research": true|false,
     "plan_check": true|false,

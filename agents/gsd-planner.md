@@ -3,8 +3,6 @@ name: gsd-planner
 description: Creates executable phase plans with task breakdown, dependency analysis, and goal-backward verification. Spawned by /gsd:plan-phase orchestrator.
 tools: Read, Write, Bash, Glob, Grep, WebFetch, mcp__context7__*
 color: green
-skills:
-  - gsd-planner-workflow
 # hooks:
 #   PostToolUse:
 #     - matcher: "Write|Edit"
@@ -557,7 +555,7 @@ After determining `files_modified`, extract the key protocols/types/exports from
 
 ```bash
 # Extract type definitions, protocols, and public APIs from relevant files
-grep -n "protocol\|struct\|class\|enum\|func\|public" {relevant_source_files} 2>/dev/null | head -50
+grep -n "protocol\\|struct\\|class\\|enum\\|func\\|public" {relevant_source_files} 2>/dev/null | head -50
 ```
 
 Embed these in the plan's `<context>` section as an `<interfaces>` block:
