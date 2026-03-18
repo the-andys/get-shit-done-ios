@@ -155,15 +155,15 @@ Same as upstream format. iOS fork scopes:
 
 ## Infrastructure Principles (D78-D82)
 
-D78. Multi-runtime compatibility — agents, workflows, and hooks work across Claude Code, OpenCode, Gemini CLI, and Codex CLI
-D79. Copilot and Antigravity runtimes supported via install.js detection
-D80. Frontmatter schemas define agent metadata — name, description, tools, model, hooks
-D81. Hooks architecture — statusline, context-monitor, and check-update run as PostToolUse/AfterTool hooks
-D82. Build pipeline — hooks are source files in `hooks/`, built to `hooks/dist/` at prepublishOnly
+D78. Multi-runtime is non-negotiable for infrastructure files — iOS content only, not iOS infrastructure
+D79. install.js is upstream-owned — fork applies branding only (2 customizations: banner + package name)
+D80. config.json COPY from upstream, never MERGE — depth→granularity, nyquist were tech debt
+D81. Permissions: Bash(*) + surgical deny > 100 granular rules — compound commands break allowlists
+D82. copilot-instructions.md template adopted — discovered as Copilot runtime dependency
 
 ## Process Principles (71-74)
 
-71. Context engineering — every agent gets exactly the context it needs, no more, no less
-72. Spec-driven development — requirements drive roadmap, roadmap drives phases, phases drive plans
-73. Fresh context — subagents spawn with clean context windows, avoiding accumulated degradation
-74. Verify-before-commit — every task runs its verification step before creating a commit
+71. Multi-runtime non-negotiable — same as D78, process-level restatement
+72. "Fork owns" classification must be re-examined periodically — install.js was misclassified for 3 cycles
+73. Deprecated keys in templates create silent tech debt — depth worked via migration, but new projects got deprecated configs
+74. Permission simplification: Bash(*) + deny > 100 granular rules — Anthropic-recommended pattern
