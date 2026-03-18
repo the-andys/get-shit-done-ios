@@ -7,6 +7,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [1.3.0] - 2026-03-18
+
+### Added
 - 7 upstream test files (frontmatter, dispatcher, runtime configs) — test count 452 → 633
 - 7 reference docs (ARCHITECTURE, CLI-TOOLS, CONFIGURATION, AGENTS, COMMANDS, FEATURES, docs/README)
 - CI test workflow (3 OS × 3 Node matrix with coverage)
@@ -395,6 +403,23 @@ Upstream sync: v1.20.5 → v1.20.6
 ### Removed
 - All web-specific patterns: React, Next.js, Prisma, npm run, .tsx/.jsx references
 
+[Unreleased]: https://github.com/the-andys/get-shit-done-ios/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/the-andys/get-shit-done-ios/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/the-andys/get-shit-done-ios/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/the-andys/get-shit-done-ios/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/the-andys/get-shit-done-ios/compare/v0.11.0...v1.0.0
+[0.11.0]: https://github.com/the-andys/get-shit-done-ios/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/the-andys/get-shit-done-ios/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/the-andys/get-shit-done-ios/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/the-andys/get-shit-done-ios/compare/v0.7.1...v0.8.0
+[0.7.1]: https://github.com/the-andys/get-shit-done-ios/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/the-andys/get-shit-done-ios/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/the-andys/get-shit-done-ios/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/the-andys/get-shit-done-ios/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/the-andys/get-shit-done-ios/compare/v0.2.0...v0.4.0
+[0.2.0]: https://github.com/the-andys/get-shit-done-ios/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/the-andys/get-shit-done-ios/releases/tag/v0.1.0
+
 ---
 
-*Based on upstream [Get Shit Done](https://github.com/gsd-build/get-shit-done) v1.18.0*
+*Based on upstream [Get Shit Done](https://github.com/gsd-build/get-shit-done) v1.25.1*

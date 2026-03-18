@@ -19,7 +19,7 @@ npx get-shit-done-ios@latest
 
 <br>
 
-> **Built on [Get Shit Done](https://github.com/glittercowboy/get-shit-done) by TÂCHES.**
+> **Built on [Get Shit Done](https://github.com/gsd-build/get-shit-done) by TÂCHES.**
 > This is an iOS-native fork — all agents, references, templates, and workflows
 > have been adapted for Swift, SwiftUI, and native iOS development patterns.
 
