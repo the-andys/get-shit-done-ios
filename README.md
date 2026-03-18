@@ -9,7 +9,7 @@
 **Solves context rot — the quality degradation that happens as Claude fills its context window.**
 
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.22.4-orange?style=for-the-badge)](https://github.com/glittercowboy/get-shit-done)
+[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.25.1-orange?style=for-the-badge)](https://github.com/gsd-build/get-shit-done)
 
 ```bash
 npx get-shit-done-ios@latest
@@ -359,7 +359,7 @@ Then `/gsd:new-milestone` starts the next version — same flow as `new-project`
 Quick mode gives you GSD guarantees (atomic commits, state tracking) with a faster path:
 
 - **Same agents** — Planner + executor, same quality
-- **Skips optional steps** — No research, no plan checker, no verifier
+- **Skips optional steps** — No research, no plan checker, no verifier (use `--research` to add domain research)
 - **Separate tracking** — Lives in `.planning/quick/`, not phases
 
 Use for: bug fixes, small features, config changes, one-off tasks.
@@ -467,7 +467,7 @@ You're never locked in. The system adapts.
 | Command | What it does |
 |---------|--------------|
 | `/gsd:new-project [--auto]` | Full initialization: questions → research → requirements → roadmap |
-| `/gsd:discuss-phase [N] [--auto]` | Capture implementation decisions before planning |
+| `/gsd:discuss-phase [N] [--auto] [--batch]` | Capture implementation decisions before planning |
 | `/gsd:plan-phase [N] [--auto]` | Research + plan + verify for a phase |
 | `/gsd:execute-phase <N>` | Execute all plans in parallel waves, verify when complete |
 | `/gsd:verify-work [N]` | Manual user acceptance testing ¹ |
@@ -482,12 +482,13 @@ You're never locked in. The system adapts.
 | `/gsd:progress` | Where am I? What's next? |
 | `/gsd:help` | Show all commands and usage guide |
 | `/gsd:update` | Update GSD with changelog preview |
+| `/gsd:join-discord` | Join the GSD community Discord |
 
 ### Brownfield
 
 | Command | What it does |
 |---------|--------------|
-| `/gsd:map-codebase` | Analyze existing codebase before new-project |
+| `/gsd:map-codebase [area]` | Analyze existing codebase before new-project |
 
 ### Phase Management
 
@@ -511,12 +512,22 @@ You're never locked in. The system adapts.
 | Command | What it does |
 |---------|--------------|
 | `/gsd:settings` | Configure model profile and workflow agents |
-| `/gsd:set-profile <profile>` | Switch model profile (quality/balanced/budget) |
+| `/gsd:set-profile <profile>` | Switch model profile (quality/balanced/budget/inherit) |
+| `/gsd:do <text>` | Execute a task directly without interactive prompt |
+| `/gsd:note <text>` | Add a note to the current session state |
+| `/gsd:stats` | Show project statistics and metrics |
 | `/gsd:add-todo [desc]` | Capture idea for later |
 | `/gsd:check-todos` | List pending todos |
 | `/gsd:debug [desc]` | Systematic debugging with persistent state |
-| `/gsd:quick [--discuss] [--full]` | Execute ad-hoc task with GSD guarantees (`--discuss` for pre-planning context, `--full` adds plan-checking and verification) |
+| `/gsd:quick [--discuss] [--full] [--research]` | Execute ad-hoc task with GSD guarantees (`--discuss` for pre-planning context, `--full` adds plan-checking and verification, `--research` adds domain research) |
 | `/gsd:health [--repair]` | Validate `.planning/` directory integrity, auto-repair with `--repair` |
+
+### UI Design
+
+| Command | What it does |
+|---------|--------------|
+| `/gsd:ui-phase [N]` | Create SwiftUI design contract (color assets, typography tokens, accessibility) before planning |
+| `/gsd:ui-review [N]` | Retroactive 6-pillar visual audit of implemented SwiftUI views |
 
 <sup>¹ Contributed by reddit user OracleGreyBeard</sup>
 
@@ -531,7 +542,7 @@ GSD stores project settings in `.planning/config.json`. Configure during `/gsd:n
 | Setting | Options | Default | What it controls |
 |---------|---------|---------|------------------|
 | `mode` | `yolo`, `interactive` | `interactive` | Auto-approve vs confirm at each step |
-| `granularity` | `coarse`, `standard`, `fine` | `standard` | Planning thoroughness (phases × plans) |
+| `granularity` | `coarse`, `standard`, `fine` | `standard` | Phase granularity — how finely scope is sliced |
 
 ### Model Profiles
 
@@ -542,6 +553,9 @@ Control which Claude model each agent uses. Balance quality vs token spend.
 | `quality` | Opus | Opus | Sonnet |
 | `balanced` (default) | Opus | Sonnet | Sonnet |
 | `budget` | Sonnet | Sonnet | Haiku |
+| `inherit` | Inherit | Inherit | Inherit |
+
+Use `inherit` to follow the current session model selection.
 
 Switch profiles:
 ```

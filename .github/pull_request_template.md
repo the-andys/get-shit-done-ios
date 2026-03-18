@@ -28,6 +28,11 @@
 - [ ] No hardcoded user-facing strings (uses `String(localized:)`)
 - [ ] Accessibility not removed or degraded
 
+### Runtimes tested
+
+- [ ] Claude Code
+- [ ] N/A (docs/config only)
+
 ## GSD Style Checklist
 
 - [ ] Follows GSD-iOS-STYLE.md (no enterprise patterns, no filler)

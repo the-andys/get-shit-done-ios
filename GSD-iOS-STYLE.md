@@ -82,6 +82,15 @@ Not an afterthought. Every UI component includes:
 - No hardcoded string literals in UI
 - `LocalizedStringResource` for string catalogs
 
+### Skills Layer
+
+GSD:iOS includes 10 built-in skills for iOS-specific workflows:
+
+- Skills are organized by `INDEX.md` and `ios-conventions.md` in the skills directory
+- `ios-conventions.md` provides Swift/SwiftUI conventions enforced across all agents
+- Project-level overrides can be added via `.planning/config.json`
+- Skills follow the same command structure as upstream GSD but with iOS context
+
 ## Agent File Conventions
 
 iOS agents follow the same XML structure as upstream but with iOS context:
@@ -143,3 +152,18 @@ Same as upstream format. iOS fork scopes:
 | `sync` | Upstream sync work |
 | `ci` | GitHub Actions |
 | `branding` | Logo, README, assets |
+
+## Infrastructure Principles (D78-D82)
+
+D78. Multi-runtime compatibility — agents, workflows, and hooks work across Claude Code, OpenCode, Gemini CLI, and Codex CLI
+D79. Copilot and Antigravity runtimes supported via install.js detection
+D80. Frontmatter schemas define agent metadata — name, description, tools, model, hooks
+D81. Hooks architecture — statusline, context-monitor, and check-update run as PostToolUse/AfterTool hooks
+D82. Build pipeline — hooks are source files in `hooks/`, built to `hooks/dist/` at prepublishOnly
+
+## Process Principles (71-74)
+
+71. Context engineering — every agent gets exactly the context it needs, no more, no less
+72. Spec-driven development — requirements drive roadmap, roadmap drives phases, phases drive plans
+73. Fresh context — subagents spawn with clean context windows, avoiding accumulated degradation
+74. Verify-before-commit — every task runs its verification step before creating a commit
