@@ -21,6 +21,5 @@ RAILROAD_ARCHITECTURE.md
 
 .planning/
 
-# Development docs (local only — only UPSTREAM_VERSION is tracked)
-.dev/*
-!.dev/UPSTREAM_VERSION
+# Development docs (local only)
+.dev/
