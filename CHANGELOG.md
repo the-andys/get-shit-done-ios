@@ -7,6 +7,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- 7 upstream test files (frontmatter, dispatcher, runtime configs) — test count 452 → 633
+- 7 reference docs (ARCHITECTURE, CLI-TOOLS, CONFIGURATION, AGENTS, COMMANDS, FEATURES, docs/README)
+- CI test workflow (3 OS × 3 Node matrix with coverage)
+- Issue templates (docs, config) with fork Discussions URL
+- `scripts/run-tests.cjs` cross-platform test runner
+- `c8` coverage tooling and `test:coverage` script
+- `inherit` model profile to USER-GUIDE and README
+- Runtimes tested section to PR template
+- Skills layer, D78-D82, 71-74 principles to GSD-iOS-STYLE.md
+- UI Design commands (`/gsd:ui-phase`, `/gsd:ui-review`) to README commands table
+- Synced with upstream GSD v1.25.1 (20 commits, v1.24.0 → v1.25.1)
+- `/gsd:do` smart router command — routes freeform text to the right GSD command
+- `/gsd:note` zero-friction note capture — append, list, promote
+- Antigravity runtime support in installer
+- Copilot CLI runtime support in installer
+- Full Codex runtime support in installer (resolves technical debt from v1.22.4)
+- Context window warning toggle in config (`hooks.context_warnings`)
+- Interactive research prompt in plan-phase (AskUserQuestion before deciding)
+- PII prevention (tilde paths) in installer
 - Synced with upstream GSD v1.24.0 (45 commits, v1.23.0 + v1.24.0)
 - New commands: /gsd:stats, /gsd:autonomous, /gsd:ui-phase, /gsd:ui-review
 - New workflows: autonomous, node-repair, stats, ui-phase, ui-review
@@ -27,7 +46,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - ROADMAP milestone scoping (stripShippedMilestones, replaceInCurrentMilestone)
 - Nyquist validation checks W008/W009 with auto-repair
 
+### Changed
+- `UPSTREAM_VERSION` moved from `.dev/` to project root
+- `.gitignore` simplified (`.dev/` without exceptions)
+- README badge updated from GSD 1.22.4 to 1.25.1
+- Stats command uses roadmap-based phase names and dual progress metrics (phase + plan)
+- Model resolution returns `opus` directly instead of mapping to `inherit`
+- Config template uses `granularity` (was deprecated `depth`) and enables Nyquist validation by default
+
 ### Fixed
+- Context-monitor hook `const cwd` duplicate declaration (hook was non-functional in npm installs)
+- package.json test runner (glob → cross-platform script)
+- package.json empty `dependencies` object removed
+- plan-phase.md "First, read agent .md" workaround replaced with named subagent_type
+- UI agents (gsd-ui-auditor, gsd-ui-researcher) missing commented hooks frontmatter
+- Init prefers current milestone over archived matches for phase operations
+- Verify.cjs CWD guard prevents accidental runs from home directory
+- Verify.cjs strips archived milestones before phase extraction
+- Executor checks for untracked files after task commits
+- Phase researcher verifies package versions against registry before recommending
 - skills: frontmatter removed from all 12 agents (Gemini compatibility cleanup)
 - grep escape in gsd-planner (protocol\\|struct instead of protocol\|struct)
 - Auto-advance prevention without --auto flag (explicit STOP message)

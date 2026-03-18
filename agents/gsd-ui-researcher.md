@@ -3,6 +3,12 @@ name: gsd-ui-researcher
 description: Produces UI-SPEC.md design contract for SwiftUI phases. Reads upstream artifacts, detects design system state, asks only unanswered questions. Spawned by /gsd:ui-phase orchestrator.
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*
 color: "#E879F9"
+# hooks:
+#   PostToolUse:
+#     - matcher: "Write|Edit"
+#       hooks:
+#         - type: command
+#           command: "node hooks/dist/gsd-check-update.js"
 ---
 
 <role>

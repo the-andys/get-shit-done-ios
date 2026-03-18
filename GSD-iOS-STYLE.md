@@ -82,6 +82,15 @@ Not an afterthought. Every UI component includes:
 - No hardcoded string literals in UI
 - `LocalizedStringResource` for string catalogs
 
+### Skills Layer
+
+GSD:iOS includes 10 built-in skills for iOS-specific workflows:
+
+- Skills are organized by `INDEX.md` and `ios-conventions.md` in the skills directory
+- `ios-conventions.md` provides Swift/SwiftUI conventions enforced across all agents
+- Project-level overrides can be added via `.planning/config.json`
+- Skills follow the same command structure as upstream GSD but with iOS context
+
 ## Agent File Conventions
 
 iOS agents follow the same XML structure as upstream but with iOS context:
@@ -143,3 +152,18 @@ Same as upstream format. iOS fork scopes:
 | `sync` | Upstream sync work |
 | `ci` | GitHub Actions |
 | `branding` | Logo, README, assets |
+
+## Infrastructure Principles (D78-D82)
+
+D78. Multi-runtime is non-negotiable for infrastructure files — iOS content only, not iOS infrastructure
+D79. install.js is upstream-owned — fork applies branding only (2 customizations: banner + package name)
+D80. config.json COPY from upstream, never MERGE — depth→granularity, nyquist were tech debt
+D81. Permissions: Bash(*) + surgical deny > 100 granular rules — compound commands break allowlists
+D82. copilot-instructions.md template adopted — discovered as Copilot runtime dependency
+
+## Process Principles (71-74)
+
+71. Multi-runtime non-negotiable — same as D78, process-level restatement
+72. "Fork owns" classification must be re-examined periodically — install.js was misclassified for 3 cycles
+73. Deprecated keys in templates create silent tech debt — depth worked via migration, but new projects got deprecated configs
+74. Permission simplification: Bash(*) + deny > 100 granular rules — Anthropic-recommended pattern
