@@ -66,28 +66,43 @@ jobs:
           UPSTREAM_VERSION=$(cat /tmp/upstream_version.txt)
           echo "upstream_version=${UPSTREAM_VERSION}" >> $GITHUB_OUTPUT
 
-          # Build commit data as JSON for Claude
-          echo "[" > /tmp/commits.json
-          FIRST=true
-          git log ${SYNC_COMMIT}..upstream/main --format="%H<SEP>%s" | while IFS= read -r line; do
-            hash=$(echo "$line" | sed 's/<SEP>.*//')
-            msg=$(echo "$line" | sed 's/^[^<]*<SEP>//')
-            # Get changed files for this commit
-            FILES=$(git diff-tree --no-commit-id --name-only -r "$hash" 2>/dev/null | tr '\n' ', ' | sed 's/,$//')
-            if [ "$FIRST" = true ]; then
-              FIRST=false
-            else
-              echo "," >> /tmp/commits.json
-            fi
-            # Escape JSON strings
-            MSG_ESCAPED=$(echo "$msg" | sed 's/"/\\"/g')
-            FILES_ESCAPED=$(echo "$FILES" | sed 's/"/\\"/g')
-            SHORT=$(echo "$hash" | cut -c1-7)
-            echo "  {\"hash\": \"${SHORT}\", \"message\": \"${MSG_ESCAPED}\", \"files\": \"${FILES_ESCAPED}\"}" >> /tmp/commits.json
-          done
-          echo "]" >> /tmp/commits.json
+          # Build commit data as JSON for Claude (using Python for safe escaping)
+          git log ${SYNC_COMMIT}..upstream/main --format="%H<SEP>%s" > /tmp/raw_commits.txt
 
-          cat /tmp/commits.json
+          python3 << 'PYEOF'
+          import json, subprocess, sys
+
+          commits = []
+          with open('/tmp/raw_commits.txt') as f:
+              for line in f:
+                  line = line.strip()
+                  if '<SEP>' not in line:
+                      continue
+                  full_hash, msg = line.split('<SEP>', 1)
+                  short_hash = full_hash[:7]
+                  # Get changed files
+                  try:
+                      result = subprocess.run(
+                          ['git', 'diff-tree', '--no-commit-id', '--name-only', '-r', full_hash],
+                          capture_output=True, text=True, timeout=10
+                      )
+                      files = ', '.join(result.stdout.strip().split('\n')) if result.stdout.strip() else ''
+                  except Exception:
+                      files = ''
+                  commits.append({
+                      'hash': short_hash,
+                      'message': msg,
+                      'files': files
+                  })
+
+          with open('/tmp/commits.json', 'w') as f:
+              json.dump(commits, f, indent=2, ensure_ascii=False)
+
+          print(f'Built JSON for {len(commits)} commits')
+          PYEOF
+
+          cat /tmp/commits.json | head -20
+          echo "... (truncated)"
 
       - name: Check for existing issue
         if: steps.detect.outputs.has_new == 'true'
@@ -124,7 +139,7 @@ jobs:
           cat > /tmp/prompt.json << 'PROMPT_END'
           {
             "model": "claude-sonnet-4-6",
-            "max_tokens": 4096,
+            "max_tokens": 16384,
             "system": "You are a JSON-only classifier. You MUST respond with a valid JSON array and nothing else. No markdown fences, no explanation, no preamble. Every object in the array MUST have exactly these 5 fields: hash, message, classification, effort, rationale.",
             "messages": [
               {
@@ -211,15 +226,26 @@ jobs:
               analysis = JSON.parse(raw);
             } catch (e) {
               console.error('Failed to parse analysis:', e.message);
-              // Fallback: load raw commits
-              const commits = JSON.parse(fs.readFileSync('/tmp/commits.json', 'utf8'));
-              analysis = commits.map(c => ({
-                hash: c.hash,
-                message: c.message,
-                classification: 'UNKNOWN',
-                effort: 'TBD',
-                rationale: 'Classification failed — manual review needed'
-              }));
+              // Fallback: load raw commits (with its own error handling)
+              try {
+                const commits = JSON.parse(fs.readFileSync('/tmp/commits.json', 'utf8'));
+                analysis = commits.map(c => ({
+                  hash: c.hash,
+                  message: c.message,
+                  classification: 'UNKNOWN',
+                  effort: 'TBD',
+                  rationale: 'Classification failed — manual review needed'
+                }));
+              } catch (e2) {
+                console.error('Fallback also failed:', e2.message);
+                analysis = [{
+                  hash: '???????',
+                  message: `${commitCount} commits detected but classification and parsing both failed`,
+                  classification: 'UNKNOWN',
+                  effort: 'High',
+                  rationale: 'Both Claude classification and commit parsing failed — manual review required'
+                }];
+              }
             }
 
             // Count classifications (normalize missing/invalid to UNKNOWN)
