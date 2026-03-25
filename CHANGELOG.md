@@ -7,6 +7,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [1.4.0] - 2026-03-25
+
+### Added
 - Upstream sync v1.25.1 → v1.28.0 (307 commits, 189 files)
 - Developer profiling pipeline (`/gsd:profile-user`, `/gsd:dev-preferences`)
 - `/gsd:ship` command for PR creation from verified phase work
@@ -446,7 +454,8 @@ Upstream sync: v1.20.5 → v1.20.6
 ### Removed
 - All web-specific patterns: React, Next.js, Prisma, npm run, .tsx/.jsx references
 
-[Unreleased]: https://github.com/the-andys/get-shit-done-ios/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/the-andys/get-shit-done-ios/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/the-andys/get-shit-done-ios/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/the-andys/get-shit-done-ios/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/the-andys/get-shit-done-ios/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/the-andys/get-shit-done-ios/compare/v1.0.0...v1.1.0
@@ -465,4 +474,4 @@ Upstream sync: v1.20.5 → v1.20.6
 
 ---
 
-*Based on upstream [Get Shit Done](https://github.com/gsd-build/get-shit-done) v1.25.1*
+*Based on upstream [Get Shit Done](https://github.com/gsd-build/get-shit-done) v1.28.0*
