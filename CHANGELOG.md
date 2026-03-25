@@ -7,10 +7,53 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Upstream sync v1.25.1 → v1.28.0 (307 commits, 189 files)
+- Developer profiling pipeline (`/gsd:profile-user`, `/gsd:dev-preferences`)
+- `/gsd:ship` command for PR creation from verified phase work
+- `/gsd:next` command for automatic workflow advancement
+- `/gsd:fast` command for trivial inline tasks without planning
+- `/gsd:review` command for cross-AI peer code review
+- `/gsd:forensics` command for post-mortem workflow investigation
+- `/gsd:milestone-summary` command for post-build onboarding
+- `/gsd:plant-seed` command for backlog parking lot
+- `/gsd:pr-branch` command for clean PR branch management
+- `/gsd:audit-uat` command for verification debt tracking
+- `/gsd:workstreams` command for parallel milestone work
+- Multi-project workspace commands (`list-workspaces`, `new-workspace`, `remove-workspace`)
+- Interactive command manager (`/gsd:manager`)
+- Advisor mode for discuss-phase with research agents
+- Security hardening layer (prompt injection detection, path traversal prevention)
+- PreToolUse hooks: `gsd-prompt-guard`, `gsd-workflow-guard`
+- Cursor CLI runtime support (7th runtime)
+- Cross-phase regression gate in execute-phase
+- Session handoff artifact (`HANDOFF.json`) and `WAITING.json` signal file
+- Interactive executor mode with `--wave N` flag
+- Workstream namespacing for parallel milestones
+- Context window size awareness for 1M+ models
+- CLAUDE.md enforcement as plan-checker Dimension 10
+- Discussion audit trail (`DISCUSSION-LOG.md`)
+- 3 new agents: `gsd-user-profiler`, `gsd-advisor-researcher`, `gsd-assumptions-analyzer`
+- 22 new test files (~600 new tests)
 
 ### Changed
+- Core lib refactored: `planningPaths()` replaces hardcoded `.planning/`
+- `extractCurrentMilestone` replaces `stripShippedMilestones`
+- Generated markdown normalized for markdownlint compliance
+- `curl` replaced with `fetch()` in upstream references (fork iOS examples unaffected)
+- `jq` dependency removed (replaced by `--pick` flag)
+- Worktree isolation for code-writing subagents
+- Node.js minimum version: `>=16.7.0` → `>=20.0.0`
+- CI matrix: dropped Node 18, optimized to 4 jobs with `fail-fast: false`
+- Hook version tracking with stale detection
+- `install.js` updated for Cursor runtime + multi-runtime selection
+- Verifier Step 4b (Data-Flow Trace) and Step 7b (Behavioral Spot-Checks) with iOS equivalents
+- Roadmapper UI Phase Detection keywords adapted for iOS (SwiftUI/UIKit/NavigationStack)
 
 ### Fixed
+- Context monitor `const cwd` duplicate declaration (Task 023 bug)
+- `/gsd:transition` references replaced with real commands
+- CRLF frontmatter parsing
+- Duplicate `stateExtractField`
 
 ## [1.3.0] - 2026-03-18
 

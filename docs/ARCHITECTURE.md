@@ -113,7 +113,7 @@ User-facing entry points. Each file contains YAML frontmatter (name, description
 - **Copilot:** Slash commands (`/gsd:command-name`)
 - **Antigravity:** Skills
 
-**Total commands:** 37
+**Total commands:** 44
 
 ### Workflows (`get-shit-done/workflows/*.md`)
 
@@ -124,7 +124,7 @@ Orchestration logic that commands reference. Contains the step-by-step process i
 - State update patterns
 - Error handling and recovery
 
-**Total workflows:** 41
+**Total workflows:** 46
 
 ### Agents (`agents/*.md`)
 
@@ -134,7 +134,7 @@ Specialized agent definitions with frontmatter specifying:
 - `tools` — Allowed tool access (Read, Write, Edit, Bash, Grep, Glob, WebSearch, etc.)
 - `color` — Terminal output color for visual distinction
 
-**Total agents:** 15
+**Total agents:** 16
 
 ### References (`get-shit-done/references/*.md`)
 
@@ -156,6 +156,7 @@ Markdown templates for all planning artifacts. Used by `gsd-tools.cjs template f
 - `summary.md` (+ `summary-minimal.md`, `summary-standard.md`, `summary-complex.md`) — Granularity-aware summary templates
 - `DEBUG.md` — Debug session tracking template
 - `UI-SPEC.md`, `UAT.md`, `VALIDATION.md` — Specialized verification templates
+- `discussion-log.md` — Discussion audit trail template
 - `codebase/` — Brownfield mapping templates (stack, architecture, conventions, concerns, structure, testing, integrations)
 - `research-project/` — Research output templates (SUMMARY, STACK, FEATURES, ARCHITECTURE, PITFALLS)
 
@@ -168,10 +169,12 @@ Runtime hooks that integrate with the host AI agent:
 | `gsd-statusline.js` | `statusLine` | Displays model, task, directory, and context usage bar |
 | `gsd-context-monitor.js` | `PostToolUse` / `AfterTool` | Injects agent-facing context warnings at 35%/25% remaining |
 | `gsd-check-update.js` | `SessionStart` | Background check for new GSD versions |
+| `gsd-prompt-guard.js` | `PreToolUse` | Scans `.planning/` writes for prompt injection patterns (advisory) |
+| `gsd-workflow-guard.js` | `PreToolUse` | Detects file edits outside GSD workflow context (advisory, opt-in via `hooks.workflow_guard`) |
 
 ### CLI Tools (`get-shit-done/bin/`)
 
-Node.js CLI utility (`gsd-tools.cjs`) with 11 domain modules:
+Node.js CLI utility (`gsd-tools.cjs`) with 17 domain modules:
 
 | Module | Responsibility |
 |--------|---------------|
@@ -187,6 +190,8 @@ Node.js CLI utility (`gsd-tools.cjs`) with 11 domain modules:
 | `milestone.cjs` | Milestone archival, requirements marking |
 | `commands.cjs` | Misc commands (slug, timestamp, todos, scaffolding, stats) |
 | `model-profiles.cjs` | Model profile resolution table |
+| `security.cjs` | Path traversal prevention, prompt injection detection, safe JSON parsing, shell argument validation |
+| `uat.cjs` | UAT file parsing, verification debt tracking, audit-uat support |
 
 ---
 
@@ -218,7 +223,7 @@ Orchestrator (workflow .md)
 
 | Category | Agents | Parallelism |
 |----------|--------|-------------|
-| **Researchers** | gsd-project-researcher, gsd-phase-researcher, gsd-ui-researcher | 4 parallel (stack, features, architecture, pitfalls) |
+| **Researchers** | gsd-project-researcher, gsd-phase-researcher, gsd-ui-researcher, gsd-advisor-researcher | 4 parallel (stack, features, architecture, pitfalls); advisor spawns during discuss-phase |
 | **Synthesizers** | gsd-research-synthesizer | Sequential (after researchers complete) |
 | **Planners** | gsd-planner, gsd-roadmapper | Sequential |
 | **Checkers** | gsd-plan-checker, gsd-integration-checker, gsd-ui-checker, gsd-nyquist-auditor | Sequential (verification loop, max 3 iterations) |
@@ -246,6 +251,14 @@ Each executor gets:
 - The specific PLAN.md to execute
 - Project context (PROJECT.md, STATE.md)
 - Phase context (CONTEXT.md, RESEARCH.md if available)
+
+#### Parallel Commit Safety
+
+When multiple executors run within the same wave, two mechanisms prevent conflicts:
+
+1. **`--no-verify` commits** — Parallel agents skip pre-commit hooks (which can cause build lock contention, e.g., cargo lock fights in Rust projects). The orchestrator runs `git hook run pre-commit` once after each wave completes.
+
+2. **STATE.md file locking** — All `writeStateMd()` calls use lockfile-based mutual exclusion (`STATE.md.lock` with `O_EXCL` atomic creation). This prevents the read-modify-write race condition where two agents read STATE.md, modify different fields, and the last writer overwrites the other's changes. Includes stale lock detection (10s timeout) and spin-wait with jitter.
 
 ---
 
@@ -334,8 +347,8 @@ UI-SPEC.md (per phase) ───────────────────
 ├── commands/gsd/*.md               # 37 slash commands
 ├── get-shit-done/
 │   ├── bin/gsd-tools.cjs           # CLI utility
-│   ├── bin/lib/*.cjs               # 11 domain modules
-│   ├── workflows/*.md              # 41 workflow definitions
+│   ├── bin/lib/*.cjs               # 15 domain modules
+│   ├── workflows/*.md              # 42 workflow definitions
 │   ├── references/*.md             # 13 shared reference docs
 │   └── templates/                  # Planning artifact templates
 ├── agents/*.md                     # 15 agent definitions
@@ -358,7 +371,7 @@ Equivalent paths for other runtimes:
 
 ```
 .planning/
-├── PROJECT.md              # Project vision, constraints, decisions
+├── PROJECT.md              # Project vision, constraints, decisions, evolution rules
 ├── REQUIREMENTS.md         # Scoped requirements (v1/v2/out-of-scope)
 ├── ROADMAP.md              # Phase breakdown with status tracking
 ├── STATE.md                # Living memory: position, decisions, blockers, metrics
@@ -396,6 +409,8 @@ Equivalent paths for other runtimes:
 ├── todos/
 │   ├── pending/            # Captured ideas
 │   └── done/               # Completed todos
+├── threads/               # Persistent context threads (from /gsd:thread)
+├── seeds/                 # Forward-looking ideas (from /gsd:plant-seed)
 ├── debug/                  # Active debug sessions
 │   ├── *.md                # Active sessions
 │   ├── resolved/           # Archived sessions
@@ -471,6 +486,20 @@ Debounce: 5 tool uses between repeated warnings. Severity escalation (WARNING→
 - Stale metrics (>60s old) are ignored
 - Missing bridge files handled gracefully (subagents, fresh sessions)
 - Context monitor is advisory — never issues imperative commands that override user preferences
+
+### Security Hooks (v1.27)
+
+**Prompt Guard** (`gsd-prompt-guard.js`):
+- Triggers on Write/Edit to `.planning/` files
+- Scans content for prompt injection patterns (role override, instruction bypass, system tag injection)
+- Advisory-only — logs detection, does not block
+- Patterns are inlined (subset of `security.cjs`) for hook independence
+
+**Workflow Guard** (`gsd-workflow-guard.js`):
+- Triggers on Write/Edit to non-`.planning/` files
+- Detects edits outside GSD workflow context (no active `/gsd:` command or Task subagent)
+- Advises using `/gsd:quick` or `/gsd:fast` for state-tracked changes
+- Opt-in via `hooks.workflow_guard: true` (default: false)
 
 ---
 

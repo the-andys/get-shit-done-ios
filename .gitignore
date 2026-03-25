@@ -11,13 +11,33 @@ commands.html
 # Build artifacts (committed to npm, not git)
 hooks/dist/
 
+# Coverage artifacts
+coverage/
+
 # Animation assets
 animation/
 *.gif
 
+# Installed GSD files (runtime — not source)
+.github/agents/gsd-*
+.github/skills/gsd-*
+.github/get-shit-done/*
+.github/skills/get-shit-done
+.github/copilot-instructions.md
+
+# Background shell
+.bg-shell/
+
 # Internal planning documents
 reports/
 RAILROAD_ARCHITECTURE.md
+analysis/
+docs/GSD-MASTER-ARCHITECTURE.md
+docs/GSD-RUST-IMPLEMENTATION-GUIDE.md
+docs/GSD-SYSTEM-SPECIFICATION.md
+gaps.md
+improve.md
+philosophy.md
 
 .planning/
 
