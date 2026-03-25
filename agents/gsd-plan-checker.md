@@ -284,9 +284,11 @@ issue:
 
 **Process:**
 1. Parse CONTEXT.md sections: Decisions, Claude's Discretion, Deferred Ideas
-2. For each locked Decision, find implementing task(s)
-3. Verify no tasks implement Deferred Ideas (scope creep)
-4. Verify Discretion areas are handled (planner's choice is valid)
+2. Extract all numbered decisions (D-01, D-02, etc.) from the `<decisions>` section
+3. For each locked Decision, find implementing task(s) — check task actions for D-XX references
+4. Verify 100% decision coverage: every D-XX must appear in at least one task's action or rationale
+5. Verify no tasks implement Deferred Ideas (scope creep)
+6. Verify Discretion areas are handled (planner's choice is valid)
 
 **Red flags:**
 - Locked decision has no implementing task
@@ -376,6 +378,69 @@ Overall: ✅ PASS / ❌ FAIL
 ```
 
 If FAIL: return to planner with specific fixes. Same revision loop as other dimensions (max 3 loops).
+
+## Dimension 9: Cross-Plan Data Contracts
+
+**Question:** When plans share data pipelines, are their transformations compatible?
+
+**Process:**
+1. Identify data entities in multiple plans' `key_links` or `<action>` elements
+2. For each shared data path, check if one plan's transformation conflicts with another's:
+   - Plan A strips/sanitizes data that Plan B needs in original form
+   - Plan A's output format doesn't match Plan B's expected input
+   - Two plans consume the same stream with incompatible assumptions
+3. Check for a preservation mechanism (raw buffer, copy-before-transform)
+
+**Red flags:**
+- "strip"/"clean"/"sanitize" in one plan + "parse"/"extract" original format in another
+- Streaming consumer modifies data that finalization consumer needs intact
+- Two plans transform same entity without shared raw source
+
+**Severity:** WARNING for potential conflicts. BLOCKER if incompatible transforms on same data entity with no preservation mechanism.
+
+## Dimension 10: CLAUDE.md Compliance
+
+**Question:** Do plans respect project-specific conventions, constraints, and requirements from CLAUDE.md?
+
+**Process:**
+1. Read `./CLAUDE.md` in the working directory (already loaded in `<project_context>`)
+2. Extract actionable directives: coding conventions, forbidden patterns, required tools, security requirements, testing rules, architectural constraints
+3. For each directive, check if any plan task contradicts or ignores it
+4. Flag plans that introduce patterns CLAUDE.md explicitly forbids
+5. Flag plans that skip steps CLAUDE.md explicitly requires (e.g., required linting, specific test frameworks, commit conventions)
+
+**Red flags:**
+- Plan uses a library/pattern CLAUDE.md explicitly forbids
+- Plan skips a required step (e.g., CLAUDE.md says "always run X before Y" but plan omits X)
+- Plan introduces code style that contradicts CLAUDE.md conventions
+- Plan creates files in locations that violate CLAUDE.md's architectural constraints
+- Plan ignores security requirements documented in CLAUDE.md
+
+**Skip condition:** If no `./CLAUDE.md` exists in the working directory, output: "Dimension 10: SKIPPED (no CLAUDE.md found)" and move on.
+
+**Example — forbidden pattern:**
+```yaml
+issue:
+  dimension: claude_md_compliance
+  severity: blocker
+  description: "Plan uses Jest for testing but CLAUDE.md requires Vitest"
+  plan: "01"
+  task: 1
+  claude_md_rule: "Testing: Always use Vitest, never Jest"
+  plan_action: "Install Jest and create test suite..."
+  fix_hint: "Replace Jest with Vitest per project CLAUDE.md"
+```
+
+**Example — skipped required step:**
+```yaml
+issue:
+  dimension: claude_md_compliance
+  severity: warning
+  description: "Plan does not include lint step required by CLAUDE.md"
+  plan: "02"
+  claude_md_rule: "All tasks must run eslint before committing"
+  fix_hint: "Add eslint verification step to each task's <verify> block"
+```
 
 </verification_dimensions>
 
@@ -707,6 +772,8 @@ Plan verification complete when:
   - [ ] No tasks contradict locked decisions
   - [ ] Deferred ideas not included in plans
 - [ ] Overall status determined (passed | issues_found)
+- [ ] Cross-plan data contracts checked (no conflicting transforms on shared data)
+- [ ] CLAUDE.md compliance checked (plans respect project conventions)
 - [ ] Structured issues returned (if any found)
 - [ ] Result returned to orchestrator
 
