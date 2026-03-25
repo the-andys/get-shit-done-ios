@@ -8,7 +8,7 @@ STATE_FILE="/tmp/gsd-monitor-last-tag"
 LOG_FILE="/tmp/gsd-monitor.log"
 
 # Initialize with current latest
-echo "v1.25.1" > "$STATE_FILE"
+echo "v1.28.0" > "$STATE_FILE"
 rm -f "$SIGNAL_FILE"
 
 log() {
@@ -16,7 +16,7 @@ log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
-log "Monitor started. Watching $REPO for releases newer than v1.25.1"
+log "Monitor started. Watching $REPO for releases newer than v1.28.0"
 log "Checking every 15 minutes..."
 
 while true; do
