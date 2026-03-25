@@ -14,21 +14,27 @@ const TOOLS_PATH = path.join(__dirname, '..', 'get-shit-done', 'bin', 'gsd-tools
  * @param {string|string[]} args - Command string (shell-interpreted) or array
  *   of arguments (shell-bypassed via execFileSync, safe for JSON and dollar signs).
  * @param {string} cwd - Working directory.
+ * @param {object} [env] - Optional env overrides merged on top of process.env.
+ *   Pass { HOME: cwd } to sandbox ~/.gsd/ lookups in tests that assert concrete
+ *   config values that could be overridden by a developer's defaults.json.
  */
-function runGsdTools(args, cwd = process.cwd()) {
+function runGsdTools(args, cwd = process.cwd(), env = {}) {
   try {
     let result;
+    const childEnv = { ...process.env, ...env };
     if (Array.isArray(args)) {
       result = execFileSync(process.execPath, [TOOLS_PATH, ...args], {
         cwd,
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
+        env: childEnv,
       });
     } else {
       result = execSync(`node "${TOOLS_PATH}" ${args}`, {
         cwd,
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
+        env: childEnv,
       });
     }
     return { success: true, output: result.trim() };
@@ -56,6 +62,7 @@ function createTempGitProject() {
   execSync('git init', { cwd: tmpDir, stdio: 'pipe' });
   execSync('git config user.email "test@test.com"', { cwd: tmpDir, stdio: 'pipe' });
   execSync('git config user.name "Test"', { cwd: tmpDir, stdio: 'pipe' });
+  execSync('git config commit.gpgsign false', { cwd: tmpDir, stdio: 'pipe' });
 
   fs.writeFileSync(
     path.join(tmpDir, '.planning', 'PROJECT.md'),

@@ -93,7 +93,7 @@ For each observable truth, determine if the codebase enables it.
 
 For each truth: identify supporting artifacts → check artifact status → check wiring → determine truth status.
 
-**Example:** Truth "User can see existing messages" depends on ChatListView.swift (renders), ChatViewModel.swift (provides data via async fetch), ChatMessage model (SwiftData schema). If ChatListView body is `Text("Hello, World!")` or ViewModel returns hardcoded `[]` → FAILED. If all exist, are substantive, and connected → VERIFIED.
+**Example:** Truth "User can see existing messages" depends on Chat.tsx (renders), /api/chat GET (provides), Message model (schema). If Chat.tsx is a stub or API returns hardcoded [] → FAILED. If all exist, are substantive, and connected → VERIFIED.
 </step>
 
 <step name="verify_artifacts">
@@ -115,8 +115,8 @@ Parse JSON result: `{ all_passed, passed, total, artifacts: [{path, exists, issu
 
 **Level 3 — Wired (manual check for artifacts that pass Levels 1-2):**
 ```bash
-grep -r "import.*$artifact_name\|$artifact_name" Sources/ --include="*.swift" | head -5  # REFERENCED
-grep -r "$artifact_name" Sources/ --include="*.swift" | grep -v "import" | grep -v "Tests/"  # USED (not just imported)
+grep -r "import.*$artifact_name" src/ --include="*.ts" --include="*.tsx"  # IMPORTED
+grep -r "$artifact_name" src/ --include="*.ts" --include="*.tsx" | grep -v "import"  # USED
 ```
 WIRED = imported AND used. ORPHANED = exists but not imported/used.
 
@@ -126,6 +126,17 @@ WIRED = imported AND used. ORPHANED = exists but not imported/used.
 | ✓ | ✓ | ✗ | ⚠️ ORPHANED |
 | ✓ | ✗ | - | ✗ STUB |
 | ✗ | - | - | ✗ MISSING |
+
+**Export-level spot check (WARNING severity):**
+
+For artifacts that pass Level 3, spot-check individual exports:
+- Extract key exported symbols (functions, constants, classes — skip types/interfaces)
+- For each, grep for usage outside the defining file
+- Flag exports with zero external call sites as "exported but unused"
+
+This catches dead stores like `setPlan()` that exist in a wired file but are
+never actually called. Report as WARNING — may indicate incomplete cross-plan
+wiring or leftover code from plan revisions.
 </step>
 
 <step name="verify_wiring">
@@ -149,11 +160,10 @@ Parse JSON result: `{ all_verified, verified, total, links: [{from, to, via, ver
 
 | Pattern | Check | Status |
 |---------|-------|--------|
-| View → ViewModel | View declares ViewModel (@Environment/@State/@Bindable) and reads its properties in body | WIRED / PARTIAL (declared but not read) / NOT_WIRED |
-| ViewModel → Service | ViewModel calls service/repository async methods, stores result in published state | WIRED / PARTIAL (calls but discards result) / NOT_WIRED |
-| Navigation → Destination | NavigationLink/sheet/navigationDestination points to real View (not Text("Coming soon") or EmptyView) | WIRED / STUB (placeholder destination) / NOT_WIRED |
-| State → Render | @State/@Query/ViewModel properties rendered in body (ForEach, Text, conditionals), not hardcoded content | WIRED / NOT_WIRED |
-| Model → Container | @Model registered in modelContainer(for:), queried via @Query or modelContext.fetch somewhere | WIRED / NOT_WIRED |
+| Component → API | fetch/axios call to API path, response used (await/.then/setState) | WIRED / PARTIAL (call but unused response) / NOT_WIRED |
+| API → Database | Prisma/DB query on model, result returned via res.json() | WIRED / PARTIAL (query but not returned) / NOT_WIRED |
+| Form → Handler | onSubmit with real implementation (fetch/axios/mutate/dispatch), not console.log/empty | WIRED / STUB (log-only/empty) / NOT_WIRED |
+| State → Render | useState variable appears in JSX (`{stateVar}` or `{stateVar.property}`) | WIRED / NOT_WIRED |
 
 Record status and evidence for each key link.
 </step>
@@ -174,15 +184,14 @@ Extract files modified in this phase from SUMMARY.md, scan each:
 |---------|--------|----------|
 | TODO/FIXME/XXX/HACK | `grep -n -E "TODO\|FIXME\|XXX\|HACK"` | ⚠️ Warning |
 | Placeholder content | `grep -n -iE "placeholder\|coming soon\|will be here"` | 🛑 Blocker |
-| Empty returns | `grep -n -E "return nil\|return \[\]\|return \.init()\|fatalError"` | ⚠️ Warning |
-| Print-only functions | Functions containing only `print()` or `debugPrint()` | ⚠️ Warning |
-| Empty closures | `grep -n -E "Button.*\{ \}\|\.onTapGesture \{ \}\|\.task \{ \}\|\.onAppear \{ \}"` | ⚠️ Warning |
+| Empty returns | `grep -n -E "return null\|return \{\}\|return \[\]\|=> \{\}"` | ⚠️ Warning |
+| Log-only functions | Functions containing only console.log | ⚠️ Warning |
 
 Categorize: 🛑 Blocker (prevents goal) | ⚠️ Warning (incomplete) | ℹ️ Info (notable).
 </step>
 
 <step name="identify_human_verification">
-**Always needs human:** Visual appearance (Xcode Preview / Simulator), user flow completion, SwiftUI animations and transitions, real-time behavior (push notifications, background refresh), external service integration (Sign in with Apple, StoreKit, CloudKit), performance on physical device, VoiceOver navigation, Dark Mode appearance, Dynamic Type at large sizes.
+**Always needs human:** Visual appearance, user flow completion, real-time behavior (WebSocket/SSE), external service integration, performance feel, error message clarity.
 
 **Needs human if uncertain:** Complex wiring grep can't trace, dynamic state-dependent behavior, edge cases.
 
@@ -202,7 +211,7 @@ Format each as: Test Name → What to do → Expected result → Why can't verif
 <step name="generate_fix_plans">
 If gaps_found:
 
-1. **Cluster related gaps:** ViewModel stub + View unwired → "Wire View to ViewModel". Multiple missing → "Complete core implementation". Wiring only → "Connect existing components". Navigation stubs → "Implement navigation destinations".
+1. **Cluster related gaps:** API stub + component unwired → "Wire frontend to backend". Multiple missing → "Complete core implementation". Wiring only → "Connect existing components".
 
 2. **Generate plan per cluster:** Objective, 2-3 tasks (files/action/verify each), re-verify step. Keep focused: single concern per plan.
 

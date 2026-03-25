@@ -9,7 +9,7 @@
 **Solves context rot — the quality degradation that happens as Claude fills its context window.**
 
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.25.1-orange?style=for-the-badge)](https://github.com/gsd-build/get-shit-done)
+[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.28.0-orange?style=for-the-badge)](https://github.com/gsd-build/get-shit-done)
 
 ```bash
 npx get-shit-done-ios@latest
@@ -80,11 +80,12 @@ npx get-shit-done-ios@latest
 ```
 
 The installer prompts you to choose:
-1. **Location** — Global (all projects) or local (current iOS project only)
+1. **Runtime** — Claude Code (recommended for iOS), OpenCode, Gemini, Codex, Copilot, Cursor, or Antigravity
+2. **Location** — Global (all projects) or local (current iOS project only)
 
 Verify with `/gsd:help` inside Claude Code.
 
-> **Requires:** macOS, Xcode, Node.js 18+, Claude Code.
+> **Requires:** macOS, Xcode, Node.js 20+, Claude Code.
 
 ### Staying Updated
 
@@ -100,9 +101,15 @@ Or use `/gsd:update` inside Claude Code for changelog preview before updating.
 ```bash
 npx get-shit-done-ios --claude --local    # Install to ./.claude/ (current project)
 npx get-shit-done-ios --claude --global   # Install to ~/.claude/ (all projects)
+npx get-shit-done-ios --opencode --global # Install to ~/.config/opencode/
+npx get-shit-done-ios --gemini --global   # Install to ~/.gemini/
+npx get-shit-done-ios --codex --global    # Install to ~/.codex/
+npx get-shit-done-ios --copilot --global  # Install to ~/.github/
+npx get-shit-done-ios --cursor --global   # Install to ~/.cursor/
+npx get-shit-done-ios --antigravity --global # Install to ~/.gemini/antigravity/
 ```
 
-Use `--global` (`-g`) or `--local` (`-l`) to skip the location prompt.
+Use `--claude`, `--opencode`, `--gemini`, `--codex`, `--copilot`, `--cursor`, `--antigravity`, or `--all` to skip the runtime prompt. Use `--global` (`-g`) or `--local` (`-l`) to skip the location prompt.
 
 </details>
 
@@ -468,12 +475,15 @@ You're never locked in. The system adapts.
 |---------|--------------|
 | `/gsd:new-project [--auto]` | Full initialization: questions → research → requirements → roadmap |
 | `/gsd:discuss-phase [N] [--auto] [--batch]` | Capture implementation decisions before planning |
-| `/gsd:plan-phase [N] [--auto]` | Research + plan + verify for a phase |
-| `/gsd:execute-phase <N>` | Execute all plans in parallel waves, verify when complete |
+| `/gsd:plan-phase [N] [--auto] [--reviews]` | Research + plan + verify for a phase |
+| `/gsd:execute-phase <N> [--wave N] [--interactive]` | Execute all plans in parallel waves, verify when complete |
 | `/gsd:verify-work [N]` | Manual user acceptance testing ¹ |
 | `/gsd:audit-milestone` | Verify milestone achieved its definition of done |
 | `/gsd:complete-milestone` | Archive milestone, tag release |
 | `/gsd:new-milestone [name]` | Start next version: questions → research → requirements → roadmap |
+| `/gsd:next` | Automatically advance to next workflow step |
+| `/gsd:ship` | Create PR from verified phase work |
+| `/gsd:fast <desc>` | Trivial inline task without planning overhead |
 
 ### Navigation
 
@@ -506,6 +516,7 @@ You're never locked in. The system adapts.
 |---------|--------------|
 | `/gsd:pause-work` | Create handoff when stopping mid-phase |
 | `/gsd:resume-work` | Restore from last session |
+| `/gsd:session-report` | Post-session activity report |
 
 ### Utilities
 
@@ -521,6 +532,16 @@ You're never locked in. The system adapts.
 | `/gsd:debug [desc]` | Systematic debugging with persistent state |
 | `/gsd:quick [--discuss] [--full] [--research]` | Execute ad-hoc task with GSD guarantees (`--discuss` for pre-planning context, `--full` adds plan-checking and verification, `--research` adds domain research) |
 | `/gsd:health [--repair]` | Validate `.planning/` directory integrity, auto-repair with `--repair` |
+| `/gsd:profile-user` | Build developer behavioral profile |
+| `/gsd:review` | Cross-AI peer code review |
+| `/gsd:forensics` | Post-mortem workflow investigation |
+| `/gsd:milestone-summary` | Milestone onboarding summary |
+| `/gsd:manager` | Interactive command center |
+| `/gsd:plant-seed` | Backlog parking lot |
+| `/gsd:pr-branch` | Clean PR branch management |
+| `/gsd:audit-uat` | UAT/verification debt tracking |
+| `/gsd:thread` | Persistent context threads |
+| `/gsd:workstreams` | Parallel workstream management |
 
 ### UI Design
 
@@ -669,6 +690,8 @@ npx get-shit-done-ios --claude --local --uninstall
 # Global install
 npx get-shit-done-ios --claude --global --uninstall
 ```
+
+For other runtimes, replace `--claude` with the runtime flag (e.g., `--cursor`, `--copilot`).
 
 This removes all GSD commands, agents, hooks, and settings while preserving your other configurations.
 

@@ -383,6 +383,36 @@ Use template from `~/.claude/get-shit-done/templates/roadmap.md`.
 
 **The `### Phase X:` headers are parsed by downstream tools.** If you only write the summary checklist, phase lookups will fail.
 
+### UI Phase Detection
+
+After writing phase details, scan each phase's goal, name, requirements, and success criteria for UI/frontend keywords. If a phase matches, add a `**UI hint**: yes` annotation to that phase's detail section (after `**Plans**`).
+
+**Detection keywords** (case-insensitive):
+
+```
+UI, interface, component, layout, page, screen, view, form,
+dashboard, widget, styling, navigation, menu, modal,
+sidebar, header, footer, theme, design system, SwiftUI, UIKit,
+NavigationStack, NavigationSplitView, TabView, Sheet, Alert, Toolbar,
+List, LazyVGrid, ScrollView
+```
+
+**Example annotated phase:**
+
+```markdown
+### Phase 3: Dashboard & Analytics
+**Goal**: Users can view activity metrics and manage settings
+**Depends on**: Phase 2
+**Requirements**: DASH-01, DASH-02
+**Success Criteria** (what must be TRUE):
+  1. User can view a dashboard with key metrics
+  2. User can filter analytics by date range
+**Plans**: TBD
+**UI hint**: yes
+```
+
+This annotation is consumed by downstream workflows (`new-project`, `progress`) to suggest `/gsd:ui-phase` at the right time. Phases without UI indicators omit the annotation entirely.
+
 ### 3. Progress Table
 
 ```markdown

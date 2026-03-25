@@ -31,14 +31,14 @@ Template for `.planning/phases/XX-name/{phase_num}-CONTEXT.md` - captures implem
 ## Implementation Decisions
 
 ### [Area 1 that was discussed]
-- [Specific decision made]
-- [Another decision if applicable]
+- **D-01:** [Specific decision made]
+- **D-02:** [Another decision if applicable]
 
 ### [Area 2 that was discussed]
-- [Specific decision made]
+- **D-03:** [Specific decision made]
 
 ### [Area 3 that was discussed]
-- [Specific decision made]
+- **D-04:** [Specific decision made]
 
 ### Claude's Discretion
 [Areas where user explicitly said "you decide" — Claude has flexibility here during planning/implementation]
@@ -53,20 +53,6 @@ Template for `.planning/phases/XX-name/{phase_num}-CONTEXT.md` - captures implem
 [If none: "No specific requirements — open to standard approaches"]
 
 </specifics>
-
-<code_context>
-## Existing Code Insights
-
-### Reusable Assets
-- [View/ViewModel/Service]: [How it could be used in this phase]
-
-### Established Patterns
-- [Pattern]: [How it constrains/enables this phase]
-
-### Integration Points
-- [Where new code connects to existing system]
-
-</code_context>
 
 <canonical_refs>
 ## Canonical References
@@ -85,6 +71,20 @@ Template for `.planning/phases/XX-name/{phase_num}-CONTEXT.md` - captures implem
 [If the project has no external specs: "No external specs — requirements are fully captured in decisions above"]
 
 </canonical_refs>
+
+<code_context>
+## Existing Code Insights
+
+### Reusable Assets
+- [Component/hook/utility]: [How it could be used in this phase]
+
+### Established Patterns
+- [Pattern]: [How it constrains/enables this phase]
+
+### Integration Points
+- [Where new code connects to existing system]
+
+</code_context>
 
 <deferred>
 ## Deferred Ideas
@@ -142,14 +142,6 @@ Display posts from followed users in a scrollable feed. Users can view posts and
 
 </decisions>
 
-<specifics>
-## Specific Ideas
-
-- "I like how Twitter shows the new posts indicator without disrupting your scroll position"
-- Cards should feel like Linear's issue cards — clean, not cluttered
-
-</specifics>
-
 <canonical_refs>
 ## Canonical References
 
@@ -161,6 +153,14 @@ Display posts from followed users in a scrollable feed. Users can view posts and
 - `docs/design/empty-states.md` — Empty state patterns, illustration guidelines
 
 </canonical_refs>
+
+<specifics>
+## Specific Ideas
+
+- "I like how Twitter shows the new posts indicator without disrupting your scroll position"
+- Cards should feel like Linear's issue cards — clean, not cluttered
+
+</specifics>
 
 <deferred>
 ## Deferred Ideas
@@ -216,14 +216,6 @@ CLI command to backup database to local file or S3. Supports full and incrementa
 
 </decisions>
 
-<specifics>
-## Specific Ideas
-
-- "I want it to feel like pg_dump — familiar to database people"
-- Should work in CI pipelines (exit codes, no interactive prompts)
-
-</specifics>
-
 <canonical_refs>
 ## Canonical References
 
@@ -232,6 +224,14 @@ CLI command to backup database to local file or S3. Supports full and incrementa
 - `docs/decisions/adr-007-cli-conventions.md` — Flag naming, exit codes, output format standards
 
 </canonical_refs>
+
+<specifics>
+## Specific Ideas
+
+- "I want it to feel like pg_dump — familiar to database people"
+- Should work in CI pipelines (exit codes, no interactive prompts)
+
+</specifics>
 
 <deferred>
 ## Deferred Ideas
@@ -287,14 +287,6 @@ Organize existing photo library into structured folders. Handle duplicates and a
 
 </decisions>
 
-<specifics>
-## Specific Ideas
-
-- "I want to be able to find photos by roughly when they were taken"
-- Don't delete anything — worst case, move to a review folder
-
-</specifics>
-
 <canonical_refs>
 ## Canonical References
 
@@ -303,6 +295,14 @@ Organize existing photo library into structured folders. Handle duplicates and a
 - `docs/decisions/adr-003-exif-handling.md` — EXIF extraction strategy, fallback for missing metadata
 
 </canonical_refs>
+
+<specifics>
+## Specific Ideas
+
+- "I want to be able to find photos by roughly when they were taken"
+- Don't delete anything — worst case, move to a review folder
+
+</specifics>
 
 <deferred>
 ## Deferred Ideas

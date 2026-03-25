@@ -114,14 +114,14 @@ Skip internal/non-observable items (refactors, type changes, etc.).
 
 After extracting tests from SUMMARYs, scan the SUMMARY files for modified/created file paths. If ANY path matches these patterns:
 
-`App.swift`, `*App.swift`, `AppDelegate.swift`, `SceneDelegate.swift`, `*.xcdatamodeld`, `ModelContainer*`, `@ModelActor*`, `Persistence.swift`, `*-Info.plist`, `*.entitlements`, `ContentView.swift`
+`server.ts`, `server.js`, `app.ts`, `app.js`, `index.ts`, `index.js`, `main.ts`, `main.js`, `database/*`, `db/*`, `seed/*`, `seeds/*`, `migrations/*`, `startup*`, `docker-compose*`, `Dockerfile*`
 
 Then **prepend** this test to the test list:
 
 - name: "Cold Start Smoke Test"
-- expected: "Delete the app from Simulator (or use a fresh Simulator). Build and run from Xcode. App launches without crashes, any SwiftData/CoreData migration completes, initial data loads, and the primary screen renders with live content (not placeholder or empty state that should have data)."
+- expected: "Kill any running server/service. Clear ephemeral state (temp DBs, caches, lock files). Start the application from scratch. Server boots without errors, any seed/migration completes, and a primary query (health check, homepage load, or basic API call) returns live data."
 
-This catches bugs that only manifest on fresh install — SwiftData schema mismatches, missing default data, entitlement issues, broken ModelContainer setup — which pass against existing app state but crash on first launch.
+This catches bugs that only manifest on fresh start — race conditions in startup sequences, silent seed failures, missing environment setup — which pass against warm state but break in production.
 </step>
 
 <step name="create_uat_file">
@@ -231,6 +231,29 @@ result: skipped
 reason: [user's reason if provided]
 ```
 
+**If response indicates blocked:**
+- "blocked", "can't test - server not running", "need physical device", "need release build"
+- Or any response containing: "server", "blocked", "not running", "physical device", "release build"
+
+Infer blocked_by tag from response:
+- Contains: server, not running, gateway, API → `server`
+- Contains: physical, device, hardware, real phone → `physical-device`
+- Contains: release, preview, build, EAS → `release-build`
+- Contains: stripe, twilio, third-party, configure → `third-party`
+- Contains: depends on, prior phase, prerequisite → `prior-phase`
+- Default: `other`
+
+Update Tests section:
+```
+### {N}. {name}
+expected: {expected}
+result: blocked
+blocked_by: {inferred tag}
+reason: "{verbatim user response}"
+```
+
+Note: Blocked tests do NOT go into the Gaps section (they aren't code issues — they're prerequisite gates).
+
 **If response is anything else:**
 - Treat as issue description
 
@@ -293,8 +316,24 @@ Proceed to `present_test`.
 <step name="complete_session">
 **Complete testing and commit:**
 
+**Determine final status:**
+
+Count results:
+- `pending_count`: tests with `result: [pending]`
+- `blocked_count`: tests with `result: blocked`
+- `skipped_no_reason`: tests with `result: skipped` and no `reason` field
+
+```
+if pending_count > 0 OR blocked_count > 0 OR skipped_no_reason > 0:
+  status: partial
+  # Session ended but not all tests resolved
+else:
+  status: complete
+  # All tests have a definitive result (pass, issue, or skipped-with-reason)
+```
+
 Update frontmatter:
-- status: complete
+- status: {computed status}
 - updated: [now]
 
 Clear Current Test section:

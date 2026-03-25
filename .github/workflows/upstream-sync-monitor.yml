@@ -27,7 +27,7 @@ jobs:
         id: detect
         run: |
           # Read our last synced version from UPSTREAM_VERSION (root)
-          LAST_SYNC=$(cat UPSTREAM_VERSION 2>/dev/null || echo "1.25.1")
+          LAST_SYNC=$(cat UPSTREAM_VERSION 2>/dev/null || echo "1.28.0")
           echo "last_sync=v${LAST_SYNC}" >> $GITHUB_OUTPUT
           echo "Last synced version: v${LAST_SYNC}"
 

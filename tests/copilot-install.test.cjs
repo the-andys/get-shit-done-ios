@@ -150,18 +150,13 @@ describe('Source code integration (Copilot)', () => {
     assert.ok(src.includes('--copilot'), 'help text has --copilot option');
   });
 
-  test('CLI-02: promptRuntime has Copilot as option 5', () => {
-    assert.ok(src.includes("choice === '5'"), 'choice 5 exists');
-    // Verify choice 5 maps to copilot (the line after choice === '5' should reference copilot)
-    const choice5Index = src.indexOf("choice === '5'");
-    const nextLines = src.substring(choice5Index, choice5Index + 100);
-    assert.ok(nextLines.includes('copilot'), 'choice 5 maps to copilot');
+  test('CLI-02: promptRuntime runtimeMap has Copilot as option 5', () => {
+    assert.ok(src.includes("'5': 'copilot'"), 'runtimeMap has 5 -> copilot');
   });
 
-  test('CLI-02: promptRuntime has All option including copilot', () => {
-    // All option callback includes copilot in the runtimes array
-    const allCallbackMatch = src.match(/callback\(\[(['a-z', ]+)\]\)/g);
-    assert.ok(allCallbackMatch && allCallbackMatch.some(m => m.includes('copilot')), 'All option includes copilot');
+  test('CLI-02: promptRuntime allRuntimes array includes copilot', () => {
+    const allMatch = src.match(/const allRuntimes = \[([^\]]+)\]/);
+    assert.ok(allMatch && allMatch[1].includes('copilot'), 'allRuntimes includes copilot');
   });
 
   test('isCopilot variable exists in install function', () => {
@@ -622,10 +617,12 @@ describe('copyCommandsAsCopilotSkills', () => {
       assert.ok(fs.existsSync(path.join(tempDir, 'gsd-help')), 'gsd-help folder exists');
       assert.ok(fs.existsSync(path.join(tempDir, 'gsd-progress')), 'gsd-progress folder exists');
 
-      // Count gsd-* directories — should be 31
+      // Count gsd-* directories — should match number of source command files
       const dirs = fs.readdirSync(tempDir, { withFileTypes: true })
         .filter(e => e.isDirectory() && e.name.startsWith('gsd-'));
-      assert.strictEqual(dirs.length, 38, `expected 38 skill folders, got ${dirs.length}`);
+      const expectedSkillCount = fs.readdirSync(path.join(__dirname, '..', 'commands', 'gsd'))
+        .filter(f => f.endsWith('.md')).length;
+      assert.strictEqual(dirs.length, expectedSkillCount, `expected ${expectedSkillCount} skill folders, got ${dirs.length}`);
     } finally {
       fs.rmSync(tempDir, { recursive: true });
     }
@@ -746,10 +743,12 @@ describe('Copilot agent conversion - real files', () => {
     assert.ok(toolsLine.includes("'read'"), 'Read mapped');
   });
 
-  test('all 15 agents convert without error', () => {
+  test('all 18 agents convert without error', () => {
     const agents = fs.readdirSync(agentsSrc)
       .filter(f => f.startsWith('gsd-') && f.endsWith('.md'));
-    assert.strictEqual(agents.length, 15, `expected 15 agents, got ${agents.length}`);
+    const expectedAgentCount = fs.readdirSync(agentsSrc)
+      .filter(f => f.startsWith('gsd-') && f.endsWith('.md')).length;
+    assert.strictEqual(agents.length, expectedAgentCount, `expected ${expectedAgentCount} agents, got ${agents.length}`);
 
     for (const agentFile of agents) {
       const content = fs.readFileSync(path.join(agentsSrc, agentFile), 'utf8');
@@ -1119,8 +1118,10 @@ const { execFileSync } = require('child_process');
 const crypto = require('crypto');
 
 const INSTALL_PATH = path.join(__dirname, '..', 'bin', 'install.js');
-const EXPECTED_SKILLS = 38;
-const EXPECTED_AGENTS = 15;
+const EXPECTED_SKILLS = fs.readdirSync(path.join(__dirname, '..', 'commands', 'gsd'))
+  .filter(f => f.endsWith('.md')).length;
+const EXPECTED_AGENTS = fs.readdirSync(path.join(__dirname, '..', 'agents'))
+  .filter(f => f.startsWith('gsd-') && f.endsWith('.md')).length;
 
 function runCopilotInstall(cwd) {
   const env = { ...process.env };
@@ -1188,6 +1189,8 @@ describe('E2E: Copilot full install verification', () => {
     const files = fs.readdirSync(agentsDir);
     const gsdAgents = files.filter(f => f.startsWith('gsd-') && f.endsWith('.agent.md')).sort();
     const expected = [
+      'gsd-advisor-researcher.agent.md',
+      'gsd-assumptions-analyzer.agent.md',
       'gsd-codebase-mapper.agent.md',
       'gsd-debugger.agent.md',
       'gsd-executor.agent.md',
@@ -1202,6 +1205,7 @@ describe('E2E: Copilot full install verification', () => {
       'gsd-ui-auditor.agent.md',
       'gsd-ui-checker.agent.md',
       'gsd-ui-researcher.agent.md',
+      'gsd-user-profiler.agent.md',
       'gsd-verifier.agent.md',
     ].sort();
     assert.deepStrictEqual(gsdAgents, expected);

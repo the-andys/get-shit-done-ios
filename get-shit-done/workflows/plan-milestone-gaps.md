@@ -49,15 +49,15 @@ Cluster related gaps into logical phases:
 
 **Example grouping:**
 ```
-Gap: DASH-01 unsatisfied (Dashboard doesn't load data)
-Gap: Integration Phase 1→3 (Auth token not passed to ViewModel)
-Gap: Flow "View dashboard" broken at data load
+Gap: DASH-01 unsatisfied (Dashboard doesn't fetch)
+Gap: Integration Phase 1→3 (Auth not passed to API calls)
+Gap: Flow "View dashboard" broken at data fetch
 
-→ Phase 6: "Wire Dashboard ViewModel to Service"
-  - Implement DashboardViewModel.loadData() with service call
-  - Pass auth token via Environment to service layer
-  - Store response in @Observable state, handle errors
-  - Render data in DashboardView via ForEach
+→ Phase 6: "Wire Dashboard to API"
+  - Add fetch to Dashboard.tsx
+  - Include auth header in fetch
+  - Handle response, update state
+  - Render user data
 ```
 
 ## 4. Determine Phase Numbers
@@ -65,8 +65,7 @@ Gap: Flow "View dashboard" broken at data load
 Find highest existing phase:
 ```bash
 # Get sorted phase list, extract last one
-PHASES=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" phases list)
-HIGHEST=$(printf '%s\n' "$PHASES" | jq -r '.directories[-1]')
+HIGHEST=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" phases list --pick directories[-1])
 ```
 
 New phases continue from there:
@@ -193,27 +192,27 @@ node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" commit "docs(roadmap): add 
 gap:
   id: DASH-01
   description: "User sees their data"
-  reason: "Dashboard exists but ViewModel doesn't fetch from service"
+  reason: "Dashboard exists but doesn't fetch from API"
   missing:
-    - ".task modifier calling viewModel.loadData()"
-    - "ViewModel state for userData, isLoading, errorMessage"
-    - "ForEach rendering of userData in View body"
+    - "useEffect with fetch to /api/user/data"
+    - "State for user data"
+    - "Render user data in JSX"
 
 becomes:
 
 phase: "Wire Dashboard Data"
 tasks:
   - name: "Add data fetching"
-    files: [Sources/ViewModels/DashboardViewModel.swift]
-    action: "Implement loadData() with try await service.fetchUserData()"
+    files: [src/components/Dashboard.tsx]
+    action: "Add useEffect that fetches /api/user/data on mount"
 
   - name: "Add state management"
-    files: [Sources/ViewModels/DashboardViewModel.swift]
-    action: "Add userData, isLoading, errorMessage properties to @Observable class"
+    files: [src/components/Dashboard.tsx]
+    action: "Add useState for userData, loading, error states"
 
   - name: "Render user data"
-    files: [Sources/Views/Dashboard/DashboardView.swift]
-    action: "Replace placeholder Text with ForEach over viewModel.userData, add .task { await viewModel.loadData() }"
+    files: [src/components/Dashboard.tsx]
+    action: "Replace placeholder with userData.map rendering"
 ```
 
 **Integration gap → Tasks:**
@@ -221,23 +220,23 @@ tasks:
 gap:
   from_phase: 1
   to_phase: 3
-  connection: "Auth token → Service layer"
-  reason: "Dashboard service calls don't include auth token"
+  connection: "Auth token → API calls"
+  reason: "Dashboard API calls don't include auth header"
   missing:
-    - "Auth token passed to service via Environment or init"
-    - "Token refresh on 401 response"
+    - "Auth header in fetch calls"
+    - "Token refresh on 401"
 
 becomes:
 
-phase: "Add Auth to Dashboard Service"
+phase: "Add Auth to Dashboard API Calls"
 tasks:
-  - name: "Pass auth token to service"
-    files: [Sources/ViewModels/DashboardViewModel.swift, Sources/Services/APIClient.swift]
-    action: "Inject AuthService via Environment, include bearer token in URLRequest headers"
+  - name: "Add auth header to fetches"
+    files: [src/components/Dashboard.tsx, src/lib/api.ts]
+    action: "Include Authorization header with token in all API calls"
 
   - name: "Handle 401 responses"
-    files: [Sources/Services/APIClient.swift]
-    action: "Check HTTPURLResponse statusCode, trigger token refresh or navigate to login on 401"
+    files: [src/lib/api.ts]
+    action: "Add interceptor to refresh token or redirect to login on 401"
 ```
 
 **Flow gap → Tasks:**
@@ -265,10 +264,10 @@ becomes:
 - [ ] Gaps grouped into logical phases
 - [ ] User confirmed phase plan
 - [ ] ROADMAP.md updated with new phases
-- [ ] Phase directories created
 - [ ] REQUIREMENTS.md traceability table updated with gap closure phase assignments
 - [ ] Unsatisfied requirement checkboxes reset (`[x]` → `[ ]`)
 - [ ] Coverage count updated in REQUIREMENTS.md
+- [ ] Phase directories created
 - [ ] Changes committed (includes REQUIREMENTS.md)
 - [ ] User knows to run `/gsd:plan-phase` next
 </success_criteria>
