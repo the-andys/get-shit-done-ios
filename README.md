@@ -80,11 +80,12 @@ npx get-shit-done-ios@latest
 ```
 
 The installer prompts you to choose:
-1. **Location** — Global (all projects) or local (current iOS project only)
+1. **Runtime** — Claude Code (recommended for iOS), OpenCode, Gemini, Codex, Copilot, Cursor, or Antigravity
+2. **Location** — Global (all projects) or local (current iOS project only)
 
 Verify with `/gsd:help` inside Claude Code.
 
-> **Requires:** macOS, Xcode, Node.js 18+, Claude Code.
+> **Requires:** macOS, Xcode, Node.js 20+, Claude Code.
 
 ### Staying Updated
 
@@ -100,9 +101,15 @@ Or use `/gsd:update` inside Claude Code for changelog preview before updating.
 ```bash
 npx get-shit-done-ios --claude --local    # Install to ./.claude/ (current project)
 npx get-shit-done-ios --claude --global   # Install to ~/.claude/ (all projects)
+npx get-shit-done-ios --opencode --global # Install to ~/.config/opencode/
+npx get-shit-done-ios --gemini --global   # Install to ~/.gemini/
+npx get-shit-done-ios --codex --global    # Install to ~/.codex/
+npx get-shit-done-ios --copilot --global  # Install to ~/.github/
+npx get-shit-done-ios --cursor --global   # Install to ~/.cursor/
+npx get-shit-done-ios --antigravity --global # Install to ~/.gemini/antigravity/
 ```
 
-Use `--global` (`-g`) or `--local` (`-l`) to skip the location prompt.
+Use `--claude`, `--opencode`, `--gemini`, `--codex`, `--copilot`, `--cursor`, `--antigravity`, or `--all` to skip the runtime prompt. Use `--global` (`-g`) or `--local` (`-l`) to skip the location prompt.
 
 </details>
 
@@ -683,6 +690,8 @@ npx get-shit-done-ios --claude --local --uninstall
 # Global install
 npx get-shit-done-ios --claude --global --uninstall
 ```
+
+For other runtimes, replace `--claude` with the runtime flag (e.g., `--cursor`, `--copilot`).
 
 This removes all GSD commands, agents, hooks, and settings while preserving your other configurations.
 
