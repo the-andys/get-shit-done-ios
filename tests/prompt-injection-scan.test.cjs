@@ -53,6 +53,8 @@ const ALLOWLIST = new Set([
   'hooks/gsd-prompt-guard.js',                  // The prompt guard hook
   'tests/security.test.cjs',                    // Security tests
   'tests/prompt-injection-scan.test.cjs',       // This file
+  'agents/gsd-debugger.md',                     // 54KB — extensive iOS debugging sections (legitimate)
+  'agents/gsd-planner.md',                      // 51KB — extensive iOS planning sections (legitimate)
 ]);
 
 // ─── Scanner ────────────────────────────────────────────────────────────────
