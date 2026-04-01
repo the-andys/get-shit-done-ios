@@ -34,6 +34,7 @@ Load phase operation context:
 
 ```bash
 INIT=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" init phase-op "${PHASE_ARG}")
+if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
 Extract from init JSON: `phase_dir`, `phase_number`, `phase_name`.
@@ -145,7 +146,7 @@ find . -type d -name "*Tests" -o -name "*Test" 2>/dev/null | head -20
 # Find existing test files for convention matching
 find . -type f \( -name "*Tests.swift" -o -name "*UITests.swift" -o -name "*Test.swift" \) 2>/dev/null | head -20
 # Check for test targets
-ls Package.swift *.xcodeproj *.xcworkspace 2>/dev/null
+ls Package.swift *.xcodeproj *.xcworkspace 2>/dev/null || true
 ```
 
 Identify:
@@ -242,7 +243,7 @@ For each approved E2E test:
 
 1. **Check for existing tests** covering the same scenario:
    ```bash
-   grep -r "{scenario keyword}" {UI test directory} 2>/dev/null
+   grep -r "{scenario keyword}" {UI test directory} 2>/dev/null || true
    ```
    If found, extend rather than duplicate.
 
