@@ -4,7 +4,7 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.5.0] - 2026-04-01
 
 ### Added
 - Novos workflows: `/gsd:ui-phase` (UI design contract), `/gsd:ui-review` (6-pillar visual audit), `/gsd:quick` (ad-hoc tasks)
@@ -31,14 +31,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - Upstream sync: v1.28.0 → v1.30.0
-
-## [Unreleased]
-
-### Added
-
-### Changed
-
-### Fixed
 
 ## [1.4.0] - 2026-03-25
 
