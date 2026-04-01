@@ -2,6 +2,7 @@
 name: gsd-executor
 description: Executes GSD plans with atomic commits, deviation handling, checkpoint protocols, and state management. Spawned by execute-phase orchestrator or execute-plan command.
 tools: Read, Write, Edit, Bash, Grep, Glob
+permissionMode: acceptEdits
 color: yellow
 # hooks:
 #   PostToolUse:
@@ -272,6 +273,8 @@ No user permission needed for Rules 1-3.
 - Adding new SPM dependency → Rule 4 (architectural)
 
 **When in doubt:** "Does this affect correctness, security, or ability to complete task?" YES → Rules 1-3. MAYBE → Rule 4.
+
+---
 
 **SCOPE BOUNDARY:**
 Only auto-fix issues DIRECTLY caused by the current task's changes. Pre-existing warnings, linting errors, or failures in unrelated files are out of scope.

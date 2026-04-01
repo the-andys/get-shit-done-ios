@@ -951,16 +951,15 @@ describe('cmdInitMapCodebase', () => {
     assert.strictEqual(output.codebase_dir_exists, true);
   });
 
-  test('map-codebase workflow lists OpenCode as having Task tool support (#1316)', () => {
+  test('map-codebase workflow does not list OpenCode under runtimes without Task tool (#1316)', () => {
     const workflow = fs.readFileSync(
       path.join(__dirname, '..', 'get-shit-done', 'workflows', 'map-codebase.md'), 'utf8'
     );
-    // OpenCode must appear in the "with Task tool" line, not the "WITHOUT" line
-    const withLine = workflow.split('\n').find(l => l.includes('Runtimes with Task tool'));
-    const withoutLine = workflow.split('\n').find(l => l.includes('WITHOUT Task tool'));
-    assert.ok(withLine, 'workflow should have a "Runtimes with Task tool" line');
-    assert.ok(withoutLine, 'workflow should have a "WITHOUT Task tool" line');
-    assert.ok(withLine.includes('OpenCode'), 'OpenCode must be listed under runtimes WITH Task tool');
+    // OpenCode must NOT appear in the "WITHOUT Task tool" / "NOT available" condition
+    const withoutLine = workflow.split('\n').find(l =>
+      l.includes('NOT available') || l.includes('WITHOUT Task tool')
+    );
+    assert.ok(withoutLine, 'workflow should have a line about Task tool NOT being available');
     assert.ok(!withoutLine.includes('OpenCode'), 'OpenCode must NOT be listed under runtimes WITHOUT Task tool');
   });
 });
@@ -1021,6 +1020,88 @@ describe('cmdInitNewProject', () => {
 
     const output = JSON.parse(result.output);
     assert.strictEqual(output.planning_exists, true);
+  });
+
+  test('brownfield with Kotlin files detected (Android project)', () => {
+    const srcDir = path.join(tmpDir, 'app', 'src', 'main');
+    fs.mkdirSync(srcDir, { recursive: true });
+    fs.writeFileSync(path.join(srcDir, 'MainActivity.kt'), 'class MainActivity');
+
+    const result = runGsdTools('init new-project', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.has_existing_code, true);
+    assert.strictEqual(output.is_brownfield, true);
+  });
+
+  test('brownfield with build.gradle detected (Android/Gradle project)', () => {
+    fs.writeFileSync(path.join(tmpDir, 'build.gradle'), 'apply plugin: "com.android.application"');
+
+    const result = runGsdTools('init new-project', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.has_package_file, true);
+    assert.strictEqual(output.is_brownfield, true);
+    assert.strictEqual(output.needs_codebase_map, true);
+  });
+
+  test('brownfield with build.gradle.kts detected (Kotlin DSL)', () => {
+    fs.writeFileSync(path.join(tmpDir, 'build.gradle.kts'), 'plugins { id("com.android.application") }');
+
+    const result = runGsdTools('init new-project', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.has_package_file, true);
+    assert.strictEqual(output.is_brownfield, true);
+  });
+
+  test('brownfield with pom.xml detected (Maven project)', () => {
+    fs.writeFileSync(path.join(tmpDir, 'pom.xml'), '<project></project>');
+
+    const result = runGsdTools('init new-project', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.has_package_file, true);
+    assert.strictEqual(output.is_brownfield, true);
+  });
+
+  test('brownfield with pubspec.yaml detected (Flutter/Dart project)', () => {
+    fs.writeFileSync(path.join(tmpDir, 'pubspec.yaml'), 'name: my_app');
+
+    const result = runGsdTools('init new-project', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.has_package_file, true);
+    assert.strictEqual(output.is_brownfield, true);
+  });
+
+  test('brownfield with Dart files detected', () => {
+    const libDir = path.join(tmpDir, 'lib');
+    fs.mkdirSync(libDir, { recursive: true });
+    fs.writeFileSync(path.join(libDir, 'main.dart'), 'void main() {}');
+
+    const result = runGsdTools('init new-project', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.has_existing_code, true);
+    assert.strictEqual(output.is_brownfield, true);
+  });
+
+  test('brownfield with C++ files detected', () => {
+    fs.writeFileSync(path.join(tmpDir, 'main.cpp'), 'int main() { return 0; }');
+
+    const result = runGsdTools('init new-project', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.has_existing_code, true);
+    assert.strictEqual(output.is_brownfield, true);
   });
 });
 

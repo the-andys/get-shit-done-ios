@@ -30,7 +30,10 @@ GSD stores project settings in `.planning/config.json`. Created during `/gsd:new
     "ui_safety_gate": true,
     "node_repair": true,
     "node_repair_budget": 2,
-    "research_before_questions": false
+    "research_before_questions": false,
+    "discuss_mode": "discuss",
+    "skip_discuss": false,
+    "text_mode": false
   },
   "hooks": {
     "context_warnings": true,
@@ -63,7 +66,8 @@ GSD stores project settings in `.planning/config.json`. Created during `/gsd:new
   "safety": {
     "always_confirm_destructive": true,
     "always_confirm_external_services": true
-  }
+  },
+  "agent_skills": {}
 }
 ```
 
@@ -97,6 +101,9 @@ All workflow toggles follow the **absent = enabled** pattern. If a key is missin
 | `workflow.node_repair` | boolean | `true` | Autonomous task repair on verification failure |
 | `workflow.node_repair_budget` | number | `2` | Max repair attempts per failed task |
 | `workflow.research_before_questions` | boolean | `false` | Run research before discussion questions instead of after |
+| `workflow.discuss_mode` | string | `'discuss'` | Controls how `/gsd:discuss-phase` gathers context. `'discuss'` (default) asks questions one-by-one. `'assumptions'` reads the codebase first, generates structured assumptions with confidence levels, and only asks you to correct what's wrong. Added in v1.28 |
+| `workflow.skip_discuss` | boolean | `false` | When `true`, `/gsd:autonomous` bypasses the discuss-phase entirely, writing minimal CONTEXT.md from the ROADMAP phase goal. Useful for projects where developer preferences are fully captured in PROJECT.md/REQUIREMENTS.md. Added in v1.28 |
+| `workflow.text_mode` | boolean | `false` | Replaces AskUserQuestion TUI menus with plain-text numbered lists. Required for Claude Code remote sessions (`/rc` mode) where TUI menus don't render. Can also be set per-session with `--text` flag on discuss-phase. Added in v1.28 |
 
 ### Recommended Presets
 
@@ -137,6 +144,72 @@ To keep planning artifacts out of git:
 1. Set `planning.commit_docs: false` and `planning.search_gitignored: true`
 2. Add `.planning/` to `.gitignore`
 3. If previously tracked: `git rm -r --cached .planning/ && git commit -m "chore: stop tracking planning docs"`
+
+---
+
+## Agent Skills Injection
+
+Inject custom skill files into GSD subagent prompts. Skills are read by agents at spawn time, giving them project-specific instructions beyond what CLAUDE.md provides.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `agent_skills` | object | `{}` | Map of agent types to skill directory paths |
+
+### Configuration
+
+Add an `agent_skills` section to `.planning/config.json` mapping agent types to arrays of skill directory paths (relative to project root):
+
+```json
+{
+  "agent_skills": {
+    "gsd-executor": ["skills/testing-standards", "skills/api-conventions"],
+    "gsd-planner": ["skills/architecture-rules"],
+    "gsd-verifier": ["skills/acceptance-criteria"]
+  }
+}
+```
+
+Each path must be a directory containing a `SKILL.md` file. Paths are validated for safety (no traversal outside project root).
+
+### Supported Agent Types
+
+Any GSD agent type can receive skills. Common types:
+
+- `gsd-executor` -- executes implementation plans
+- `gsd-planner` -- creates phase plans
+- `gsd-checker` -- verifies plan quality
+- `gsd-verifier` -- post-execution verification
+- `gsd-researcher` -- phase research
+- `gsd-project-researcher` -- new-project research
+- `gsd-debugger` -- diagnostic agents
+- `gsd-codebase-mapper` -- codebase analysis
+- `gsd-advisor` -- discuss-phase advisors
+- `gsd-ui-researcher` -- UI design contract creation
+- `gsd-ui-checker` -- UI spec verification
+- `gsd-roadmapper` -- roadmap creation
+- `gsd-synthesizer` -- research synthesis
+
+### How It Works
+
+At spawn time, workflows call `node gsd-tools.cjs agent-skills <type>` to load configured skills. If skills exist for the agent type, they are injected as an `<agent_skills>` block in the Task() prompt:
+
+```xml
+<agent_skills>
+Read these user-configured skills:
+- @skills/testing-standards/SKILL.md
+- @skills/api-conventions/SKILL.md
+</agent_skills>
+```
+
+If no skills are configured, the block is omitted (zero overhead).
+
+### CLI
+
+Set skills via the CLI:
+
+```bash
+node gsd-tools.cjs config-set agent_skills.gsd-executor '["skills/my-skill"]'
+```
 
 ---
 
