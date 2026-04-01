@@ -111,12 +111,12 @@ must_haves:
     - "User can see existing messages"
     - "User can send a message"
   artifacts:
-    - path: "Sources/Features/Chat/ChatView.swift"
+    - path: "src/components/Chat.tsx"
       provides: "Message list rendering"
   key_links:
-    - from: "ChatView.swift"
-      to: "ChatViewModel"
-      via: "@StateObject or @ObservedObject property"
+    - from: "Chat.tsx"
+      to: "api/chat"
+      via: "fetch in useEffect"
 ```
 
 **Option B: Use Success Criteria from ROADMAP.md**
@@ -188,11 +188,11 @@ For each artifact in result:
 **For wiring verification (Level 3)**, check imports/usage manually for artifacts that pass Levels 1-2:
 
 ```bash
-# Import check — Swift uses module-level imports, so check for type usage directly
-grep -r "import.*$artifact_name" "${search_path:-.}" --include="*.swift" 2>/dev/null | wc -l
+# Import check
+grep -r "import.*$artifact_name" "${search_path:-src/}" --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l
 
-# Usage check (beyond imports) — look for type references, initializations, property declarations
-grep -r "$artifact_name" "${search_path:-.}" --include="*.swift" 2>/dev/null | grep -v "^.*import " | wc -l
+# Usage check (beyond imports)
+grep -r "$artifact_name" "${search_path:-src/}" --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v "import" | wc -l
 ```
 
 **Wiring status:**
@@ -222,9 +222,6 @@ Artifacts that pass Levels 1-3 (exist, substantive, wired) can still be hollow i
 ```bash
 # Find state variables that are rendered in JSX/TSX
 grep -n -E "useState|useQuery|useSWR|useStore|props\." "$artifact" 2>/dev/null
-
-# iOS: Find SwiftUI state/data variables rendered in body
-grep -n -E "@State|@Binding|@Query|@Observable|@Environment|@Published|@StateObject|@ObservedObject" "$artifact" 2>/dev/null
 ```
 
 2. **Trace the data source** — where does that variable get populated?
@@ -232,9 +229,6 @@ grep -n -E "@State|@Binding|@Query|@Observable|@Environment|@Published|@StateObj
 ```bash
 # Find the fetch/query that populates the state
 grep -n -A 5 "set${STATE_VAR}\|${STATE_VAR}\s*=" "$artifact" 2>/dev/null | grep -E "fetch|axios|query|store|dispatch|props\."
-
-# iOS: Trace where the state variable gets assigned real data
-grep -n -A 5 "${STATE_VAR}\s*=" "$artifact" 2>/dev/null | grep -E "URLSession|async let|await|Task \{|\.task \{|try await"
 ```
 
 3. **Verify the source produces real data** — does the API/store return actual data or static/empty values?
@@ -244,12 +238,6 @@ grep -n -A 5 "${STATE_VAR}\s*=" "$artifact" 2>/dev/null | grep -E "URLSession|as
 grep -n -E "prisma\.|db\.|query\(|findMany|findOne|select|FROM" "$source_file" 2>/dev/null
 # Flag: static returns with no query
 grep -n -E "return.*json\(\s*\[\]|return.*json\(\s*\{\}" "$source_file" 2>/dev/null
-
-# iOS: Check for real SwiftData queries or network calls vs static returns
-grep -n -E "@Query|FetchDescriptor|ModelContext|modelContext\.\(fetch\|delete\|insert\)" "$source_file" 2>/dev/null
-grep -n -E "URLSession\.shared\.\(data\|dataTask\)|URLRequest" "$source_file" 2>/dev/null
-# Flag: static returns with no query or network call
-grep -n -E "return \[\]|return nil|return \.init\(\)" "$source_file" 2>/dev/null
 ```
 
 4. **Check for disconnected props** — props passed to child components that are hardcoded empty at the call site
@@ -257,21 +245,16 @@ grep -n -E "return \[\]|return nil|return \.init\(\)" "$source_file" 2>/dev/null
 ```bash
 # Find where the component is used and check prop values
 grep -r -A 3 "<${COMPONENT_NAME}" "${search_path:-src/}" --include="*.tsx" 2>/dev/null | grep -E "=\{(\[\]|\{\}|null|''|\"\")\}"
-
-# iOS: Check for @Binding not connected or @Environment without provider
-grep -r "${COMPONENT_NAME}" "${search_path:-.}" --include="*.swift" 2>/dev/null | grep -E "\.constant\(\[\]\)|\.constant\(\"\"\)|\.constant\(nil\)|\.constant\(false\)"
-# Check @Environment values provided up the view hierarchy
-grep -r -E "\.environment\(\\\\|\.modelContainer\(|\.environmentObject\(" "${search_path:-.}" --include="*.swift" 2>/dev/null
 ```
 
 **Data-flow status:**
 
 | Data Source | Produces Real Data | Status |
 | ---------- | ------------------ | ------ |
-| DB query found / @Query with ModelContainer | Yes | ✓ FLOWING |
+| DB query found | Yes | ✓ FLOWING |
 | Fetch exists, static fallback only | No | ⚠️ STATIC |
 | No data source found | N/A | ✗ DISCONNECTED |
-| Props hardcoded empty at call site / @Binding with .constant | No | ✗ HOLLOW_PROP |
+| Props hardcoded empty at call site | No | ✗ HOLLOW_PROP |
 
 **Final Artifact Status (updated with Level 4):**
 
@@ -302,52 +285,41 @@ For each link:
 
 **Fallback patterns** (if must_haves.key_links not defined in PLAN):
 
-### Pattern: View → ViewModel
+### Pattern: Component → API
 
 ```bash
-# Check View holds a reference to ViewModel via @StateObject, @ObservedObject, or @EnvironmentObject
-grep -E "@StateObject|@ObservedObject|@EnvironmentObject" "$view_file" 2>/dev/null | grep -i "$viewmodel_name"
-# Check ViewModel is actually used in the View body
-grep -E "\.$viewmodel_var\." "$view_file" 2>/dev/null | head -5
+grep -E "fetch\(['\"].*$api_path|axios\.(get|post).*$api_path" "$component" 2>/dev/null
+grep -A 5 "fetch\|axios" "$component" | grep -E "await|\.then|setData|setState" 2>/dev/null
 ```
 
-Status: WIRED (@Property wrapper + usage in body) | PARTIAL (declared but not used) | NOT_WIRED (no ViewModel reference)
+Status: WIRED (call + response handling) | PARTIAL (call, no response use) | NOT_WIRED (no call)
 
-### Pattern: ViewModel → Service/Repository
+### Pattern: API → Database
 
 ```bash
-# Check ViewModel calls service methods (network, persistence)
-grep -E "(let|var).*:.*Service|Repository|Manager" "$viewmodel_file" 2>/dev/null
-grep -E "await.*\.(fetch|load|save|delete|create|update)" "$viewmodel_file" 2>/dev/null
-# Check results are assigned to @Published properties
-grep -E "@Published" "$viewmodel_file" 2>/dev/null
+grep -E "prisma\.$model|db\.$model|$model\.(find|create|update|delete)" "$route" 2>/dev/null
+grep -E "return.*json.*\w+|res\.json\(\w+" "$route" 2>/dev/null
 ```
 
-Status: WIRED (service call + @Published update) | PARTIAL (service exists, no @Published update) | NOT_WIRED (no service call)
+Status: WIRED (query + result returned) | PARTIAL (query, static return) | NOT_WIRED (no query)
 
-### Pattern: View → Navigation
+### Pattern: Form → Handler
 
 ```bash
-# Check NavigationStack/NavigationLink/navigationDestination usage
-grep -E "NavigationStack|NavigationLink|navigationDestination|NavigationPath|\.sheet\(|\.fullScreenCover\(" "$view_file" 2>/dev/null
-# Check destination views exist and are real
-grep -E "NavigationLink.*destination:|navigationDestination\(for:" "$view_file" 2>/dev/null
+grep -E "onSubmit=\{|handleSubmit" "$component" 2>/dev/null
+grep -A 10 "onSubmit.*=" "$component" | grep -E "fetch|axios|mutate|dispatch" 2>/dev/null
 ```
 
-Status: WIRED (navigation + real destination) | STUB (NavigationLink with placeholder view) | NOT_WIRED (no navigation)
+Status: WIRED (handler + API call) | STUB (only logs/preventDefault) | NOT_WIRED (no handler)
 
-### Pattern: Data → Persistence (SwiftData / Core Data)
+### Pattern: State → Render
 
 ```bash
-# Check @Model or NSManagedObject definitions
-grep -E "@Model|NSManagedObject|NSPersistentContainer" "${search_path:-.}" -r --include="*.swift" 2>/dev/null
-# Check @Query or @FetchRequest usage in views
-grep -E "@Query|@FetchRequest|modelContainer|modelContext" "${search_path:-.}" -r --include="*.swift" 2>/dev/null
-# Check modelContext operations (insert, delete, save)
-grep -E "modelContext\.\(insert\|delete\|save\)|viewContext\.\(save\|delete\)" "${search_path:-.}" -r --include="*.swift" 2>/dev/null
+grep -E "useState.*$state_var|\[$state_var," "$component" 2>/dev/null
+grep -E "\{.*$state_var.*\}|\{$state_var\." "$component" 2>/dev/null
 ```
 
-Status: WIRED (model defined + queried + CRUD operations) | PARTIAL (model exists, no query or no CRUD) | NOT_WIRED (no persistence)
+Status: WIRED (state displayed) | NOT_WIRED (state exists, not rendered)
 
 ## Step 6: Check Requirements Coverage
 
@@ -401,41 +373,19 @@ Run anti-pattern detection on each file:
 # TODO/FIXME/placeholder comments
 grep -n -E "TODO|FIXME|XXX|HACK|PLACEHOLDER" "$file" 2>/dev/null
 grep -n -E "placeholder|coming soon|will be here|not yet implemented|not available" "$file" -i 2>/dev/null
-
-# Force unwraps (crash risk in production)
-grep -n -E "[a-zA-Z_]+!" "$file" 2>/dev/null | grep -v "IBOutlet" | grep -v "IBAction" | grep -v "import "
-
-# Inappropriate main thread dispatch (usually a code smell in SwiftUI)
-grep -n "DispatchQueue\.main\.async" "$file" 2>/dev/null
-
-# Deprecated PreviewProvider (should use #Preview macro on iOS 17+)
-grep -n "PreviewProvider" "$file" 2>/dev/null
-
-# Print statements left in production code
-grep -n -E "^\s*print\(|^\s*debugPrint\(|^\s*dump\(" "$file" 2>/dev/null
-
-# Empty function bodies / stub implementations
-grep -n -E "func .+\{[[:space:]]*\}$" "$file" 2>/dev/null
-grep -n -A 1 "func " "$file" 2>/dev/null | grep -E "fatalError|return nil|break$"
-
+# Empty implementations
+grep -n -E "return null|return \{\}|return \[\]|=> \{\}" "$file" 2>/dev/null
 # Hardcoded empty data (common stub patterns)
 grep -n -E "=\s*\[\]|=\s*\{\}|=\s*null|=\s*undefined" "$file" 2>/dev/null | grep -v -E "(test|spec|mock|fixture|\.test\.|\.spec\.)" 2>/dev/null
-# iOS: Hardcoded empty state that may indicate stubs
-grep -n -E "=\s*\[\]|=\s*nil|=\s*\"\"$|=\s*0$|=\s*false$" "$file" 2>/dev/null | grep -v -E "(Test|Mock|Preview|Fixture)" 2>/dev/null
-
 # Props with hardcoded empty values (React/Vue/Svelte stub indicators)
 grep -n -E "=\{(\[\]|\{\}|null|undefined|''|\"\")\}" "$file" 2>/dev/null
-# iOS: @Binding with .constant() or @Environment without provider (stub indicators)
-grep -n -E "\.constant\(\[\]\)|\.constant\(\"\"\)|\.constant\(nil\)|\.constant\(false\)" "$file" 2>/dev/null
-
-# Hardcoded user-facing strings that should use String(localized:) or LocalizedStringKey
-# Catches: Text("..."), Label("..."), Button("..."), Toggle("..."), .navigationTitle("..."), etc.
-grep -n -E '(Text|Label|Button|Toggle|Picker|NavigationLink|\.navigationTitle|\.confirmationDialog|\.alert)\("[A-Za-z]' "$file" 2>/dev/null | grep -v "accessibilityLabel\|accessibilityHint\|#Preview\|// " | head -20
+# Console.log only implementations
+grep -n -B 2 -A 2 "console\.log" "$file" 2>/dev/null | grep -E "^\s*(const|function|=>)"
 ```
 
-**Stub classification:** A grep match is a STUB only when the value flows to rendering or user-visible output AND no other code path populates it with real data. A test helper, type default, or initial state that gets overwritten by a fetch/store is NOT a stub. Check for data-fetching (`.task { }`, `Task { }`, `async let`, `URLSession`, `@Query`, `.onAppear`) that writes to the same variable before flagging.
+**Stub classification:** A grep match is a STUB only when the value flows to rendering or user-visible output AND no other code path populates it with real data. A test helper, type default, or initial state that gets overwritten by a fetch/store is NOT a stub. Check for data-fetching (useEffect, fetch, query, useSWR, useQuery, subscribe) that writes to the same variable before flagging.
 
-Categorize: BLOCKER (prevents goal) | WARNING (incomplete) | INFO (notable)
+Categorize: 🛑 Blocker (prevents goal) | ⚠️ Warning (incomplete) | ℹ️ Info (notable)
 
 ## Step 7b: Behavioral Spot-Checks
 
@@ -449,7 +399,7 @@ Anti-pattern scanning (Step 7) checks for code smells. Behavioral spot-checks go
 
 ```bash
 # API endpoint returns non-empty data
-curl -s http://localhost:$PORT/api/$ENDPOINT 2>/dev/null | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); process.exit(Array.isArray(d) ? (d.length > 0 ? 0 : 1) : (Object.keys(d).length > 0 ? 0 : 1))"
+curl -s http://localhost:$PORT/api/$ENDPOINT 2>/dev/null | node -e "let b='';process.stdin.setEncoding('utf8');process.stdin.on('data',c=>b+=c);process.stdin.on('end',()=>{const d=JSON.parse(b);process.exit(Array.isArray(d)?(d.length>0?0:1):(Object.keys(d).length>0?0:1))})"
 
 # CLI command produces expected output
 node $CLI_PATH --help 2>&1 | grep -q "$EXPECTED_SUBCOMMAND"
@@ -462,19 +412,6 @@ node -e "const m = require('$MODULE_PATH'); console.log(typeof m.$FUNCTION_NAME)
 
 # Test suite passes (if tests exist for this phase's code)
 npm test -- --grep "$PHASE_TEST_PATTERN" 2>&1 | grep -q "passing"
-
-# iOS: Build the project for simulator
-xcodebuild test -scheme $SCHEME -destination 'platform=iOS Simulator,name=iPhone 16' 2>&1 | tail -5
-
-# iOS: Run Swift package tests
-swift test 2>&1 | grep -E "passed|failed"
-
-# iOS: Boot simulator and launch app for verification
-xcrun simctl boot "$DEVICE_UDID" 2>/dev/null
-xcrun simctl launch "$DEVICE_UDID" "$BUNDLE_ID" 2>/dev/null
-
-# iOS: Check module exports — public types accessible via @testable import
-grep -r "public class\|public struct\|public protocol\|public enum\|public func" "${search_path:-.}" --include="*.swift" 2>/dev/null | grep "$MODULE_NAME"
 ```
 
 2. **Run each check** and record pass/fail:
@@ -496,89 +433,9 @@ grep -r "public class\|public struct\|public protocol\|public enum\|public func"
 - Do not modify state (no writes, no mutations, no side effects)
 - If the project has no runnable entry points yet, skip with: "Step 7b: SKIPPED (no runnable entry points)"
 
-## Step 8: Verify Accessibility (MANDATORY for iOS)
+## Step 8: Identify Human Verification Needs
 
-Every iOS view must meet baseline accessibility requirements. This is a mandatory verification step, not optional.
-
-```bash
-# Check for .accessibilityLabel() on interactive elements (buttons, images, icons)
-grep -rn "Button\|Image\|\.onTapGesture" "$file" --include="*.swift" 2>/dev/null | while read line; do
-  FILE=$(echo "$line" | cut -d: -f1)
-  LINE_NUM=$(echo "$line" | cut -d: -f2)
-  grep -A 3 -n "" "$FILE" 2>/dev/null | sed -n "${LINE_NUM},$((LINE_NUM+5))p" | grep -q "accessibilityLabel\|accessibilityHint"
-done
-
-# Check for Dynamic Type support — views should NOT use fixed font sizes
-grep -rn "\.font(.system(size:" "$file" --include="*.swift" 2>/dev/null
-# Preferred: .font(.body), .font(.headline), .font(.title), etc.
-
-# Check for hardcoded colors that may fail contrast requirements
-grep -rn "Color(red:\|Color(#\|UIColor(red:" "$file" --include="*.swift" 2>/dev/null
-
-# Check images have accessibility labels
-grep -rn 'Image(' "$file" --include="*.swift" 2>/dev/null | grep -v "decorative\|accessibilityLabel\|accessibilityHidden"
-```
-
-**Accessibility status for each view file:**
-
-| Check | Status | Details |
-| --- | --- | --- |
-| `.accessibilityLabel()` on interactive elements | PASS / FAIL | List missing labels |
-| Dynamic Type (no fixed font sizes) | PASS / FAIL | Lines with hardcoded sizes |
-| Color contrast (no hardcoded colors without semantic equivalents) | PASS / WARN | Lines with raw color values |
-| Images labeled or marked decorative | PASS / FAIL | Images without labels |
-
-**Severity:** Missing accessibility labels on interactive elements is a BLOCKER. Fixed font sizes and hardcoded colors are WARNINGS.
-
-## Step 8b: Verify Localization (MANDATORY for iOS)
-
-Every iOS view with user-facing text must use proper localization. This is a mandatory verification step, parallel to accessibility.
-
-```bash
-# Scan all Swift view files modified in this phase for hardcoded strings
-for file in $PHASE_FILES; do
-  # Skip non-view files (models, services, utilities)
-  grep -q "var body: some View" "$file" 2>/dev/null || continue
-
-  # Check for hardcoded user-facing strings (should use String(localized:) or LocalizedStringKey)
-  HARDCODED=$(grep -n -E '(Text|Label|Button|Toggle|Picker|NavigationLink|\.navigationTitle|\.confirmationDialog|\.alert)\("[A-Za-z]' "$file" 2>/dev/null | grep -v 'String(localized:\|LocalizedStringKey\|accessibilityLabel\|accessibilityHint\|#Preview\|// ')
-  if [ -n "$HARDCODED" ]; then
-    echo "LOCALIZATION FAIL: $file"
-    echo "$HARDCODED"
-  fi
-
-  # Verify String(localized:) usage includes comment: parameter for ambiguous strings
-  grep -n 'String(localized:' "$file" 2>/dev/null | grep -v 'comment:' | head -5
-done
-```
-
-**Localization status for each view file:**
-
-| Check | Status | Details |
-| --- | --- | --- |
-| No hardcoded user-facing strings | PASS / FAIL | Lines with raw string literals in UI components |
-| `String(localized:)` or `LocalizedStringKey` used | PASS / FAIL | Lines using wrong pattern |
-| `comment:` parameter on ambiguous strings | PASS / WARN | `String(localized:)` calls without translator context |
-
-**Severity:** Hardcoded user-facing strings in views is a BLOCKER (localization is mandatory per ios-conventions.md). Missing `comment:` parameter is a WARNING.
-
-### iOS Build & Test Verification
-
-When verifying iOS implementations:
-1. `mcp__XcodeBuildMCP__build_sim` — Project must compile without errors or warnings
-2. `mcp__XcodeBuildMCP__test_sim` — All tests must pass (zero failures)
-3. For plans that modify SwiftUI views — visual verification is MANDATORY:
-   - `mcp__XcodeBuildMCP__build_run_sim` + `mcp__XcodeBuildMCP__screenshot` — capture UI state
-   - `mcp__XcodeBuildMCP__describe_ui` — verify accessibility tree
-   - Present screenshots when requesting checkpoint approval
-   - Build + tests passing WITHOUT visual check = INCOMPLETE verification for UI work
-4. If Xcode open: `mcp__xcode__RenderPreview` — verify SwiftUI previews render correctly
-
-If any step fails, the verification fails. Report the specific failure with tool output.
-
-## Step 9: Identify Human Verification Needs
-
-**Always needs human:** Visual appearance on device, user flow completion, SwiftUI previews rendering correctly, animations and transitions, real-time behavior, external service integration (push notifications, in-app purchases), performance on physical device (Instruments profiling), VoiceOver navigation, Dark Mode appearance, different device sizes (iPhone SE, iPhone Pro Max, iPad if supported).
+**Always needs human:** Visual appearance, user flow completion, real-time behavior, external service integration, performance feel, error message clarity.
 
 **Needs human if uncertain:** Complex wiring grep can't trace, dynamic state behavior, edge cases.
 
@@ -592,7 +449,7 @@ If any step fails, the verification fails. Report the specific failure with tool
 **Why human:** {Why can't verify programmatically}
 ```
 
-## Step 10: Determine Overall Status
+## Step 9: Determine Overall Status
 
 **Status: passed** — All truths VERIFIED, all artifacts pass levels 1-3, all key links WIRED, no blocker anti-patterns.
 
@@ -602,7 +459,7 @@ If any step fails, the verification fails. Report the specific failure with tool
 
 **Score:** `verified_truths / total_truths`
 
-## Step 11: Structure Gap Output (If Gaps Found)
+## Step 10: Structure Gap Output (If Gaps Found)
 
 Structure gaps in YAML frontmatter for `/gsd:plan-phase --gaps`:
 
@@ -612,7 +469,7 @@ gaps:
     status: failed
     reason: "Brief explanation"
     artifacts:
-      - path: "Sources/Features/path/to/File.swift"
+      - path: "src/path/to/file.tsx"
         issue: "What's wrong"
     missing:
       - "Specific thing to add/fix"
@@ -654,7 +511,7 @@ gaps: # Only if status: gaps_found
     status: failed
     reason: "Why it failed"
     artifacts:
-      - path: "Sources/Features/path/to/File.swift"
+      - path: "src/path/to/file.tsx"
         issue: "What's wrong"
     missing:
       - "Specific thing to add/fix"
@@ -764,21 +621,17 @@ Automated checks passed. Awaiting human verification.
 
 <critical_rules>
 
-**DO NOT trust SUMMARY claims.** Verify the View actually renders data, not `Text("Hello, World!")` or `EmptyView()`.
+**DO NOT trust SUMMARY claims.** Verify the component actually renders messages, not a placeholder.
 
-**DO NOT assume existence = implementation.** Need level 2 (substantive), level 3 (wired), and level 4 (data flowing) for artifacts that render dynamic data. A `.swift` file with only a struct declaration is a stub.
+**DO NOT assume existence = implementation.** Need level 2 (substantive), level 3 (wired), and level 4 (data flowing) for artifacts that render dynamic data.
 
-**DO NOT skip key link verification.** 80% of stubs hide here — Views exist but ViewModel is never connected via @StateObject/@ObservedObject.
-
-**ALWAYS verify accessibility.** Missing `.accessibilityLabel()` on interactive elements is a blocker, not a warning.
-
-**ALWAYS verify localization.** Hardcoded user-facing strings without `String(localized:)` is a blocker, not a warning.
+**DO NOT skip key link verification.** 80% of stubs hide here — pieces exist but aren't connected.
 
 **Structure gaps in YAML frontmatter** for `/gsd:plan-phase --gaps`.
 
-**DO flag for human verification when uncertain** (visual, animations, VoiceOver, device-specific, Dark Mode).
+**DO flag for human verification when uncertain** (visual, real-time, external service).
 
-**Keep verification fast.** Use grep/file checks, not building or running the app.
+**Keep verification fast.** Use grep/file checks, not running the app.
 
 **DO NOT commit.** Leave committing to the orchestrator.
 
@@ -786,68 +639,51 @@ Automated checks passed. Awaiting human verification.
 
 <stub_detection_patterns>
 
-## SwiftUI View Stubs
+## React Component Stubs
 
-```swift
-// RED FLAGS — placeholder views:
-Text("TODO")
-Text("Placeholder")
-Text("Hello, World!")      // Default Xcode template text
-EmptyView()                // Empty body
-Color.clear                // Invisible placeholder
-Spacer()                   // Body is only a spacer
+```javascript
+// RED FLAGS:
+return <div>Component</div>
+return <div>Placeholder</div>
+return <div>{/* TODO */}</div>
+return null
+return <></>
 
-// Empty action closures:
-Button("Save") { }
-.onTapGesture { }
-.task { }                  // Empty async task
-.onAppear { }              // Empty onAppear
+// Empty handlers:
+onClick={() => {}}
+onChange={() => console.log('clicked')}
+onSubmit={(e) => e.preventDefault()}  // Only prevents default
 ```
 
-## ViewModel / Service Stubs
+## API Route Stubs
 
-```swift
-// RED FLAGS — empty async functions:
-func fetchMessages() async { }
-func loadData() async throws { }
-func save() async { /* TODO */ }
-
-// Functions that return hardcoded data:
-func fetchMessages() async -> [Message] {
-    return []              // Always returns empty, no network/DB call
+```typescript
+// RED FLAGS:
+export async function POST() {
+  return Response.json({ message: "Not implemented" });
 }
 
-// @Published properties never updated:
-@Published var messages: [Message] = []
-// ... but no code ever assigns to self.messages
+export async function GET() {
+  return Response.json([]); // Empty array with no DB query
+}
 ```
 
 ## Wiring Red Flags
 
-```swift
-// ViewModel declared but never used in body:
-@StateObject private var viewModel = ChatViewModel()
-var body: some View {
-    Text("Chat")           // viewModel never referenced
+```typescript
+// Fetch exists but response ignored:
+fetch('/api/messages')  // No await, no .then, no assignment
 
-// Service injected but methods never called:
-let service: ChatService
-// ... no service.fetchX() calls anywhere
+// Query exists but result not returned:
+await prisma.message.findMany()
+return Response.json({ ok: true })  // Returns static, not query result
 
-// Navigation declared but destination is placeholder:
-NavigationLink("Details") {
-    Text("Coming soon")    // Destination is a stub
-}
+// Handler only prevents default:
+onSubmit={(e) => e.preventDefault()}
 
-// @Query declared but results not rendered:
-@Query var items: [Item]
-var body: some View {
-    Text("No items")       // Always shows static text, ignores items
-}
-
-// Model defined but never inserted/queried:
-@Model class ChatMessage { ... }
-// ... no modelContext.insert() or @Query anywhere
+// State exists but not rendered:
+const [messages, setMessages] = useState([])
+return <div>No messages</div>  // Always shows "no messages"
 ```
 
 </stub_detection_patterns>
@@ -862,10 +698,8 @@ var body: some View {
 - [ ] Data-flow trace (Level 4) run on wired artifacts that render dynamic data
 - [ ] All key links verified
 - [ ] Requirements coverage assessed (if applicable)
-- [ ] Anti-patterns scanned and categorized (force unwraps, print statements, deprecated APIs)
+- [ ] Anti-patterns scanned and categorized
 - [ ] Behavioral spot-checks run on runnable code (or skipped with reason)
-- [ ] Accessibility verified (labels, Dynamic Type, contrast, image descriptions)
-- [ ] Localization verified (no hardcoded user-facing strings, String(localized:) usage)
 - [ ] Human verification items identified
 - [ ] Overall status determined
 - [ ] Gaps structured in YAML frontmatter (if gaps_found)
