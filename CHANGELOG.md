@@ -7,6 +7,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Novos workflows: `/gsd:ui-phase` (UI design contract), `/gsd:ui-review` (6-pillar visual audit), `/gsd:quick` (ad-hoc tasks)
+- `permissionMode: acceptEdits` nos agents gsd-executor e gsd-debugger
+- Agent skills injection e `@file:` response handling em execute-plan
+- Brownfield detection expandida (init.cjs) — .m, .mm, .kt, .dart, etc.
+- Security scanning CI: prompt-injection, base64, secret scans
+- Windsurf runtime support (8th runtime total) no installer
+- `security.cjs`: scanning utilities (NOVO)
+- `cmdRenderCheckpoint` em uat.cjs, `cmdValidateAgents` em verify.cjs
+- `cmdAgentSkills` em init.cjs, `agent_skills` em config.json template
+- Shell robustness (`|| true`) em autonomous, verify-work, add-tests workflows
+- `parseMustHavesBlock` YAML indent flexible em frontmatter.cjs
+- `begin-phase` preserva Status/LastActivity/Progress em state.cjs
+- 11 novos test files, 15 atualizados (1465 testes total, 0 falhas)
+
+### Fixed
+- Hook `gsd-check-update.js`: referenciava pacote upstream (`get-shit-done-cc`) em vez do fork (`get-shit-done-ios`)
+- Fork consistency audit: corrigidas 7 referências residuais a `get-shit-done-cc` em workflows e docs
+- Fork consistency audit: corrigidas 2 referências residuais a `glittercowboy` em FUNDING.yml e SECURITY.md
+- `gsd-verifier`: stdin reading corrigido (sync → streaming)
+- `findProjectRoot` fix em core.cjs
+- 2 testes pré-existentes resolvidos (config-get, config-set-model-profile)
+
+### Changed
+- Upstream sync: v1.28.0 → v1.30.0
+
+## [Unreleased]
+
+### Added
 
 ### Changed
 

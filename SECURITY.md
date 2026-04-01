@@ -9,7 +9,7 @@
 For vulnerabilities in the core GSD framework (orchestration, agents, workflows):
 
 - **Email:** security@gsd.build
-- **Fallback:** DM @glittercowboy on Discord/Twitter
+- **Fallback:** DM @gsd-build on Discord/Twitter
 
 ### iOS Fork Issues
 
