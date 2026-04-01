@@ -152,6 +152,52 @@ describe('SPAWN: spawn type consistency', () => {
     );
   });
 
+  test('workflows spawning named agents have <available_agent_types> listing (#1357)', () => {
+    // After /clear, Claude Code re-reads workflow instructions but loses agent
+    // context. Without an <available_agent_types> section, the orchestrator may
+    // fall back to general-purpose, silently breaking agent capabilities.
+    // PR #1139 added this to plan-phase and execute-phase but missed all other
+    // workflows that spawn named GSD agents.
+    const dirs = [WORKFLOWS_DIR, COMMANDS_DIR];
+    for (const dir of dirs) {
+      if (!fs.existsSync(dir)) continue;
+      const files = fs.readdirSync(dir).filter(f => f.endsWith('.md'));
+      for (const file of files) {
+        const content = fs.readFileSync(path.join(dir, file), 'utf-8');
+        // Find all named subagent_type references (excluding general-purpose)
+        const matches = [...content.matchAll(/subagent_type="([^"]+)"/g)];
+        const namedAgents = matches
+          .map(m => m[1])
+          .filter(t => t !== 'general-purpose');
+
+        if (namedAgents.length === 0) continue;
+
+        // Workflow spawns named agents — must have <available_agent_types>
+        assert.ok(
+          content.includes('<available_agent_types>'),
+          `${file} spawns named agents (${[...new Set(namedAgents)].join(', ')}) ` +
+          `but has no <available_agent_types> section — after /clear, the ` +
+          `orchestrator may fall back to general-purpose (#1357)`
+        );
+
+        // Every spawned agent type must appear in the listing
+        for (const agent of new Set(namedAgents)) {
+          const agentTypesMatch = content.match(
+            /<available_agent_types>([\s\S]*?)<\/available_agent_types>/
+          );
+          assert.ok(
+            agentTypesMatch,
+            `${file} has malformed <available_agent_types> section`
+          );
+          assert.ok(
+            agentTypesMatch[1].includes(agent),
+            `${file} spawns ${agent} but does not list it in <available_agent_types>`
+          );
+        }
+      }
+    }
+  });
+
   test('execute-phase has Copilot sequential fallback in runtime_compatibility', () => {
     const content = fs.readFileSync(
       path.join(WORKFLOWS_DIR, 'execute-phase.md'), 'utf-8'
@@ -337,5 +383,58 @@ describe('DISCUSS: discussion log generation', () => {
       content.includes('Do not use as input to planning'),
       'template must contain audit-only notice'
     );
+  });
+});
+
+// ─── Worktree Permission Mode (#1334) ───────────────────────────────────────
+
+describe('PERM: worktree agents have permissionMode: acceptEdits', () => {
+  // Agents spawned with isolation="worktree" need permissionMode: acceptEdits
+  // to avoid per-directory edit permission prompts in the worktree path.
+  // See: anthropics/claude-code#29110, anthropics/claude-code#28041
+  const WORKTREE_AGENTS = ['gsd-executor', 'gsd-debugger'];
+
+  for (const agent of WORKTREE_AGENTS) {
+    test(`${agent} has permissionMode: acceptEdits`, () => {
+      const content = fs.readFileSync(path.join(AGENTS_DIR, agent + '.md'), 'utf-8');
+      const frontmatter = content.split('---')[1] || '';
+      assert.ok(
+        frontmatter.includes('permissionMode: acceptEdits'),
+        `${agent} must have permissionMode: acceptEdits — worktree agents need this to avoid ` +
+        `per-directory edit permission prompts (see #1334)`
+      );
+    });
+  }
+
+  test('worktree-spawned agents are covered', () => {
+    // Verify that agents referenced with isolation="worktree" in workflows
+    // are included in the WORKTREE_AGENTS list above
+    const dirs = [WORKFLOWS_DIR, COMMANDS_DIR];
+    const worktreeAgentTypes = new Set();
+
+    for (const dir of dirs) {
+      if (!fs.existsSync(dir)) continue;
+      const files = fs.readdirSync(dir).filter(f => f.endsWith('.md'));
+      for (const file of files) {
+        const content = fs.readFileSync(path.join(dir, file), 'utf-8');
+        // Find patterns like: subagent_type="gsd-executor" ... isolation="worktree"
+        // These can span multiple lines in Task() calls
+        const taskBlocks = content.match(/Task\([^)]*isolation="worktree"[^)]*\)/gs) || [];
+        for (const block of taskBlocks) {
+          const typeMatch = block.match(/subagent_type="([^"]+)"/);
+          if (typeMatch) {
+            worktreeAgentTypes.add(typeMatch[1]);
+          }
+        }
+      }
+    }
+
+    for (const agentType of worktreeAgentTypes) {
+      assert.ok(
+        WORKTREE_AGENTS.includes(agentType),
+        `${agentType} is spawned with isolation="worktree" but not in WORKTREE_AGENTS list — ` +
+        `add permissionMode: acceptEdits to its frontmatter and update this test`
+      );
+    }
   });
 });

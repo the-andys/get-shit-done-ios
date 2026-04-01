@@ -149,27 +149,34 @@ describe('state-snapshot command', () => {
     assert.strictEqual(output.paused_at, 'Phase 3, Plan 1, Task 2 - mid-implementation', 'paused_at extracted');
   });
 
-  test('supports --cwd override when command runs outside project root', () => {
-    fs.writeFileSync(
-      path.join(tmpDir, '.planning', 'STATE.md'),
-      `# Session State
+  describe('--cwd override', () => {
+    let outsideDir;
+
+    beforeEach(() => {
+      outsideDir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'gsd-test-outside-'));
+    });
+
+    afterEach(() => {
+      cleanup(outsideDir);
+    });
+
+    test('supports --cwd override when command runs outside project root', () => {
+      fs.writeFileSync(
+        path.join(tmpDir, '.planning', 'STATE.md'),
+        `# Session State
 
 **Current Phase:** 03
 **Status:** Ready to plan
 `
-    );
-    const outsideDir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'gsd-test-outside-'));
+      );
 
-    try {
       const result = runGsdTools(`state-snapshot --cwd "${tmpDir}"`, outsideDir);
       assert.ok(result.success, `Command failed: ${result.error}`);
 
       const output = JSON.parse(result.output);
       assert.strictEqual(output.current_phase, '03', 'should read STATE.md from overridden cwd');
       assert.strictEqual(output.status, 'Ready to plan', 'should parse status from overridden cwd');
-    } finally {
-      cleanup(outsideDir);
-    }
+    });
   });
 
   test('returns error for invalid --cwd path', () => {
@@ -1472,6 +1479,130 @@ describe('milestone-scoped phase counting in frontmatter', () => {
 
     const output = JSON.parse(jsonResult.output);
     assert.strictEqual(Number(output.progress.total_phases), 4, 'without ROADMAP should count all 4 phases');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// begin-phase — field preservation (#1365)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('state begin-phase preserves Current Position fields (#1365)', () => {
+  let tmpDir;
+
+  beforeEach(() => {
+    tmpDir = createTempProject();
+  });
+
+  afterEach(() => {
+    cleanup(tmpDir);
+  });
+
+  test('begin-phase preserves Status, Last activity, and Progress in Current Position', () => {
+    const stateMd = `# Project State
+
+**Current Phase:** 1
+**Current Phase Name:** setup
+**Total Phases:** 5
+**Current Plan:** 0
+**Total Plans in Phase:** 0
+**Status:** Ready to plan
+**Last Activity:** 2026-03-20
+**Last Activity Description:** Roadmap created
+
+## Current Position
+Phase: 1 of 5 (setup)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-03-20 -- Roadmap created
+Progress: [..........] 0%
+
+## Decisions Made
+
+| Phase | Decision | Rationale |
+|-------|----------|-----------|
+`;
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'STATE.md'), stateMd);
+
+    const result = runGsdTools(
+      ['state', 'begin-phase', '--phase', '1', '--name', 'setup', '--plans', '4'],
+      tmpDir
+    );
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const content = fs.readFileSync(
+      path.join(tmpDir, '.planning', 'STATE.md'), 'utf-8'
+    );
+
+    // Extract the Current Position section
+    const posMatch = content.match(/## Current Position\s*\n([\s\S]*?)(?=\n##|$)/i);
+    assert.ok(posMatch, 'Current Position section should exist');
+    const posSection = posMatch[1];
+
+    // Phase and Plan lines should be updated
+    assert.ok(/^Phase:.*EXECUTING/m.test(posSection), 'Phase line should say EXECUTING');
+    assert.ok(/^Plan:.*1 of 4/m.test(posSection), 'Plan line should show 1 of 4');
+
+    // Status, Last activity, and Progress must still be present (the bug destroys these)
+    assert.ok(/^Status:/m.test(posSection),
+      'Status field must be preserved in Current Position');
+    assert.ok(/^Last activity:/m.test(posSection),
+      'Last activity field must be preserved in Current Position');
+    assert.ok(/^Progress:/m.test(posSection),
+      'Progress field must be preserved in Current Position');
+  });
+
+  test('advance-plan can update Status after begin-phase', () => {
+    // Simulates the full workflow: begin-phase then advance through all plans
+    const stateMd = `# Project State
+
+**Current Phase:** 1
+**Current Phase Name:** setup
+**Total Phases:** 5
+**Current Plan:** 0
+**Total Plans in Phase:** 0
+**Status:** Ready to plan
+**Last Activity:** 2026-03-20
+**Last Activity Description:** Roadmap created
+
+## Current Position
+Phase: 1 of 5 (setup)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-03-20 -- Roadmap created
+Progress: [..........] 0%
+
+## Decisions Made
+
+| Phase | Decision | Rationale |
+|-------|----------|-----------|
+`;
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'STATE.md'), stateMd);
+
+    // Step 1: begin-phase
+    const beginResult = runGsdTools(
+      ['state', 'begin-phase', '--phase', '1', '--name', 'setup', '--plans', '2'],
+      tmpDir
+    );
+    assert.ok(beginResult.success, `begin-phase failed: ${beginResult.error}`);
+
+    // Step 2: advance-plan to go from plan 1 to plan 2
+    const adv1 = runGsdTools(['state', 'advance-plan'], tmpDir);
+    assert.ok(adv1.success, `advance-plan 1 failed: ${adv1.error}`);
+
+    // Step 3: advance-plan again — plan 2 of 2 is the last, should set "Phase complete"
+    const adv2 = runGsdTools(['state', 'advance-plan'], tmpDir);
+    assert.ok(adv2.success, `advance-plan 2 failed: ${adv2.error}`);
+
+    const content = fs.readFileSync(
+      path.join(tmpDir, '.planning', 'STATE.md'), 'utf-8'
+    );
+    const posMatch = content.match(/## Current Position\s*\n([\s\S]*?)(?=\n##|$)/i);
+    assert.ok(posMatch, 'Current Position section should exist after advance-plan');
+    const posSection = posMatch[1];
+
+    // After advancing past all plans, Status should say "Phase complete"
+    assert.ok(/Status:.*Phase complete/i.test(posSection),
+      'Status should be updated to "Phase complete" after last advance-plan');
   });
 });
 
