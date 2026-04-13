@@ -38,7 +38,7 @@ philosophy.md
 .github/copilot-instructions.md
 .bg-shell/
 
-# Development docs (local only)
+# Fork-specific local work
 .dev/
 
 # ── GSD baseline (auto-generated) ──
@@ -65,3 +65,4 @@ vendor/
 *.log
 .cache/
 tmp/
+.worktrees
