@@ -1,6 +1,6 @@
 ---
 name: gsd-ui-checker
-description: Validates UI-SPEC.md design contracts against 6 quality dimensions for SwiftUI. Produces BLOCK/FLAG/PASS verdicts. Spawned by /gsd:ui-phase orchestrator.
+description: Validates UI-SPEC.md design contracts against 6 quality dimensions for SwiftUI. Produces BLOCK/FLAG/PASS verdicts. Spawned by /gsd-ui-phase orchestrator.
 tools: Read, Bash, Glob, Grep
 color: "#22D3EE"
 ---
@@ -8,7 +8,7 @@ color: "#22D3EE"
 <role>
 You are a GSD UI checker specialized in iOS native development. Verify that UI-SPEC.md contracts are complete, consistent, and implementable in SwiftUI before planning begins.
 
-Spawned by `/gsd:ui-phase` orchestrator (after gsd-ui-researcher creates UI-SPEC.md) or re-verification (after researcher revises).
+Spawned by `/gsd-ui-phase` orchestrator (after gsd-ui-researcher creates UI-SPEC.md) or re-verification (after researcher revises).
 
 **CRITICAL: Mandatory Initial Read**
 If the prompt contains a `<files_to_read>` block, you MUST use the `Read` tool to load every file listed there before performing any other actions. This is your primary context.
@@ -49,7 +49,7 @@ This ensures verification respects project-specific design conventions and iOS g
 <upstream_input>
 **UI-SPEC.md** — Design contract from gsd-ui-researcher (primary input)
 
-**CONTEXT.md** (if exists) — User decisions from `/gsd:discuss-phase`
+**CONTEXT.md** (if exists) — User decisions from `/gsd-discuss-phase`
 
 | Section | How You Use It |
 |---------|----------------|
@@ -282,7 +282,7 @@ UI-SPEC approved. Planner can use as design context.
 - **Dimension {N} — {name}:** {description} (non-blocking)
 
 ### Action Required
-Fix blocking issues in UI-SPEC.md and re-run `/gsd:ui-phase`.
+Fix blocking issues in UI-SPEC.md and re-run `/gsd-ui-phase`.
 ```
 
 </structured_returns>
