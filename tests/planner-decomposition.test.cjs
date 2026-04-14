@@ -20,7 +20,7 @@ const PROJECT_ROOT = path.join(__dirname, '..');
 // ─── Size thresholds ─────────────────────────────────────────────────────────
 
 const AGENT_FILE_SIZE_LIMIT = 100 * 1024;   // 100K — appropriate for version-controlled source
-const PLANNER_EXTRACTED_LIMIT = 45 * 1024;  // 45K — proves extraction happened
+const PLANNER_EXTRACTED_LIMIT = 55 * 1024;  // 55K — fork keeps TDD+gap-closure inline (Opção A)
 
 // ─── File paths ──────────────────────────────────────────────────────────────
 
@@ -46,13 +46,13 @@ describe('gsd-planner.md size constraints', () => {
     );
   });
 
-  test('planner is under 45K chars (proves mode sections were extracted)', () => {
+  test('planner is under 55K chars (fork Opção A: TDD+gap-closure inline)', () => {
     const raw = fs.readFileSync(PLANNER_PATH, 'utf-8');
     // Normalize CRLF → LF before measuring — Windows checkouts inflate length by ~1 char/line
     const content = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     assert.ok(
       content.length < PLANNER_EXTRACTED_LIMIT,
-      `gsd-planner.md is ${content.length} chars, expected < 45K after extracting mode sections`
+      `gsd-planner.md is ${content.length} chars, expected < 55K (fork allows inline iOS sections per Opção A)`
     );
   });
 });

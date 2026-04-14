@@ -61,7 +61,7 @@
     <text class="text" font-size="15" y="348"><tspan class="green">  ✓</tspan><tspan class="white"> Installed iOS agents</tspan></text>
 
     <!-- Done message -->
-    <text class="text" font-size="15" y="396"><tspan class="green">  Done!</tspan><tspan class="white"> Run </tspan><tspan class="cyan">/gsd:help</tspan><tspan class="white"> to get started.</tspan></text>
+    <text class="text" font-size="15" y="396"><tspan class="green">  Done!</tspan><tspan class="white"> Run </tspan><tspan class="cyan">/gsd-help</tspan><tspan class="white"> to get started.</tspan></text>
 
     <!-- New prompt -->
     <text class="text prompt" font-size="15" y="430">~</text>

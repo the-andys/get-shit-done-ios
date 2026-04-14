@@ -152,8 +152,9 @@ describe('verifier deferred-items filtering (#1624)', () => {
 
   // ── verify-phase.md (SDK variant) ──────────────────────────────────────────
 
-  describe('sdk/prompts/workflows/verify-phase.md', () => {
-    const sdkPath = path.join(ROOT, 'sdk', 'prompts', 'workflows', 'verify-phase.md');
+  const sdkPathForSkipCheck = path.join(ROOT, 'sdk', 'prompts', 'workflows', 'verify-phase.md');
+  describe('sdk/prompts/workflows/verify-phase.md', { skip: !fs.existsSync(sdkPathForSkipCheck) ? 'sdk/ not present in iOS fork (100% SKIP per sync rule 6)' : false }, () => {
+    const sdkPath = sdkPathForSkipCheck;
     let sdkContent;
 
     test('file exists', () => {
