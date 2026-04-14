@@ -3,7 +3,7 @@
  */
 
 const { test, describe, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert');
+const assert = require('node:assert/strict');
 const { execSync } = require('node:child_process');
 const fs = require('fs');
 const path = require('path');
@@ -1250,6 +1250,41 @@ describe('commit command', () => {
     const branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: tmpDir, encoding: 'utf-8' }).trim();
     assert.strictEqual(branch, 'gsd/phase-01-setup', 'should be on phase branch');
   });
+
+  test('decimal phase numbers are captured correctly in branching strategy', () => {
+    // Configure phase branching strategy
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'config.json'),
+      JSON.stringify({
+        commit_docs: true,
+        branching_strategy: 'phase',
+        phase_branch_template: 'gsd/phase-{phase}-{slug}',
+      })
+    );
+    // Create ROADMAP.md with a decimal phase
+    fs.mkdirSync(path.join(tmpDir, '.planning', 'phases', '45.14-golden-capture'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      '# Roadmap\n\n## Phase 45.14: Golden Capture\nGoal: Capture golden standard\n'
+    );
+
+    // Create a context file for phase 45.14
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'phases', '45.14-golden-capture', '45.14-CONTEXT.md'), '# Context\n');
+
+    const result = runGsdTools(
+      'commit "docs(45.14): add context" --files .planning/phases/45.14-golden-capture/45.14-CONTEXT.md',
+      tmpDir
+    );
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.committed, true, 'should have committed');
+
+    // Verify we're on the correct branch (45.14, not 14)
+    const { execFileSync } = require('child_process');
+    const branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: tmpDir, encoding: 'utf-8' }).trim();
+    assert.strictEqual(branch, 'gsd/phase-45.14-golden-capture', 'should be on decimal phase branch, not integer-only');
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1409,11 +1444,12 @@ describe('stats command', () => {
     fs.mkdirSync(p1, { recursive: true });
     fs.mkdirSync(p2, { recursive: true });
 
-    // Phase 1: 2 plans, 2 summaries (complete)
+    // Phase 1: 2 plans, 2 summaries, passing verification (complete)
     fs.writeFileSync(path.join(p1, '01-01-PLAN.md'), '# Plan');
     fs.writeFileSync(path.join(p1, '01-02-PLAN.md'), '# Plan');
     fs.writeFileSync(path.join(p1, '01-01-SUMMARY.md'), '# Summary');
     fs.writeFileSync(path.join(p1, '01-02-SUMMARY.md'), '# Summary');
+    fs.writeFileSync(path.join(p1, 'VERIFICATION.md'), '---\nstatus: passed\n---\n# Verification');
 
     // Phase 2: 1 plan, 0 summaries (planned)
     fs.writeFileSync(path.join(p2, '02-01-PLAN.md'), '# Plan');
@@ -1485,8 +1521,10 @@ describe('stats command', () => {
     fs.mkdirSync(p2, { recursive: true });
     fs.writeFileSync(path.join(p1, '14-01-PLAN.md'), '# Plan');
     fs.writeFileSync(path.join(p1, '14-01-SUMMARY.md'), '# Summary');
+    fs.writeFileSync(path.join(p1, 'VERIFICATION.md'), '---\nstatus: passed\n---\n# Verified');
     fs.writeFileSync(path.join(p2, '15-01-PLAN.md'), '# Plan');
     fs.writeFileSync(path.join(p2, '15-01-SUMMARY.md'), '# Summary');
+    fs.writeFileSync(path.join(p2, 'VERIFICATION.md'), '---\nstatus: passed\n---\n# Verified');
 
     fs.writeFileSync(
       path.join(tmpDir, '.planning', 'ROADMAP.md'),
@@ -1569,6 +1607,7 @@ describe('stats command', () => {
     fs.mkdirSync(p1, { recursive: true });
     fs.writeFileSync(path.join(p1, '01-01-PLAN.md'), '# Plan');
     fs.writeFileSync(path.join(p1, '01-01-SUMMARY.md'), '# Summary');
+    fs.writeFileSync(path.join(p1, 'VERIFICATION.md'), '---\nstatus: passed\n---\n# Verified');
 
     const result = runGsdTools('stats table', tmpDir);
     assert.ok(result.success, `Command failed: ${result.error}`);
@@ -1579,5 +1618,136 @@ describe('stats command', () => {
     assert.ok(parsed.rendered.includes('| Phase |'), 'should include table header');
     assert.ok(parsed.rendered.includes('| 1 |'), 'should include phase row');
     assert.ok(parsed.rendered.includes('1/1 phases'), 'should report phase progress');
+  });
+
+  test('phase with summaries but no verification is Executed, not Complete', () => {
+    const p1 = path.join(tmpDir, '.planning', 'phases', '01-auth');
+    fs.mkdirSync(p1, { recursive: true });
+    fs.writeFileSync(path.join(p1, '01-01-PLAN.md'), '# Plan');
+    fs.writeFileSync(path.join(p1, '01-01-SUMMARY.md'), '# Summary');
+    const result = runGsdTools('stats', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const stats = JSON.parse(result.output);
+    const phase = stats.phases.find(p => p.number === '01' || p.number === '1');
+    assert.strictEqual(phase.status, 'Executed', 'should be Executed without verification');
+    assert.strictEqual(stats.phases_completed, 0, 'unverified phase should not count as completed');
+  });
+
+  test('phase with passing verification is Complete', () => {
+    const p1 = path.join(tmpDir, '.planning', 'phases', '01-auth');
+    fs.mkdirSync(p1, { recursive: true });
+    fs.writeFileSync(path.join(p1, '01-01-PLAN.md'), '# Plan');
+    fs.writeFileSync(path.join(p1, '01-01-SUMMARY.md'), '# Summary');
+    fs.writeFileSync(path.join(p1, 'VERIFICATION.md'), '---\nstatus: passed\n---\n# Verification');
+    const result = runGsdTools('stats', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const stats = JSON.parse(result.output);
+    const phase = stats.phases.find(p => p.number === '01' || p.number === '1');
+    assert.strictEqual(phase.status, 'Complete', 'should be Complete with passing verification');
+    assert.strictEqual(stats.phases_completed, 1);
+  });
+
+  test('phase with gaps_found verification is Executed', () => {
+    const p1 = path.join(tmpDir, '.planning', 'phases', '01-auth');
+    fs.mkdirSync(p1, { recursive: true });
+    fs.writeFileSync(path.join(p1, '01-01-PLAN.md'), '# Plan');
+    fs.writeFileSync(path.join(p1, '01-01-SUMMARY.md'), '# Summary');
+    fs.writeFileSync(path.join(p1, 'VERIFICATION.md'), '---\nstatus: gaps_found\n---\n# Verification');
+    const result = runGsdTools('stats', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const stats = JSON.parse(result.output);
+    const phase = stats.phases.find(p => p.number === '01' || p.number === '1');
+    assert.strictEqual(phase.status, 'Executed', 'gaps_found should show as Executed');
+  });
+
+  test('phase with human_needed verification shows Needs Review', () => {
+    const p1 = path.join(tmpDir, '.planning', 'phases', '01-auth');
+    fs.mkdirSync(p1, { recursive: true });
+    fs.writeFileSync(path.join(p1, '01-01-PLAN.md'), '# Plan');
+    fs.writeFileSync(path.join(p1, '01-01-SUMMARY.md'), '# Summary');
+    fs.writeFileSync(path.join(p1, 'VERIFICATION.md'), '---\nstatus: human_needed\n---\n# Verification');
+    const result = runGsdTools('stats', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const stats = JSON.parse(result.output);
+    const phase = stats.phases.find(p => p.number === '01' || p.number === '1');
+    assert.strictEqual(phase.status, 'Needs Review', 'human_needed should show as Needs Review');
+  });
+
+  test('progress command also uses verification-aware status', () => {
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      `# Roadmap v1.0 MVP\n`
+    );
+    const p1 = path.join(tmpDir, '.planning', 'phases', '01-auth');
+    fs.mkdirSync(p1, { recursive: true });
+    fs.writeFileSync(path.join(p1, '01-01-PLAN.md'), '# Plan');
+    fs.writeFileSync(path.join(p1, '01-01-SUMMARY.md'), '# Summary');
+
+    const result = runGsdTools('progress json', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.phases[0].status, 'Executed', 'progress should show Executed without verification');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// check-commit command (#1395)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('check-commit command', () => {
+  const { createTempGitProject } = require('./helpers.cjs');
+  let tmpDir;
+
+  beforeEach(() => {
+    tmpDir = createTempGitProject();
+  });
+
+  afterEach(() => {
+    cleanup(tmpDir);
+  });
+
+  test('allows commit when commit_docs is true', () => {
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'config.json'),
+      JSON.stringify({ commit_docs: true })
+    );
+    const result = runGsdTools('check-commit', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.allowed, true);
+  });
+
+  test('allows commit when no .planning/ files staged and commit_docs is false', () => {
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'config.json'),
+      JSON.stringify({ commit_docs: false })
+    );
+    // Stage a non-planning file
+    fs.writeFileSync(path.join(tmpDir, 'src.js'), 'console.log("hi")');
+    execSync('git add src.js', { cwd: tmpDir, stdio: 'pipe' });
+
+    const result = runGsdTools('check-commit', tmpDir);
+    assert.ok(result.success, `Command failed: ${result.error}`);
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.allowed, true);
+  });
+
+  test('blocks commit when .planning/ files staged and commit_docs is false', () => {
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'config.json'),
+      JSON.stringify({ commit_docs: false })
+    );
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'STATE.md'), '# State');
+    execSync('git add .planning/STATE.md', { cwd: tmpDir, stdio: 'pipe' });
+
+    const result = runGsdTools('check-commit', tmpDir);
+    assert.ok(!result.success, 'should block commit');
+    assert.ok(result.error.includes('.planning/'), 'error should mention .planning/ files');
+    assert.ok(result.error.includes('unstage'), 'error should suggest unstage command');
   });
 });

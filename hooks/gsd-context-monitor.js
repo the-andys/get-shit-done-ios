@@ -45,17 +45,26 @@ process.stdin.on('end', () => {
       process.exit(0);
     }
 
-    // Check if context warnings are disabled via config
+    // Reject session IDs that contain path traversal sequences or path separators.
+    // session_id is used to construct file paths in /tmp — an unsanitized value
+    // could escape the temp directory and read or write arbitrary files.
+    if (/[/\\]|\.\./.test(sessionId)) {
+      process.exit(0);
+    }
+
+    // Check if context warnings are disabled via config.
+    // Quick sentinel check: skip config read entirely for non-GSD projects (#P2.5).
     const cwd = data.cwd || process.cwd();
-    const configPath = path.join(cwd, '.planning', 'config.json');
-    if (fs.existsSync(configPath)) {
+    const planningDir = path.join(cwd, '.planning');
+    if (fs.existsSync(planningDir)) {
       try {
+        const configPath = path.join(planningDir, 'config.json');
         const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         if (config.hooks?.context_warnings === false) {
           process.exit(0);
         }
       } catch (e) {
-        // Ignore config parse errors
+        // Ignore config read/parse errors (config may not exist in .planning/)
       }
     }
 
@@ -127,7 +136,7 @@ process.stdin.on('end', () => {
         ? `CONTEXT CRITICAL: Usage at ${usedPct}%. Remaining: ${remaining}%. ` +
           'Context is nearly exhausted. Do NOT start new complex work or write handoff files — ' +
           'GSD state is already tracked in STATE.md. Inform the user so they can run ' +
-          '/gsd:pause-work at the next natural stopping point.'
+          '/gsd-pause-work at the next natural stopping point.'
         : `CONTEXT CRITICAL: Usage at ${usedPct}%. Remaining: ${remaining}%. ` +
           'Context is nearly exhausted. Inform the user that context is low and ask how they ' +
           'want to proceed. Do NOT autonomously save state or write handoff files unless the user asks.';

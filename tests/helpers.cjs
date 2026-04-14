@@ -7,6 +7,22 @@ const fs = require('fs');
 const path = require('path');
 
 const TOOLS_PATH = path.join(__dirname, '..', 'get-shit-done', 'bin', 'gsd-tools.cjs');
+const TEST_ENV_BASE = {
+  GSD_SESSION_KEY: '',
+  CODEX_THREAD_ID: '',
+  CLAUDE_SESSION_ID: '',
+  CLAUDE_CODE_SSE_PORT: '',
+  OPENCODE_SESSION_ID: '',
+  GEMINI_SESSION_ID: '',
+  CURSOR_SESSION_ID: '',
+  WINDSURF_SESSION_ID: '',
+  TERM_SESSION_ID: '',
+  WT_SESSION: '',
+  TMUX_PANE: '',
+  ZELLIJ_SESSION_NAME: '',
+  TTY: '',
+  SSH_TTY: '',
+};
 
 /**
  * Run gsd-tools command.
@@ -21,7 +37,7 @@ const TOOLS_PATH = path.join(__dirname, '..', 'get-shit-done', 'bin', 'gsd-tools
 function runGsdTools(args, cwd = process.cwd(), env = {}) {
   try {
     let result;
-    const childEnv = { ...process.env, ...env };
+    const childEnv = { ...process.env, ...TEST_ENV_BASE, ...env };
     if (Array.isArray(args)) {
       result = execFileSync(process.execPath, [TOOLS_PATH, ...args], {
         cwd,
@@ -30,7 +46,14 @@ function runGsdTools(args, cwd = process.cwd(), env = {}) {
         env: childEnv,
       });
     } else {
-      result = execSync(`node "${TOOLS_PATH}" ${args}`, {
+      // Split shell-style string into argv, stripping surrounding quotes, so we
+      // can invoke execFileSync with process.execPath instead of relying on
+      // `node` being on PATH (it isn't in Claude Code shell sessions).
+      // Apply shell-style quote removal: strip surrounding quotes from quoted
+      // sequences anywhere in a token (handles both "foo bar" and --"foo bar").
+      const argv = (args.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [])
+        .map(t => t.replace(/"([^"]*)"/g, '$1').replace(/'([^']*)'/g, '$1'));
+      result = execFileSync(process.execPath, [TOOLS_PATH, ...argv], {
         cwd,
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],

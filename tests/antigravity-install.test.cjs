@@ -8,7 +8,7 @@
 process.env.GSD_TEST_MODE = '1';
 
 const { test, describe, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert');
+const assert = require('node:assert/strict');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
@@ -36,6 +36,7 @@ describe('getDirName (Antigravity)', () => {
     assert.strictEqual(getDirName('claude'), '.claude');
     assert.strictEqual(getDirName('opencode'), '.opencode');
     assert.strictEqual(getDirName('gemini'), '.gemini');
+    assert.strictEqual(getDirName('kilo'), '.kilo');
     assert.strictEqual(getDirName('codex'), '.codex');
     assert.strictEqual(getDirName('copilot'), '.github');
   });
@@ -97,6 +98,7 @@ describe('getConfigDirFromHome (Antigravity)', () => {
   test('does not change other runtimes', () => {
     assert.strictEqual(getConfigDirFromHome('claude', true), "'.claude'");
     assert.strictEqual(getConfigDirFromHome('gemini', true), "'.gemini'");
+    assert.strictEqual(getConfigDirFromHome('kilo', true), "'.config', 'kilo'");
     assert.strictEqual(getConfigDirFromHome('copilot', true), "'.copilot'");
   });
 });

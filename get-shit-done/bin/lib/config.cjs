@@ -4,7 +4,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { output, error, planningRoot } = require('./core.cjs');
+const { output, error, planningDir, withPlanningLock, CONFIG_DEFAULTS, atomicWriteFileSync } = require('./core.cjs');
 const {
   VALID_PROFILES,
   getAgentToModelMapForProfile,
@@ -15,16 +15,28 @@ const VALID_CONFIG_KEYS = new Set([
   'mode', 'granularity', 'parallelization', 'commit_docs', 'model_profile',
   'search_gitignored', 'brave_search', 'firecrawl', 'exa_search',
   'workflow.research', 'workflow.plan_check', 'workflow.verifier',
-  'workflow.nyquist_validation', 'workflow.ui_phase', 'workflow.ui_safety_gate',
+  'workflow.nyquist_validation', 'workflow.ai_integration_phase', 'workflow.ui_phase', 'workflow.ui_safety_gate',
   'workflow.auto_advance', 'workflow.node_repair', 'workflow.node_repair_budget',
   'workflow.text_mode',
   'workflow.research_before_questions',
   'workflow.discuss_mode',
   'workflow.skip_discuss',
   'workflow._auto_chain_active',
-  'git.branching_strategy', 'git.phase_branch_template', 'git.milestone_branch_template', 'git.quick_branch_template',
+  'workflow.use_worktrees',
+  'workflow.code_review',
+  'workflow.code_review_depth',
+  'git.branching_strategy', 'git.base_branch', 'git.phase_branch_template', 'git.milestone_branch_template', 'git.quick_branch_template',
   'planning.commit_docs', 'planning.search_gitignored',
+  'workflow.subagent_timeout',
   'hooks.context_warnings',
+  'features.thinking_partner',
+  'context',
+  'features.global_learnings',
+  'learnings.max_inject',
+  'project_code', 'phase_naming',
+  'manager.flags.discuss', 'manager.flags.plan', 'manager.flags.execute',
+  'response_language',
+  'intel.enabled',
 ]);
 
 /**
@@ -36,6 +48,12 @@ function isValidConfigKey(keyPath) {
   if (VALID_CONFIG_KEYS.has(keyPath)) return true;
   // Allow agent_skills.<agent-type> with any agent type string
   if (/^agent_skills\.[a-zA-Z0-9_-]+$/.test(keyPath)) return true;
+  // Allow review.models.<cli-name> for per-CLI model selection in /gsd-review
+  if (/^review\.models\.[a-zA-Z0-9_-]+$/.test(keyPath)) return true;
+  // Allow features.<feature_name> — dynamic namespace for feature flags.
+  // Intentionally open-ended so new flags (e.g., features.global_learnings) work
+  // without updating VALID_CONFIG_KEYS each time.
+  if (/^features\.[a-zA-Z0-9_]+$/.test(keyPath)) return true;
   return false;
 }
 
@@ -45,6 +63,11 @@ const CONFIG_KEY_SUGGESTIONS = {
   'nyquist.validation_enabled': 'workflow.nyquist_validation',
   'hooks.research_questions': 'workflow.research_before_questions',
   'workflow.research_questions': 'workflow.research_before_questions',
+  'workflow.codereview': 'workflow.code_review',
+  'workflow.review': 'workflow.code_review',
+  'workflow.code_review_level': 'workflow.code_review_depth',
+  'workflow.review_depth': 'workflow.code_review_depth',
+  'review.model': 'review.models.<cli-name>',
 };
 
 function validateKnownConfigKeyPath(keyPath) {
@@ -60,7 +83,7 @@ function validateKnownConfigKeyPath(keyPath) {
  * Merges (increasing priority):
  *   1. Hardcoded defaults — every key that loadConfig() resolves, plus mode/granularity
  *   2. User-level defaults from ~/.gsd/defaults.json (if present)
- *   3. userChoices — the settings the user explicitly selected during /gsd:new-project
+ *   3. userChoices — the settings the user explicitly selected during /gsd-new-project
  *
  * Uses the canonical `git` namespace for branching keys (consistent with VALID_CONFIG_KEYS
  * and the settings workflow). loadConfig() handles both flat and nested formats, so this
@@ -101,18 +124,18 @@ function buildNewProjectConfig(userChoices) {
   }
 
   const hardcoded = {
-    model_profile: 'balanced',
-    commit_docs: true,
-    parallelization: true,
-    search_gitignored: false,
+    model_profile: CONFIG_DEFAULTS.model_profile,
+    commit_docs: CONFIG_DEFAULTS.commit_docs,
+    parallelization: CONFIG_DEFAULTS.parallelization,
+    search_gitignored: CONFIG_DEFAULTS.search_gitignored,
     brave_search: hasBraveSearch,
     firecrawl: hasFirecrawl,
     exa_search: hasExaSearch,
     git: {
-      branching_strategy: 'none',
-      phase_branch_template: 'gsd/phase-{phase}-{slug}',
-      milestone_branch_template: 'gsd/{milestone}-{slug}',
-      quick_branch_template: null,
+      branching_strategy: CONFIG_DEFAULTS.branching_strategy,
+      phase_branch_template: CONFIG_DEFAULTS.phase_branch_template,
+      milestone_branch_template: CONFIG_DEFAULTS.milestone_branch_template,
+      quick_branch_template: CONFIG_DEFAULTS.quick_branch_template,
     },
     workflow: {
       research: true,
@@ -124,14 +147,19 @@ function buildNewProjectConfig(userChoices) {
       node_repair_budget: 2,
       ui_phase: true,
       ui_safety_gate: true,
+      ai_integration_phase: true,
       text_mode: false,
       research_before_questions: false,
       discuss_mode: 'discuss',
       skip_discuss: false,
+      code_review: true,
+      code_review_depth: 'standard',
     },
     hooks: {
       context_warnings: true,
     },
+    project_code: null,
+    phase_naming: 'sequential',
     agent_skills: {},
   };
 
@@ -167,13 +195,13 @@ function buildNewProjectConfig(userChoices) {
  * Command: create a fully-materialized .planning/config.json for a new project.
  *
  * Accepts user-chosen settings as a JSON string (the keys the user explicitly
- * configured during /gsd:new-project). All remaining keys are filled from
+ * configured during /gsd-new-project). All remaining keys are filled from
  * hardcoded defaults and optional ~/.gsd/defaults.json.
  *
  * Idempotent: if config.json already exists, returns { created: false }.
  */
 function cmdConfigNewProject(cwd, choicesJson, raw) {
-  const planningBase = planningRoot(cwd);
+  const planningBase = planningDir(cwd);
   const configPath = path.join(planningBase, 'config.json');
 
   // Idempotent: don't overwrite existing config
@@ -204,7 +232,7 @@ function cmdConfigNewProject(cwd, choicesJson, raw) {
   const config = buildNewProjectConfig(userChoices);
 
   try {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+    atomicWriteFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
     output({ created: true, path: '.planning/config.json' }, raw, 'created');
   } catch (err) {
     error('Failed to write config.json: ' + err.message);
@@ -218,7 +246,7 @@ function cmdConfigNewProject(cwd, choicesJson, raw) {
  * the happy path. But note that `error()` will still `exit(1)` out of the process.
  */
 function ensureConfigFile(cwd) {
-  const planningBase = planningRoot(cwd);
+  const planningBase = planningDir(cwd);
   const configPath = path.join(planningBase, 'config.json');
 
   // Ensure .planning directory exists
@@ -238,7 +266,7 @@ function ensureConfigFile(cwd) {
   const config = buildNewProjectConfig({});
 
   try {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+    atomicWriteFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
     return { created: true, path: '.planning/config.json' };
   } catch (err) {
     error('Failed to create config.json: ' + err.message);
@@ -268,38 +296,40 @@ function cmdConfigEnsureSection(cwd, raw) {
  * the happy path. But note that `error()` will still `exit(1)` out of the process.
  */
 function setConfigValue(cwd, keyPath, parsedValue) {
-  const configPath = path.join(planningRoot(cwd), 'config.json');
+  const configPath = path.join(planningDir(cwd), 'config.json');
 
-  // Load existing config or start with empty object
-  let config = {};
-  try {
-    if (fs.existsSync(configPath)) {
-      config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  return withPlanningLock(cwd, () => {
+    // Load existing config or start with empty object
+    let config = {};
+    try {
+      if (fs.existsSync(configPath)) {
+        config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      }
+    } catch (err) {
+      error('Failed to read config.json: ' + err.message);
     }
-  } catch (err) {
-    error('Failed to read config.json: ' + err.message);
-  }
 
-  // Set nested value using dot notation (e.g., "workflow.research")
-  const keys = keyPath.split('.');
-  let current = config;
-  for (let i = 0; i < keys.length - 1; i++) {
-    const key = keys[i];
-    if (current[key] === undefined || typeof current[key] !== 'object') {
-      current[key] = {};
+    // Set nested value using dot notation (e.g., "workflow.research")
+    const keys = keyPath.split('.');
+    let current = config;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const key = keys[i];
+      if (current[key] === undefined || typeof current[key] !== 'object') {
+        current[key] = {};
+      }
+      current = current[key];
     }
-    current = current[key];
-  }
-  const previousValue = current[keys[keys.length - 1]]; // Capture previous value before overwriting
-  current[keys[keys.length - 1]] = parsedValue;
+    const previousValue = current[keys[keys.length - 1]]; // Capture previous value before overwriting
+    current[keys[keys.length - 1]] = parsedValue;
 
-  // Write back
-  try {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
-    return { updated: true, key: keyPath, value: parsedValue, previousValue };
-  } catch (err) {
-    error('Failed to write config.json: ' + err.message);
-  }
+    // Write back
+    try {
+      atomicWriteFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+      return { updated: true, key: keyPath, value: parsedValue, previousValue };
+    } catch (err) {
+      error('Failed to write config.json: ' + err.message);
+    }
+  });
 }
 
 /**
@@ -317,7 +347,7 @@ function cmdConfigSet(cwd, keyPath, value, raw) {
   validateKnownConfigKeyPath(keyPath);
 
   if (!isValidConfigKey(keyPath)) {
-    error(`Unknown config key: "${keyPath}". Valid keys: ${[...VALID_CONFIG_KEYS].sort().join(', ')}, agent_skills.<agent-type>`);
+    error(`Unknown config key: "${keyPath}". Valid keys: ${[...VALID_CONFIG_KEYS].sort().join(', ')}, agent_skills.<agent-type>, features.<feature_name>`);
   }
 
   // Parse value (handle booleans, numbers, and JSON arrays/objects)
@@ -329,21 +359,30 @@ function cmdConfigSet(cwd, keyPath, value, raw) {
     try { parsedValue = JSON.parse(value); } catch { /* keep as string */ }
   }
 
+  const VALID_CONTEXT_VALUES = ['dev', 'research', 'review'];
+  if (keyPath === 'context' && !VALID_CONTEXT_VALUES.includes(String(parsedValue))) {
+    error(`Invalid context value '${value}'. Valid values: ${VALID_CONTEXT_VALUES.join(', ')}`);
+  }
+
   const setConfigValueResult = setConfigValue(cwd, keyPath, parsedValue);
   output(setConfigValueResult, raw, `${keyPath}=${parsedValue}`);
 }
 
-function cmdConfigGet(cwd, keyPath, raw) {
-  const configPath = path.join(planningRoot(cwd), 'config.json');
+function cmdConfigGet(cwd, keyPath, raw, defaultValue) {
+  const configPath = path.join(planningDir(cwd), 'config.json');
+  const hasDefault = defaultValue !== undefined;
 
   if (!keyPath) {
-    error('Usage: config-get <key.path>');
+    error('Usage: config-get <key.path> [--default <value>]');
   }
 
   let config = {};
   try {
     if (fs.existsSync(configPath)) {
       config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    } else if (hasDefault) {
+      output(defaultValue, raw, String(defaultValue));
+      return;
     } else {
       error('No config.json found at ' + configPath);
     }
@@ -357,12 +396,14 @@ function cmdConfigGet(cwd, keyPath, raw) {
   let current = config;
   for (const key of keys) {
     if (current === undefined || current === null || typeof current !== 'object') {
+      if (hasDefault) { output(defaultValue, raw, String(defaultValue)); return; }
       error(`Key not found: ${keyPath}`);
     }
     current = current[key];
   }
 
   if (current === undefined) {
+    if (hasDefault) { output(defaultValue, raw, String(defaultValue)); return; }
     error(`Key not found: ${keyPath}`);
   }
 
@@ -434,6 +475,7 @@ function getCmdConfigSetModelProfileResultMessage(
 }
 
 module.exports = {
+  VALID_CONFIG_KEYS,
   cmdConfigEnsureSection,
   cmdConfigSet,
   cmdConfigGet,

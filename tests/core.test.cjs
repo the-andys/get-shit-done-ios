@@ -6,7 +6,7 @@
  */
 
 const { test, describe, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert');
+const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -30,6 +30,7 @@ const {
   findPhaseInternal,
   findProjectRoot,
   detectSubRepos,
+  planningDir,
 } = require('../get-shit-done/bin/lib/core.cjs');
 
 // ─── loadConfig ────────────────────────────────────────────────────────────────
@@ -98,6 +99,18 @@ describe('loadConfig', () => {
     assert.strictEqual(config.model_overrides, null);
   });
 
+  test('reads response_language when set', () => {
+    writeConfig({ response_language: 'Portuguese' });
+    const config = loadConfig(tmpDir);
+    assert.strictEqual(config.response_language, 'Portuguese');
+  });
+
+  test('returns response_language as null when not set', () => {
+    writeConfig({ model_profile: 'balanced' });
+    const config = loadConfig(tmpDir);
+    assert.strictEqual(config.response_language, null);
+  });
+
   test('returns defaults when config.json contains invalid JSON', () => {
     fs.writeFileSync(
       path.join(tmpDir, '.planning', 'config.json'),
@@ -124,6 +137,55 @@ describe('loadConfig', () => {
     writeConfig({ commit_docs: false, planning: { commit_docs: true } });
     const config = loadConfig(tmpDir);
     assert.strictEqual(config.commit_docs, false);
+  });
+
+  test('warns on unknown config keys to stderr (#1535)', (t) => {
+    writeConfig({ model_profile: 'quality', active_project: 'my-project', custom_flag: true });
+    const origWrite = process.stderr.write;
+    let stderrOutput = '';
+    process.stderr.write = (chunk) => { stderrOutput += chunk; };
+    t.after(() => { process.stderr.write = origWrite; });
+    const config = loadConfig(tmpDir);
+    // Known key still loads correctly
+    assert.strictEqual(config.model_profile, 'quality');
+    // Warning emitted for unknown keys
+    assert.ok(stderrOutput.includes('active_project'), 'should warn about active_project');
+    assert.ok(stderrOutput.includes('custom_flag'), 'should warn about custom_flag');
+    assert.ok(stderrOutput.includes('ignored'), 'should mention keys will be ignored');
+  });
+
+  test('known config keys are derived from VALID_CONFIG_KEYS (not hardcoded)', () => {
+    // Verify that loadConfig's unknown-key check uses config-set's VALID_CONFIG_KEYS
+    // as its source of truth. If a new key is added to config-set, it should
+    // automatically be recognized by loadConfig without a separate update.
+    const { VALID_CONFIG_KEYS } = require('../get-shit-done/bin/lib/config.cjs');
+    // Every top-level key from VALID_CONFIG_KEYS should be recognized
+    const topLevelKeys = [...VALID_CONFIG_KEYS].map(k => k.split('.')[0]);
+    for (const key of topLevelKeys) {
+      writeConfig({ [key]: 'test-value' });
+      const origWrite = process.stderr.write;
+      let stderrOutput = '';
+      process.stderr.write = (chunk) => { stderrOutput += chunk; };
+      try {
+        loadConfig(tmpDir);
+        assert.ok(
+          !stderrOutput.includes(key),
+          `VALID_CONFIG_KEYS key "${key}" should not trigger unknown-key warning`
+        );
+      } finally {
+        process.stderr.write = origWrite;
+      }
+    }
+  });
+
+  test('does not warn when all config keys are known', (t) => {
+    writeConfig({ model_profile: 'balanced', workflow: { research: false }, git: { branching_strategy: 'per-phase' } });
+    const origWrite = process.stderr.write;
+    let stderrOutput = '';
+    process.stderr.write = (chunk) => { stderrOutput += chunk; };
+    t.after(() => { process.stderr.write = origWrite; });
+    loadConfig(tmpDir);
+    assert.strictEqual(stderrOutput, '', 'should not emit any warnings for valid config');
   });
 });
 
@@ -365,6 +427,17 @@ describe('generateSlugInternal', () => {
 
   test('returns null for empty string', () => {
     assert.strictEqual(generateSlugInternal(''), null);
+  });
+
+  test('strips newlines and control characters', () => {
+    assert.strictEqual(generateSlugInternal('hello\nworld'), 'hello-world');
+    assert.strictEqual(generateSlugInternal('tab\there'), 'tab-here');
+  });
+
+  test('truncates to 60 characters', () => {
+    const long = 'a'.repeat(100);
+    const result = generateSlugInternal(long);
+    assert.ok(result.length <= 60, `slug should be <=60 chars, got ${result.length}`);
   });
 });
 
@@ -996,19 +1069,54 @@ describe('stale hook filter', () => {
 // ─── stale hook path regression (#1249) ──────────────────────────────────────
 
 describe('stale hook path', () => {
-  test('gsd-check-update.js checks get-shit-done/hooks/ not configDir/hooks/', () => {
+  test('gsd-check-update.js checks configDir/hooks/ where hooks are actually installed (#1421)', () => {
     const content = fs.readFileSync(
       path.join(__dirname, '..', 'hooks', 'gsd-check-update.js'), 'utf-8'
     );
+    // Hooks are installed at configDir/hooks/ (e.g. ~/.claude/hooks/),
+    // not configDir/get-shit-done/hooks/ which doesn't exist (#1421)
     assert.ok(
-      content.includes("path.join(configDir, 'get-shit-done', 'hooks')"),
-      'stale hook check must look in configDir/get-shit-done/hooks/, not configDir/hooks/'
+      content.includes("path.join(configDir, 'hooks')"),
+      'stale hook check must look in configDir/hooks/ where hooks are actually installed'
     );
+  });
+});
+
+// ─── shared cache directory regression (#1421) ─────────────────────────────────
+
+describe('shared cache directory (#1421)', () => {
+  test('gsd-check-update.js writes cache to shared ~/.cache/gsd/ directory', () => {
+    const content = fs.readFileSync(
+      path.join(__dirname, '..', 'hooks', 'gsd-check-update.js'), 'utf-8'
+    );
+    // Cache must use a tool-agnostic path so statusline can find it
+    // regardless of which runtime (Claude, Gemini, OpenCode) ran the check
     assert.ok(
-      !content.includes("path.join(configDir, 'hooks')") ||
-      content.indexOf("path.join(configDir, 'get-shit-done', 'hooks')") <
-      content.indexOf("path.join(configDir, 'hooks')") + 100, // allow the old pattern only if corrected version exists first
-      'should not use the wrong hooks path'
+      content.includes("path.join(homeDir, '.cache', 'gsd')"),
+      'check-update must write cache to ~/.cache/gsd/ (shared, tool-agnostic)'
+    );
+  });
+
+  test('gsd-statusline.js checks shared cache first, falls back to legacy (#1421)', () => {
+    const content = fs.readFileSync(
+      path.join(__dirname, '..', 'hooks', 'gsd-statusline.js'), 'utf-8'
+    );
+    // Statusline must check the shared cache path first
+    assert.ok(
+      content.includes("path.join(homeDir, '.cache', 'gsd', 'gsd-update-check.json')"),
+      'statusline must check shared cache at ~/.cache/gsd/gsd-update-check.json'
+    );
+    // Must fall back to legacy runtime-specific cache for backward compat
+    assert.ok(
+      content.includes("path.join(claudeDir, 'cache', 'gsd-update-check.json')"),
+      'statusline must fall back to legacy cache at claudeDir/cache/gsd-update-check.json'
+    );
+    // Shared cache must be checked before legacy (existsSync order matters)
+    const sharedIdx = content.indexOf('sharedCacheFile');
+    const legacyIdx = content.indexOf('legacyCacheFile');
+    assert.ok(
+      sharedIdx < legacyIdx,
+      'shared cache must be defined and checked before legacy cache'
     );
   });
 });
@@ -1563,5 +1671,80 @@ describe('reapStaleTempFiles', () => {
     assert.doesNotThrow(() => {
       reapStaleTempFiles('gsd-nonexistent-prefix-xyz-', { maxAgeMs: 0 });
     });
+  });
+});
+
+// ─── planningDir ──────────────────────────────────────────────────────────────
+
+describe('planningDir', () => {
+  const cwd = '/fake/repo';
+  let savedProject, savedWorkstream;
+
+  beforeEach(() => {
+    savedProject = process.env.GSD_PROJECT;
+    savedWorkstream = process.env.GSD_WORKSTREAM;
+    delete process.env.GSD_PROJECT;
+    delete process.env.GSD_WORKSTREAM;
+  });
+
+  afterEach(() => {
+    if (savedProject !== undefined) process.env.GSD_PROJECT = savedProject;
+    else delete process.env.GSD_PROJECT;
+    if (savedWorkstream !== undefined) process.env.GSD_WORKSTREAM = savedWorkstream;
+    else delete process.env.GSD_WORKSTREAM;
+  });
+
+  test('returns .planning/ when neither project nor workstream is set', () => {
+    const result = planningDir(cwd, null, null);
+    assert.strictEqual(result, path.join(cwd, '.planning'));
+  });
+
+  test('returns .planning/{project}/ when project is set', () => {
+    const result = planningDir(cwd, null, 'my-app');
+    assert.strictEqual(result, path.join(cwd, '.planning', 'my-app'));
+  });
+
+  test('returns .planning/workstreams/{ws}/ when workstream is set', () => {
+    const result = planningDir(cwd, 'feature-x', null);
+    assert.strictEqual(result, path.join(cwd, '.planning', 'workstreams', 'feature-x'));
+  });
+
+  test('returns .planning/{project}/workstreams/{ws}/ when both are set', () => {
+    const result = planningDir(cwd, 'feature-x', 'my-app');
+    assert.strictEqual(result, path.join(cwd, '.planning', 'my-app', 'workstreams', 'feature-x'));
+  });
+
+  test('reads GSD_PROJECT from env when project param is undefined', () => {
+    process.env.GSD_PROJECT = 'env-project';
+    const result = planningDir(cwd);
+    assert.strictEqual(result, path.join(cwd, '.planning', 'env-project'));
+  });
+
+  test('rejects path traversal in project name', () => {
+    assert.throws(
+      () => planningDir(cwd, null, '../../etc'),
+      /invalid path characters/
+    );
+  });
+
+  test('rejects forward slash in project name', () => {
+    assert.throws(
+      () => planningDir(cwd, null, 'foo/bar'),
+      /invalid path characters/
+    );
+  });
+
+  test('rejects backslash in project name', () => {
+    assert.throws(
+      () => planningDir(cwd, null, 'foo\\bar'),
+      /invalid path characters/
+    );
+  });
+
+  test('rejects path traversal in workstream name', () => {
+    assert.throws(
+      () => planningDir(cwd, '../../../tmp', null),
+      /invalid path characters/
+    );
   });
 });

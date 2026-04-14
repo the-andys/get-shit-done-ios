@@ -83,7 +83,7 @@ The installer prompts you to choose:
 1. **Runtime** — Claude Code (recommended for iOS), OpenCode, Gemini, Codex, Copilot, Cursor, or Antigravity
 2. **Location** — Global (all projects) or local (current iOS project only)
 
-Verify with `/gsd:help` inside Claude Code.
+Verify with `/gsd-help` inside Claude Code.
 
 > **Requires:** macOS, Xcode, Node.js 20+, Claude Code.
 
@@ -93,7 +93,7 @@ Verify with `/gsd:help` inside Claude Code.
 npx get-shit-done-ios@latest
 ```
 
-Or use `/gsd:update` inside Claude Code for changelog preview before updating.
+Or use `/gsd-update` inside Claude Code for changelog preview before updating.
 
 <details>
 <summary><strong>Non-Interactive Install (CI, Scripts)</strong></summary>
@@ -192,12 +192,12 @@ In practice: install whichever you use most as `--global`, and the other as `--l
 
 ## How It Works
 
-> **Already have code?** Run `/gsd:map-codebase` first. It spawns parallel agents to analyze your stack, architecture, conventions, and concerns. Then `/gsd:new-project` knows your codebase — questions focus on what you're adding, and planning automatically loads your patterns.
+> **Already have code?** Run `/gsd-map-codebase` first. It spawns parallel agents to analyze your stack, architecture, conventions, and concerns. Then `/gsd-new-project` knows your codebase — questions focus on what you're adding, and planning automatically loads your patterns.
 
 ### 1. Initialize Project
 
 ```
-/gsd:new-project
+/gsd-new-project
 ```
 
 One command, one flow. The system:
@@ -216,7 +216,7 @@ You approve the roadmap. Now you're ready to build.
 ### 2. Discuss Phase
 
 ```
-/gsd:discuss-phase 1
+/gsd-discuss-phase 1
 ```
 
 **This is where you shape the implementation.**
@@ -244,7 +244,7 @@ The deeper you go here, the more the system builds what you actually want. Skip 
 ### 3. Plan Phase
 
 ```
-/gsd:plan-phase 1
+/gsd-plan-phase 1
 ```
 
 The system:
@@ -262,7 +262,7 @@ Each plan is small enough to execute in a fresh context window. No degradation, 
 ### 4. Execute Phase
 
 ```
-/gsd:execute-phase 1
+/gsd-execute-phase 1
 ```
 
 The system:
@@ -313,7 +313,7 @@ This is why "vertical slices" (Plan 01: User feature end-to-end) parallelize bet
 ### 5. Verify Work
 
 ```
-/gsd:verify-work 1
+/gsd-verify-work 1
 ```
 
 **This is where you confirm it actually works.**
@@ -327,7 +327,7 @@ The system:
 3. **Diagnoses failures automatically** — Spawns debug agents to find root causes
 4. **Creates verified fix plans** — Ready for immediate re-execution
 
-If everything passes, you move on. If something's broken, you don't manually debug — you just run `/gsd:execute-phase` again with the fix plans it created.
+If everything passes, you move on. If something's broken, you don't manually debug — you just run `/gsd-execute-phase` again with the fix plans it created.
 
 **Creates:** `{phase_num}-UAT.md`, fix plans if issues found
 
@@ -336,29 +336,29 @@ If everything passes, you move on. If something's broken, you don't manually deb
 ### 6. Repeat → Complete → Next Milestone
 
 ```
-/gsd:discuss-phase 2
-/gsd:plan-phase 2
-/gsd:execute-phase 2
-/gsd:verify-work 2
+/gsd-discuss-phase 2
+/gsd-plan-phase 2
+/gsd-execute-phase 2
+/gsd-verify-work 2
 ...
-/gsd:complete-milestone
-/gsd:new-milestone
+/gsd-complete-milestone
+/gsd-new-milestone
 ```
 
 Loop **discuss → plan → execute → verify** until milestone complete.
 
 Each phase gets your input (discuss), proper research (plan), clean execution (execute), and human verification (verify). Context stays fresh. Quality stays high.
 
-When all phases are done, `/gsd:complete-milestone` archives the milestone and tags the release.
+When all phases are done, `/gsd-complete-milestone` archives the milestone and tags the release.
 
-Then `/gsd:new-milestone` starts the next version — same flow as `new-project` but for your existing codebase. You describe what you want to build next, the system researches the domain, you scope requirements, and it creates a fresh roadmap. Each milestone is a clean cycle: define → build → ship.
+Then `/gsd-new-milestone` starts the next version — same flow as `new-project` but for your existing codebase. You describe what you want to build next, the system researches the domain, you scope requirements, and it creates a fresh roadmap. Each milestone is a clean cycle: define → build → ship.
 
 ---
 
 ### Quick Mode
 
 ```
-/gsd:quick
+/gsd-quick
 ```
 
 **For ad-hoc tasks that don't need full planning.**
@@ -372,7 +372,7 @@ Quick mode gives you GSD guarantees (atomic commits, state tracking) with a fast
 Use for: bug fixes, small features, config changes, one-off tasks.
 
 ```
-/gsd:quick
+/gsd-quick
 > What do you want to do? "Add haptic feedback to the save button"
 ```
 
@@ -473,82 +473,82 @@ You're never locked in. The system adapts.
 
 | Command | What it does |
 |---------|--------------|
-| `/gsd:new-project [--auto]` | Full initialization: questions → research → requirements → roadmap |
-| `/gsd:discuss-phase [N] [--auto] [--batch]` | Capture implementation decisions before planning |
-| `/gsd:plan-phase [N] [--auto] [--reviews]` | Research + plan + verify for a phase |
-| `/gsd:execute-phase <N> [--wave N] [--interactive]` | Execute all plans in parallel waves, verify when complete |
-| `/gsd:verify-work [N]` | Manual user acceptance testing ¹ |
-| `/gsd:audit-milestone` | Verify milestone achieved its definition of done |
-| `/gsd:complete-milestone` | Archive milestone, tag release |
-| `/gsd:new-milestone [name]` | Start next version: questions → research → requirements → roadmap |
-| `/gsd:next` | Automatically advance to next workflow step |
-| `/gsd:ship` | Create PR from verified phase work |
-| `/gsd:fast <desc>` | Trivial inline task without planning overhead |
+| `/gsd-new-project [--auto]` | Full initialization: questions → research → requirements → roadmap |
+| `/gsd-discuss-phase [N] [--auto] [--batch]` | Capture implementation decisions before planning |
+| `/gsd-plan-phase [N] [--auto] [--reviews]` | Research + plan + verify for a phase |
+| `/gsd-execute-phase <N> [--wave N] [--interactive]` | Execute all plans in parallel waves, verify when complete |
+| `/gsd-verify-work [N]` | Manual user acceptance testing ¹ |
+| `/gsd-audit-milestone` | Verify milestone achieved its definition of done |
+| `/gsd-complete-milestone` | Archive milestone, tag release |
+| `/gsd-new-milestone [name]` | Start next version: questions → research → requirements → roadmap |
+| `/gsd-next` | Automatically advance to next workflow step |
+| `/gsd-ship` | Create PR from verified phase work |
+| `/gsd-fast <desc>` | Trivial inline task without planning overhead |
 
 ### Navigation
 
 | Command | What it does |
 |---------|--------------|
-| `/gsd:progress` | Where am I? What's next? |
-| `/gsd:help` | Show all commands and usage guide |
-| `/gsd:update` | Update GSD with changelog preview |
-| `/gsd:join-discord` | Join the GSD community Discord |
+| `/gsd-progress` | Where am I? What's next? |
+| `/gsd-help` | Show all commands and usage guide |
+| `/gsd-update` | Update GSD with changelog preview |
+| `/gsd-join-discord` | Join the GSD community Discord |
 
 ### Brownfield
 
 | Command | What it does |
 |---------|--------------|
-| `/gsd:map-codebase [area]` | Analyze existing codebase before new-project |
+| `/gsd-map-codebase [area]` | Analyze existing codebase before new-project |
 
 ### Phase Management
 
 | Command | What it does |
 |---------|--------------|
-| `/gsd:add-phase` | Append phase to roadmap |
-| `/gsd:insert-phase [N]` | Insert urgent work between phases |
-| `/gsd:remove-phase [N]` | Remove future phase, renumber |
-| `/gsd:list-phase-assumptions [N]` | See Claude's intended approach before planning |
-| `/gsd:plan-milestone-gaps` | Create phases to close gaps from audit |
+| `/gsd-add-phase` | Append phase to roadmap |
+| `/gsd-insert-phase [N]` | Insert urgent work between phases |
+| `/gsd-remove-phase [N]` | Remove future phase, renumber |
+| `/gsd-list-phase-assumptions [N]` | See Claude's intended approach before planning |
+| `/gsd-plan-milestone-gaps` | Create phases to close gaps from audit |
 
 ### Session
 
 | Command | What it does |
 |---------|--------------|
-| `/gsd:pause-work` | Create handoff when stopping mid-phase |
-| `/gsd:resume-work` | Restore from last session |
-| `/gsd:session-report` | Post-session activity report |
+| `/gsd-pause-work` | Create handoff when stopping mid-phase |
+| `/gsd-resume-work` | Restore from last session |
+| `/gsd-session-report` | Post-session activity report |
 
 ### Utilities
 
 | Command | What it does |
 |---------|--------------|
-| `/gsd:settings` | Configure model profile and workflow agents |
-| `/gsd:set-profile <profile>` | Switch model profile (quality/balanced/budget/inherit) |
-| `/gsd:do <text>` | Execute a task directly without interactive prompt |
-| `/gsd:note <text>` | Add a note to the current session state |
-| `/gsd:stats` | Show project statistics and metrics |
-| `/gsd:add-todo [desc]` | Capture idea for later |
-| `/gsd:check-todos` | List pending todos |
-| `/gsd:debug [desc]` | Systematic debugging with persistent state |
-| `/gsd:quick [--discuss] [--full] [--research]` | Execute ad-hoc task with GSD guarantees (`--discuss` for pre-planning context, `--full` adds plan-checking and verification, `--research` adds domain research) |
-| `/gsd:health [--repair]` | Validate `.planning/` directory integrity, auto-repair with `--repair` |
-| `/gsd:profile-user` | Build developer behavioral profile |
-| `/gsd:review` | Cross-AI peer code review |
-| `/gsd:forensics` | Post-mortem workflow investigation |
-| `/gsd:milestone-summary` | Milestone onboarding summary |
-| `/gsd:manager` | Interactive command center |
-| `/gsd:plant-seed` | Backlog parking lot |
-| `/gsd:pr-branch` | Clean PR branch management |
-| `/gsd:audit-uat` | UAT/verification debt tracking |
-| `/gsd:thread` | Persistent context threads |
-| `/gsd:workstreams` | Parallel workstream management |
+| `/gsd-settings` | Configure model profile and workflow agents |
+| `/gsd-set-profile <profile>` | Switch model profile (quality/balanced/budget/inherit) |
+| `/gsd-do <text>` | Execute a task directly without interactive prompt |
+| `/gsd-note <text>` | Add a note to the current session state |
+| `/gsd-stats` | Show project statistics and metrics |
+| `/gsd-add-todo [desc]` | Capture idea for later |
+| `/gsd-check-todos` | List pending todos |
+| `/gsd-debug [desc]` | Systematic debugging with persistent state |
+| `/gsd-quick [--discuss] [--full] [--research]` | Execute ad-hoc task with GSD guarantees (`--discuss` for pre-planning context, `--full` adds plan-checking and verification, `--research` adds domain research) |
+| `/gsd-health [--repair]` | Validate `.planning/` directory integrity, auto-repair with `--repair` |
+| `/gsd-profile-user` | Build developer behavioral profile |
+| `/gsd-review` | Cross-AI peer code review |
+| `/gsd-forensics` | Post-mortem workflow investigation |
+| `/gsd-milestone-summary` | Milestone onboarding summary |
+| `/gsd-manager` | Interactive command center |
+| `/gsd-plant-seed` | Backlog parking lot |
+| `/gsd-pr-branch` | Clean PR branch management |
+| `/gsd-audit-uat` | UAT/verification debt tracking |
+| `/gsd-thread` | Persistent context threads |
+| `/gsd-workstreams` | Parallel workstream management |
 
 ### UI Design
 
 | Command | What it does |
 |---------|--------------|
-| `/gsd:ui-phase [N]` | Create SwiftUI design contract (color assets, typography tokens, accessibility) before planning |
-| `/gsd:ui-review [N]` | Retroactive 6-pillar visual audit of implemented SwiftUI views |
+| `/gsd-ui-phase [N]` | Create SwiftUI design contract (color assets, typography tokens, accessibility) before planning |
+| `/gsd-ui-review [N]` | Retroactive 6-pillar visual audit of implemented SwiftUI views |
 
 <sup>¹ Contributed by reddit user OracleGreyBeard</sup>
 
@@ -556,7 +556,7 @@ You're never locked in. The system adapts.
 
 ## Configuration
 
-GSD stores project settings in `.planning/config.json`. Configure during `/gsd:new-project` or update later with `/gsd:settings`. For the full config schema, workflow toggles, git branching options, and per-agent model breakdown, see the [User Guide](docs/USER-GUIDE.md#configuration-reference).
+GSD stores project settings in `.planning/config.json`. Configure during `/gsd-new-project` or update later with `/gsd-settings`. For the full config schema, workflow toggles, git branching options, and per-agent model breakdown, see the [User Guide](docs/USER-GUIDE.md#configuration-reference).
 
 ### Core Settings
 
@@ -580,10 +580,10 @@ Use `inherit` to follow the current session model selection.
 
 Switch profiles:
 ```
-/gsd:set-profile budget
+/gsd-set-profile budget
 ```
 
-Or configure via `/gsd:settings`.
+Or configure via `/gsd-settings`.
 
 ### Workflow Agents
 
@@ -596,9 +596,9 @@ These spawn additional agents during planning/execution. They improve quality bu
 | `workflow.verifier` | `true` | Confirms must-haves were delivered after execution |
 | `workflow.auto_advance` | `false` | Auto-chain discuss → plan → execute without stopping |
 
-Use `/gsd:settings` to toggle these, or override per-invocation:
-- `/gsd:plan-phase --skip-research`
-- `/gsd:plan-phase --skip-verify`
+Use `/gsd-settings` to toggle these, or override per-invocation:
+- `/gsd-plan-phase --skip-research`
+- `/gsd-plan-phase --skip-verify`
 
 ### Execution
 
@@ -668,7 +668,7 @@ This prevents Claude from reading these files entirely, regardless of what comma
 - Verify files exist in `~/.claude/commands/gsd/` (global) or `./.claude/commands/gsd/` (local)
 
 **Commands not working as expected?**
-- Run `/gsd:help` to verify installation
+- Run `/gsd-help` to verify installation
 - Reinstall: `npx get-shit-done-ios@latest`
 
 **Updating to the latest version?**
@@ -677,7 +677,7 @@ npx get-shit-done-ios@latest
 ```
 
 **Xcode build fails after GSD changes?**
-GSD only writes to `.planning/` and generates Swift source files. If Xcode can't find new files, add them to your target in Xcode (File → Add Files to Project). If a generated file has compile errors, run `/gsd:debug` with the error message.
+GSD only writes to `.planning/` and generates Swift source files. If Xcode can't find new files, add them to your target in Xcode (File → Add Files to Project). If a generated file has compile errors, run `/gsd-debug` with the error message.
 
 ### Uninstalling
 
