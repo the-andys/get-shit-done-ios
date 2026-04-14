@@ -23,7 +23,7 @@ const ROOT = path.resolve(__dirname, '..');
  * CHANGELOG.md, node_modules/, .git/, and dist/.
  */
 function collectFiles(dir, extensions, results = []) {
-  const EXCLUDED_DIRS = new Set(['node_modules', '.git', 'dist', '.claude', '.worktrees']);
+  const EXCLUDED_DIRS = new Set(['node_modules', '.git', 'dist', '.claude', '.worktrees', '.dev']);
   let entries;
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true });
