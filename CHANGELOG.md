@@ -4,6 +4,54 @@ All notable changes to GSD iOS will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.0] - 2026-04-13
+
+### Added
+- **6 new runtimes** in installer: Cline, Trae, Kilo, Augment, CodeBuddy, Qwen (total now 14 runtimes)
+- **11 new agents**: gsd-ai-researcher, gsd-code-fixer, gsd-code-reviewer, gsd-doc-verifier, gsd-doc-writer, gsd-domain-researcher, gsd-eval-auditor, gsd-eval-planner, gsd-framework-selector, gsd-intel-updater, gsd-security-auditor
+- **14 new commands**: `/gsd-ai-integration-phase`, `/gsd-analyze-dependencies`, `/gsd-audit-fix`, `/gsd-code-review`, `/gsd-code-review-fix`, `/gsd-docs-update`, `/gsd-eval-review`, `/gsd-explore`, `/gsd-from-gsd2`, `/gsd-import`, `/gsd-intel`, `/gsd-scan`, `/gsd-secure-phase`, `/gsd-undo`
+- **14 new workflows**: corresponding workflow definitions for new commands plus `/gsd-inbox`, `/gsd-discuss-phase-power`
+- **24 new references** including `ios-scaffold.md` (XcodeGen patterns), thinking-models (debug/execution/planning/research/verification), gates patterns, agent-contracts, planner decomposition (CC4)
+- **112 new test files** (1465 → 2777 total tests)
+- **Dimension 7b — Scope Reduction Detection** in gsd-plan-checker (detects silent simplifications)
+- **Escalation Gate pattern** in gsd-verifier (surfaces unresolvable gaps)
+- **ROADMAP Success Criteria merging** (Step 2a/2b/2c) in verifier — roadmap SCs are non-negotiable contract
+- **Verification Overrides** (Step 3b) with fuzzy matching
+- **scope_reduction_prohibition** section in gsd-planner (prohibits simplifying user decisions)
+- **documentation_lookup** Context7 MCP + CLI (`npx ctx7`) fallback in 5+ agents
+- **Codebase intelligence system** via `/gsd-intel` command (.planning/intel/)
+- **3-tier release strategy** support (hotfix/release/CI workflows in .github/)
+- **New CI workflows**: stale.yml, require-issue-link.yml, dependabot.yml
+- **New GitHub templates**: ISSUE_TEMPLATE/chore.yml, enhancement.yml, PULL_REQUEST_TEMPLATE/{enhancement,feature,fix}.md
+- **New hooks**: gsd-phase-boundary.sh, gsd-read-guard.js, gsd-session-state.sh, gsd-validate-commit.sh
+- **Hook validation guards** (fs.existsSync checks — fix bug #1817)
+- **CC5 commands→skills migration** in installer (9 copyCommandsAs*Skills functions, 29 call sites)
+- **acceptance_criteria hard gate** in executor (v1.35.0)
+- **destructive_git_prohibition** section in executor
+- **post-commit deletion check** in executor/verifier
+- **bin/lib modules**: docs.cjs, gsd2-import.cjs, intel.cjs, learnings.cjs, schema-detect.cjs
+- **contexts/** directory: dev, research, review execution context profiles
+- **i18n docs**: ja-JP, ko-KR, pt-BR (10 files each), zh-CN (15 files)
+
+### Changed
+- **Node.js minimum**: bumped from 20 to 22 (`engines.node: ">=22.0.0"`)
+- **package.json files field**: `hooks/dist` → `hooks` (publishes hooks source)
+- **CC1 migration**: all `/gsd:` → `/gsd-` slash commands (0 stale refs outside `/gsd:iOS`)
+- **CC2 permissionMode removed** from gsd-executor.md and gsd-debugger.md (fixes Gemini CLI agent loading)
+- **CC4 planner decomposition**: gsd-planner (1429 → 1370 lines) now references 4 extracted files (planner-gap-closure.md, planner-revision.md, planner-reviews.md, revision-loop.md)
+- **gsd-planner**: rebuilt from upstream base + iOS re-injections (accessibility, localization, TDD Red-Green-Refactor, API feasibility, iOS test framework detection)
+- **install.js**: grew from 5003 to 6612 lines (upstream 6609 + iOS branding)
+- **CI test.yml**: Node matrix 22/24 (was 20/22), removed dedicated Windows runner (covered by hardcoded-paths tests)
+
+### Fixed
+- `gsd-check-update.js` hook: correct package name (already fixed in v1.5.0, preserved through sync)
+- `verify.cjs`: branding `get-shit-done-ios` preserved in error messages
+- `get-shit-done/commands/gsd/workstreams.md` legacy path removed (upstream deleted directory)
+
+### Removed
+- `VERSIONING.md` (upstream release process doc, not relevant to fork)
+- `docs/superpowers/` translations (already clean, upstream confirmed deletion)
+
 ## [1.5.0] - 2026-04-01
 
 ### Added

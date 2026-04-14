@@ -6,7 +6,7 @@
 
 ## Configuration File
 
-GSD stores project settings in `.planning/config.json`. Created during `/gsd:new-project`, updated via `/gsd:settings`.
+GSD stores project settings in `.planning/config.json`. Created during `/gsd-new-project`, updated via `/gsd-settings`.
 
 ### Full Schema
 
@@ -20,6 +20,7 @@ GSD stores project settings in `.planning/config.json`. Created during `/gsd:new
     "commit_docs": true,
     "search_gitignored": false
   },
+  "context_profile": null,
   "workflow": {
     "research": true,
     "plan_check": true,
@@ -33,7 +34,10 @@ GSD stores project settings in `.planning/config.json`. Created during `/gsd:new
     "research_before_questions": false,
     "discuss_mode": "discuss",
     "skip_discuss": false,
-    "text_mode": false
+    "text_mode": false,
+    "use_worktrees": true,
+    "code_review": true,
+    "code_review_depth": "standard"
   },
   "hooks": {
     "context_warnings": true,
@@ -67,7 +71,22 @@ GSD stores project settings in `.planning/config.json`. Created during `/gsd:new
     "always_confirm_destructive": true,
     "always_confirm_external_services": true
   },
-  "agent_skills": {}
+  "project_code": null,
+  "security_enforcement": true,
+  "security_asvs_level": 1,
+  "security_block_on": "high",
+  "agent_skills": {},
+  "response_language": null,
+  "features": {
+    "thinking_partner": false,
+    "global_learnings": false
+  },
+  "learnings": {
+    "max_inject": 10
+  },
+  "intel": {
+    "enabled": false
+  }
 }
 ```
 
@@ -80,6 +99,9 @@ GSD stores project settings in `.planning/config.json`. Created during `/gsd:new
 | `mode` | enum | `interactive`, `yolo` | `interactive` | `yolo` auto-approves decisions; `interactive` confirms at each step |
 | `granularity` | enum | `coarse`, `standard`, `fine` | `standard` | Controls phase count: `coarse` (3-5), `standard` (5-8), `fine` (8-12) |
 | `model_profile` | enum | `quality`, `balanced`, `budget`, `inherit` | `balanced` | Model tier for each agent (see [Model Profiles](#model-profiles)) |
+| `project_code` | string | any short string | (none) | Prefix for phase directory names (e.g., `"ABC"` produces `ABC-01-setup/`). Added in v1.31 |
+| `response_language` | string | language code | (none) | Language for agent responses (e.g., `"pt"`, `"ko"`, `"ja"`). Propagates to all spawned agents for cross-phase language consistency. Added in v1.32 |
+| `context_profile` | string | `dev`, `research`, `review` | (none) | Execution context preset that applies a pre-configured bundle of mode, model, and workflow settings for the current type of work. Added in v1.34 |
 
 > **Note:** `granularity` was renamed from `depth` in v1.22.3. Existing configs are auto-migrated.
 
@@ -97,13 +119,16 @@ All workflow toggles follow the **absent = enabled** pattern. If a key is missin
 | `workflow.auto_advance` | boolean | `false` | Auto-chain discuss → plan → execute without stopping |
 | `workflow.nyquist_validation` | boolean | `true` | Test coverage mapping during plan-phase research |
 | `workflow.ui_phase` | boolean | `true` | Generate UI design contracts for frontend phases |
-| `workflow.ui_safety_gate` | boolean | `true` | Prompt to run /gsd:ui-phase for frontend phases during plan-phase |
+| `workflow.ui_safety_gate` | boolean | `true` | Prompt to run /gsd-ui-phase for frontend phases during plan-phase |
 | `workflow.node_repair` | boolean | `true` | Autonomous task repair on verification failure |
 | `workflow.node_repair_budget` | number | `2` | Max repair attempts per failed task |
 | `workflow.research_before_questions` | boolean | `false` | Run research before discussion questions instead of after |
-| `workflow.discuss_mode` | string | `'discuss'` | Controls how `/gsd:discuss-phase` gathers context. `'discuss'` (default) asks questions one-by-one. `'assumptions'` reads the codebase first, generates structured assumptions with confidence levels, and only asks you to correct what's wrong. Added in v1.28 |
-| `workflow.skip_discuss` | boolean | `false` | When `true`, `/gsd:autonomous` bypasses the discuss-phase entirely, writing minimal CONTEXT.md from the ROADMAP phase goal. Useful for projects where developer preferences are fully captured in PROJECT.md/REQUIREMENTS.md. Added in v1.28 |
+| `workflow.discuss_mode` | string | `'discuss'` | Controls how `/gsd-discuss-phase` gathers context. `'discuss'` (default) asks questions one-by-one. `'assumptions'` reads the codebase first, generates structured assumptions with confidence levels, and only asks you to correct what's wrong. Added in v1.28 |
+| `workflow.skip_discuss` | boolean | `false` | When `true`, `/gsd-autonomous` bypasses the discuss-phase entirely, writing minimal CONTEXT.md from the ROADMAP phase goal. Useful for projects where developer preferences are fully captured in PROJECT.md/REQUIREMENTS.md. Added in v1.28 |
 | `workflow.text_mode` | boolean | `false` | Replaces AskUserQuestion TUI menus with plain-text numbered lists. Required for Claude Code remote sessions (`/rc` mode) where TUI menus don't render. Can also be set per-session with `--text` flag on discuss-phase. Added in v1.28 |
+| `workflow.use_worktrees` | boolean | `true` | When `false`, disables git worktree isolation for parallel execution. Users who prefer sequential execution or whose environment does not support worktrees can disable this. Added in v1.31 |
+| `workflow.code_review` | boolean | `true` | Enable `/gsd-code-review` and `/gsd-code-review-fix` commands. When `false`, the commands exit with a configuration gate message. Added in v1.34 |
+| `workflow.code_review_depth` | string | `standard` | Default review depth for `/gsd-code-review`: `quick` (pattern-matching only), `standard` (per-file analysis), or `deep` (cross-file with import graphs). Can be overridden per-run with `--depth=`. Added in v1.34 |
 
 ### Recommended Presets
 
@@ -133,7 +158,7 @@ If `.planning/` is in `.gitignore`, `commit_docs` is automatically `false` regar
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `hooks.context_warnings` | boolean | `true` | Show context window usage warnings via context monitor hook |
-| `hooks.workflow_guard` | boolean | `false` | Warn when file edits happen outside GSD workflow context (advises using `/gsd:quick` or `/gsd:fast`) |
+| `hooks.workflow_guard` | boolean | `false` | Warn when file edits happen outside GSD workflow context (advises using `/gsd-quick` or `/gsd-fast`) |
 
 The prompt injection guard hook (`gsd-prompt-guard.js`) is always active and cannot be disabled — it's a security feature, not a workflow toggle.
 
@@ -213,6 +238,30 @@ node gsd-tools.cjs config-set agent_skills.gsd-executor '["skills/my-skill"]'
 
 ---
 
+## Feature Flags
+
+Toggle optional capabilities via the `features.*` config namespace. Feature flags default to `false` (disabled) — enabling a flag opts into new behavior without affecting existing workflows.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `features.thinking_partner` | boolean | `false` | Enable thinking partner analysis at workflow decision points |
+| `features.global_learnings` | boolean | `false` | Enable cross-project learnings pipeline (auto-copy at phase completion, planner injection) |
+| `intel.enabled` | boolean | `false` | Enable queryable codebase intelligence system. When `true`, `/gsd-intel` commands build and query a JSON index in `.planning/intel/`. Added in v1.34 |
+
+### Usage
+
+```bash
+# Enable a feature
+node gsd-tools.cjs config-set features.global_learnings true
+
+# Disable a feature
+node gsd-tools.cjs config-set features.thinking_partner false
+```
+
+The `features.*` namespace is a dynamic key pattern — new feature flags can be added without modifying `VALID_CONFIG_KEYS`. Any key matching `features.<name>` is accepted by the config system.
+
+---
+
 ## Parallelization Settings
 
 | Setting | Type | Default | Description |
@@ -235,7 +284,7 @@ node gsd-tools.cjs config-set agent_skills.gsd-executor '["skills/my-skill"]'
 | `git.branching_strategy` | enum | `none` | `none`, `phase`, or `milestone` |
 | `git.phase_branch_template` | string | `gsd/phase-{phase}-{slug}` | Branch name template for phase strategy |
 | `git.milestone_branch_template` | string | `gsd/{milestone}-{slug}` | Branch name template for milestone strategy |
-| `git.quick_branch_template` | string or null | `null` | Optional branch name template for `/gsd:quick` tasks |
+| `git.quick_branch_template` | string or null | `null` | Optional branch name template for `/gsd-quick` tasks |
 
 ### Strategy Comparison
 
@@ -299,11 +348,43 @@ Control confirmation prompts during workflows.
 
 ---
 
-## Hook Settings
+## Security Settings
+
+Settings for the security enforcement feature (v1.31). All follow the **absent = enabled** pattern.
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `hooks.context_warnings` | boolean | `true` | Show context window usage warnings during sessions |
+| `security_enforcement` | boolean | `true` | Enable threat-model-anchored security verification via `/gsd-secure-phase`. When `false`, security checks are skipped entirely |
+| `security_asvs_level` | number (1-3) | `1` | OWASP ASVS verification level. Level 1 = opportunistic, Level 2 = standard, Level 3 = comprehensive |
+| `security_block_on` | string | `"high"` | Minimum severity that blocks phase advancement. Options: `"high"`, `"medium"`, `"low"` |
+
+---
+
+## Manager Passthrough Flags
+
+Configure per-step flags that `/gsd-manager` appends to each dispatched command. This allows customizing how the manager runs discuss, plan, and execute steps without manual flag entry.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `manager.flags.discuss` | string | (none) | Flags appended to discuss-phase commands (e.g., `"--auto"`) |
+| `manager.flags.plan` | string | (none) | Flags appended to plan-phase commands (e.g., `"--skip-research"`) |
+| `manager.flags.execute` | string | (none) | Flags appended to execute-phase commands (e.g., `"--validate"`) |
+
+**Example:**
+
+```json
+{
+  "manager": {
+    "flags": {
+      "discuss": "--auto",
+      "plan": "--skip-research",
+      "execute": "--validate"
+    }
+  }
+}
+```
+
+Invalid flag tokens are sanitized and logged as warnings. Only recognized GSD flags are passed through.
 
 ---
 
@@ -342,7 +423,7 @@ Override specific agents without changing the entire profile:
 
 Valid override values: `opus`, `sonnet`, `haiku`, `inherit`, or any fully-qualified model ID (e.g., `"openai/o3"`, `"google/gemini-2.5-pro"`).
 
-### Non-Claude Runtimes (Codex, OpenCode, Gemini CLI)
+### Non-Claude Runtimes (Codex, OpenCode, Gemini CLI, Kilo)
 
 When GSD is installed for a non-Claude runtime, the installer automatically sets `resolve_model_ids: "omit"` in `~/.gsd/defaults.json`. This causes GSD to return an empty model parameter for all agents, so each agent uses whatever model the runtime is configured with. No additional setup is needed for the default case.
 
@@ -376,8 +457,8 @@ The intent is the same as the Claude profile tiers -- use a stronger model for p
 | Value | Behavior | Use When |
 |-------|----------|----------|
 | `false` (default) | Returns Claude aliases (`opus`, `sonnet`, `haiku`) | Claude Code with native Anthropic API |
-| `true` | Maps aliases to full Claude model IDs (`claude-opus-4-0`) | Claude Code with API that requires full IDs |
-| `"omit"` | Returns empty string (runtime picks its default) | Non-Claude runtimes (Codex, OpenCode, Gemini CLI) |
+| `true` | Maps aliases to full Claude model IDs (`claude-opus-4-6`) | Claude Code with API that requires full IDs |
+| `"omit"` | Returns empty string (runtime picks its default) | Non-Claude runtimes (Codex, OpenCode, Gemini CLI, Kilo) |
 
 ### Profile Philosophy
 
@@ -397,6 +478,8 @@ The intent is the same as the Claude profile tiers -- use a stronger model for p
 | `CLAUDE_CONFIG_DIR` | Override default config directory (`~/.claude/`) |
 | `GEMINI_API_KEY` | Detected by context monitor to switch hook event name |
 | `WSL_DISTRO_NAME` | Detected by installer for WSL path handling |
+| `GSD_SKIP_SCHEMA_CHECK` | Skip schema drift detection during execute-phase (v1.31) |
+| `GSD_PROJECT` | Override project root for multi-project workspace support (v1.32) |
 
 ---
 
@@ -406,4 +489,4 @@ Save settings as global defaults for future projects:
 
 **Location:** `~/.gsd/defaults.json`
 
-When `/gsd:new-project` creates a new `config.json`, it reads global defaults and merges them as the starting configuration. Per-project settings always override globals.
+When `/gsd-new-project` creates a new `config.json`, it reads global defaults and merges them as the starting configuration. Per-project settings always override globals.
