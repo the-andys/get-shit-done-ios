@@ -1,3 +1,11 @@
+> **⚠️ This project is archived and no longer actively maintained.**
+>
+> GSD:iOS v1.6.0 is stable and functional, synced to upstream GSD v1.35.0.
+> The upstream project moves too fast (~350 commits per sync cycle) for a solo maintainer to keep up.
+> Feel free to fork if you need an iOS-specific GSD variant.
+>
+> Last sync: v1.35.0 (April 2026) | 29 agents, 71 commands, 14 runtimes, 3016 tests passing.
+
 <div align="center">
 
 # GET SHIT DONE — iOS Edition
@@ -9,7 +17,7 @@
 **Solves context rot — the quality degradation that happens as Claude fills its context window.**
 
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.30.0-orange?style=for-the-badge)](https://github.com/gsd-build/get-shit-done)
+[![Based on GSD](https://img.shields.io/badge/Based_on-GSD_1.35.0-orange?style=for-the-badge)](https://github.com/gsd-build/get-shit-done)
 
 ```bash
 npx get-shit-done-ios@latest
@@ -702,6 +710,14 @@ This removes all GSD commands, agents, hooks, and settings while preserving your
 MIT License. See [LICENSE](LICENSE) for details.
 
 ---
+
+> **⚠️ This project is archived and no longer actively maintained.**
+>
+> GSD:iOS v1.6.0 is stable and functional, synced to upstream GSD v1.35.0.
+> The upstream project moves too fast (~350 commits per sync cycle) for a solo maintainer to keep up.
+> Feel free to fork if you need an iOS-specific GSD variant.
+>
+> Last sync: v1.35.0 (April 2026) | 29 agents, 71 commands, 14 runtimes, 3016 tests passing.
 
 <div align="center">
 
